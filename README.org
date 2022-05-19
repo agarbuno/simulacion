@@ -1,0 +1,64 @@
+#+TITLE: Simulacion
+#+AUTHOR: Prof. Alfredo Garbuno Iñigo
+#+EMAIL:  agarbuno@itam.mx
+#+DATE: ~Otoño, 2022~
+:REVEAL_PROPERTIES:
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_EXTRA_CSS: ./notas/mods.css
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_PLUGINS: (notes)
+:END:
+#+STARTUP: showall
+#+EXCLUDE_TAGS: toc github latex
+
+#+EXCLUDE_TAGS: toc
+
+* Contenido                                                             :toc:
+:PROPERTIES:
+:TOC:      :include all  :ignore this :depth 3
+:END:
+:CONTENTS:
+- [[#introducción][Introducción]]
+- [[#objetivo][Objetivo]]
+- [[#temario][Temario]]
+  - [[#de-qué-trata-el-curso][¿De qué trata el curso?]]
+- [[#recursos][Recursos]]
+- [[#horarios][Horarios]]
+  - [[#formato][Formato]]
+  - [[#canvas][Canvas]]
+  - [[#fechas-importantes][Fechas importantes]]
+  - [[#grabaciones-de-clases][Grabaciones de clases]]
+- [[#evaluación][Evaluación]]
+- [[#ambiente-de-trabajo][Ambiente de trabajo]]
+:END:
+
+
+* Introducción 
+
+* Objetivo
+
+* Temario
+
+** ¿De qué trata el curso?
+
+* Recursos
+
+* Horarios
+
+** Formato
+
+** Canvas
+
+** Fechas importantes
+
+** Grabaciones de clases
+
+* Evaluación
+
+* Ambiente de trabajo
+
+
