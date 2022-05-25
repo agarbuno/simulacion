@@ -4,7 +4,7 @@
 #+DATE: Temario
 #+STARTUP: showall
 :LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
+#+OPTIONS: toc:nil date:nil author:nil tasks:nil title:nil
 #+LANGUAGE: sp
 #+LATEX_CLASS: handout
 #+LATEX_HEADER: \usepackage[spanish]{babel}
@@ -15,6 +15,7 @@
 #+LATEX_HEADER:\usepackage{framed}
 #+LaTeX_HEADER: \usepackage{listings}
 #+LATEX_HEADER: \usepackage{fancyvrb}
+#+LATEX_HEADER: \fancyhead{}
 #+LATEX_HEADER: \usepackage{xcolor}
 #+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
 #+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -24,6 +25,52 @@
 #+LaTeX_HEADER: {}
 #+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
 #+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/temario.pdf
+#+EXPORT_FILE_NAME: temario.pdf
 :END:
 
+* Objetivo
+
+El objetivo del curso es introducir al estudiante a distintos métodos de
+simulación de variables aleatorias. Esto con la intención de aprender y conocer
+herramientas útiles y bien fundamentadas que pueden utilizarse en distintas
+aplicaciones en matemáticas aplicadas, actuaría, estadística o ciencia de
+datos. El curso, además, utilizará distintas herramientas computacionales para
+brindar al estudiante un marco de trabajo reproducible. Al final del curso, lxs
+estudiantes tendrán las competencias para: 1) implementar principios de modelado
+estadístico de ciertos fenómenos relevantes en el quehacer de un científico
+aplicado; 2) ser capaces de interpretar resultados computacionales basados en
+simulación estocástica; 3) apreciar la necesidad de un ambiente reproducible de entrega
+de resultados; por nombrar algunas. 
+
+El curso en particular utilizará herramientas de código abierto como ~R~ como
+lenguaje de programación y ~GitHub~ como gestor de entrega y avance de tareas y
+trabajos.
+
+El curso está pensando para cursarse después de haber acreditado Cálculo de
+Probabilidades II (o equivalente). Sin embargo, se aprovechará mejor si se
+lleva a la par junto con Procesos Estocásticos I y Estadística Matemática (o
+equivalentes).
+
+* Temario
+
+1. Introducción a la simulación. 
+2. Generación de variables aleatorias (Ch. 3-5 citep:Ross2013, Ch. 2 citep:Robert2013a). 
+3. Integración Monte Carlo (Ch. 3 citep:Ross2013, Ch. 3 citep:Robert2013a, Ch. 3 citep:Reich2015).
+4. Técnicas de reducción de varianza (Ch. 9-10 citep:Ross2013, Ch. 4 citep:Robert2013a).
+5. Validación estadística de muestreo (Ch. 11 citep:Ross2013). 
+6. Optimización Monte Carlo (Ch. 5 citep:Robert2013a).
+7. Monte Carlo vía cadenas de Markov (Ch. 12 citep:Ross2013, Ch. 6-7 citep:Robert2013a).
+8. Algoritmo Metropolis-Hastings (Ch. 7 citep:Robert2013a).
+9. Aplicaciones de simulación:
+   1. Estimación e inferencia estadística (/bootstrap/ citep:Efron1993).
+   2. Opciones americanas (/Monte Carlo Tree search/ citep:Glasserman2013).
+   3. Aplicaciones en administración de riesgos, citep:Glasserman2013. 
+
+bibliographystyle:abbrvnat
+bibliography:references.bib
+
+* COMMENT Por incorporar
+
+1. Perfect sampling citep:Robert2013a. 
+2. Fundamental theorem of simulation citep:Robert2013a.
+3. Particle filters citep:Robert2013a. 
