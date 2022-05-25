@@ -39,6 +39,7 @@ vignettes/*.pdf
 .Renviron
 
 ## Core latex/pdflatex auxiliary files:
+*.tex
 *.aux
 *.lof
 *.log
