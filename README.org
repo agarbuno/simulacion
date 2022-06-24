@@ -17,6 +17,8 @@
 
 #+EXCLUDE_TAGS: toc
 
+[[https://mybinder.org/v2/gh/agarbuno/simulacion/binder-rocker?urlpath=rstudio][https://mybinder.org/badge_logo.svg]]
+
 * Contenido                                                             :toc:
 :PROPERTIES:
 :TOC:      :include all  :ignore this :depth 3
