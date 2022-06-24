@@ -1,0 +1,3 @@
+#!/bin/bash
+mkdir curso
+find . -maxdepth 1 -mindepth 1 ! -name 'curso' ! -name '.bashrc' ! -name '.profile' ! -name '.bash_logout' ! -name '.local' ! -name '.jupyter' ! -name '.ipython' ! -name '.config' ! -name '=2.0' -exec mv -t curso {} + 
