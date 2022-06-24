@@ -335,3 +335,5 @@ TSWLatexianTemp*
 
 # xwatermark package
 *.xwm
+
+ltximg*
