@@ -206,7 +206,7 @@ administrar sus entregas como directorios de ~Git~. Además, habrá ejercicios d
 tareas que tendrán mecanismos de calificación automatizada.
 
 #+DOWNLOADED: screenshot @ 2022-06-24 18:23:16
-#+attr_html: :width 400 :align center
+#+attr_html: :width 200 :align center
 [[file:images/20220624-182316_screenshot.png]]
 
 
