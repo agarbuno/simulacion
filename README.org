@@ -26,39 +26,199 @@
 - [[#objetivo][Objetivo]]
 - [[#temario][Temario]]
   - [[#de-qué-trata-el-curso][¿De qué trata el curso?]]
+  - [[#tenemos-un-libro-de-texto][¿Tenemos un libro de texto?]]
 - [[#recursos][Recursos]]
 - [[#horarios][Horarios]]
   - [[#formato][Formato]]
   - [[#canvas][Canvas]]
   - [[#fechas-importantes][Fechas importantes]]
-  - [[#grabaciones-de-clases][Grabaciones de clases]]
 - [[#evaluación][Evaluación]]
 - [[#ambiente-de-trabajo][Ambiente de trabajo]]
+  - [[#ambiente-de-desarrollo-gráfico-ide][Ambiente de desarrollo gráfico (IDE)]]
+  - [[#versión-de-r][Versión de R]]
+  - [[#todos-trabajando-igual][Todos trabajando igual]]
+  - [[#configuración-renv][Configuración renv]]
+- [[#tareas][Tareas]]
+- [[#pregunta-incómoda][Pregunta incómoda]]
 :END:
 
 
 * Introducción 
 
+Este es el repositorio con el contenido del curso en simulación de la
+licenciatura en Actuaría del ITAM impartido por el Prof. Alfredo Garbuno. Esta
+materia también es ofrecida de manera simultánea para alumnos en las
+licenciaturas de matemáticas aplicadas, ciencia de datos y economía como materia
+optativa.
+
 * Objetivo
+
+El objetivo del curso es introducir al estudiante a distintos ~métodos de
+simulación~ de variables aleatorias. Esto con la intención de aprender y conocer
+herramientas útiles y bien fundamentadas que pueden utilizarse en distintas
+aplicaciones en matemáticas aplicadas, actuaría, estadística o ciencia de
+datos.
+
+El curso, además, utilizará distintas herramientas computacionales para
+brindar al estudiante un marco de trabajo reproducible. Al final del curso, lxs
+estudiantes tendrán las competencias para: 1) implementar principios de modelado
+estadístico de ciertos fenómenos relevantes en el quehacer de un científico
+aplicado; 2) ser capaces de interpretar resultados computacionales basados en
+simulación estocástica; 3) apreciar la necesidad de un ambiente reproducible de entrega
+de resultados; por nombrar algunas. 
+
+El curso en particular utilizará herramientas de código abierto como ~R~ como
+lenguaje de programación y ~GitHub~ como gestor de entrega y avance de tareas y
+trabajos.
+
+El curso está pensando para cursarse después de haber acreditado Cálculo de
+Probabilidades II (o equivalente). Sin embargo, se aprovechará mejor si se
+lleva a la par junto con Procesos Estocásticos I y Estadística Matemática (o
+equivalentes).
 
 * Temario
 
+El temario para el semestre de Otoño 2022 se puede encontrar [[https://github.com/agarbuno/simulacion/blob/fall-2022/docs/temario.pdf][aqui]]. Este es un
+plan preliminar que está sujeto al avance del curso a lo largo del semestre.
+
 ** ¿De qué trata el curso?
+
+En el curso estudiaremos métodos de ~simulación estocástica~ con el fin de
+explorar realizaciones aleatorias de modelos de probabilidad. Esto nos permitirá: 
+1. ~Explorar~ de manera computacional ~distribuciones de probabilidad generales~.
+2. Resolver problemas numéricos de ~integración~.
+3. Resolver problemas numéricos de ~optimización~.
+
+El enfoque del curso es poder utilizar lo que sabemos de modelado probabilístico
+y utilizarlo en tareas donde es necesario /cuantificar/ la /incertidumbre/ expresada
+en dicho modelo. 
+
+#+DOWNLOADED: screenshot @ 2022-06-24 17:44:20
+#+attr_html: :width 700 :align center
+[[file:images/20220624-174420_screenshot.png]]
+
+** ¿Tenemos un libro de texto?
+
+#+DOWNLOADED: screenshot @ 2022-06-24 18:30:51
+#+attr_html: :width 700 :align center
+[[file:images/20220624-183051_screenshot.png]]
+
 
 * Recursos
 
+El curso se gestionará en ~Canvas LMS~ y los recursos de la materia de esta
+iteración (Otoño 2022) se encontrarán en la rama [[https://github.com/agarbuno/simulacion][fall-2022]] del repositorio de
+~GitHub~ en mi usuario. Es decir, en =agarbuno/simulacion=.
+
+El repositorio tiene la siguiente estructura
+#+begin_src bash :exports results :results org :eval never
+tree -L 1 -d 
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+.
+├── css      
+├── docs     # Handouts de las notas de clase. 
+├── images   
+├── notas    # Código fuente que utilizo para generar las notas. 
+├── renv     # Archivos de estructura de proyecto de R. 
+└── rscripts # Scripts con el código de clase que veamos a lo largo del curso. 
+
+6 directories
+#+end_src
+
 * Horarios
+
+Las clases serán Martes y Jueves en un horario de 4:00pm a 5:30pm. 
 
 ** Formato
 
+El curso será impartido de manera ~completamente presencial~. Las evaluaciones del
+curso también serán completamente presenciales (salvo que se indique lo
+contrario).
+
 ** Canvas
+
+Utilizaremos este LMS para gestionar la comunicación fuera de los horarios de clase. 
 
 ** Fechas importantes
 
-** Grabaciones de clases
+- La sesión del ~Jueves 15 de Septiembre~ no habrá clases. 
 
 * Evaluación
 
+La evaluación del curso será por medio de:
+- Tareas y participación ($30\%$).
+- Evaluaciones parciales ($30\%$).
+- Evaluación final ($40\%$). 
+
 * Ambiente de trabajo
+
+El curso es agnóstico al lenguaje de programación. Sin embargo, las notas y el
+material estará construido a partir de [[https://www.r-project.org/][R]]. En particular, utilizaremos algunas
+herramientas del [[https://www.tidyverse.org/][tidyverse]] como herramienta de programación dentro de ~R~. Esto
+ofrece un ambiente unificado de distintas librerías enfocadas al manejo de
+estructura de datos y visualizaciones, lo cual será muy útil para las
+aplicaciones de nuestro curso.
+
+En particular utilizaremos:
+1. [[https://tibble.tidyverse.org/][tibble]] para estructura de datos. 
+2. [[https://dplyr.tidyverse.org/][dplyr]] para manipular las estructuras de datos. 
+3. [[https://tidyr.tidyverse.org/][tidyr]] para manipular estructuras tabulares de datos.
+4. [[https://purrr.tidyverse.org/][purrr]] para tener una ambiente funcional de programación. 
+5. [[https://ggplot2.tidyverse.org/][ggplot2]] para crear visualizaciones con una gramática.
+6. [[https://rsample.tidymodels.org/][rsample]] para utilizar técnicas de remuestreo. 
+
+** Ambiente de desarrollo gráfico (IDE)
+
+Se sugiere utilizar [[https://www.rstudio.com/products/rstudio/download/][Rstudio]] para poder trabajar en sus proyectos y sus
+tareas. En particular, el material de clase será editado en [[https://www.gnu.org/software/emacs/][GNU Emacs]] a través
+de =orgfiles= (archivos con sufijo ~.org~) pero pueden ser visualizados en ~Github~.
+
+** Versión de ~R~
+
+*Importante*: Es necesario tener instalada la versión ~4.1.1~ de ~R~ para tener la mejor
+compatibilidad con el código del curso.
+
+** Todos trabajando igual
+
+Utilizaremos ~renv~ para mantener actualizada las herramientas de ~R~ junto con el
+contenido del curso. En la carpeta se encuentran los archivos de requerimientos
+(=renv.lock=) con el que podrán usar los archivos que se vayan decantando en la
+carpeta =rscripts=. Aún asi, la configuración se irá construyendo en los
+ejercicios de tarea que vayamos utilizando en el curso.
+
+** Configuración ~renv~
+
+Si utilizas ~MacOS~ o alguna distribución ~Linux~ se recomienda escribir en el
+archivo ~~/.Renviron~ la siguiente línea lo cual mantendrá el cache de ~renv~ en un
+lugar centralizado
+
+#+begin_src conf :tangle ~/.Renviron :mkdirp yes
+  RENV_PATHS_ROOT=~/.renv
+#+end_src
+
+* Tareas
+
+Las tareas las gestionaremos a través de ~Github Classroom~ lo cual me permite
+administrar sus entregas como directorios de ~Git~. Además, habrá ejercicios de las
+tareas que tendrán mecanismos de calificación automatizada.
+
+#+DOWNLOADED: screenshot @ 2022-06-24 18:23:16
+#+attr_html: :width 400 :align center
+[[file:images/20220624-182316_screenshot.png]]
+
+
+Para esto necesito que obtengan su usuario de ~GitHub~. Les recomiendo utilizar su
+correo del ITAM para que tengan acceso al ambiente de desarrollo educativo de
+~GitHub~ y tengan acceso a otras aplicaciones.
+
+Las primeras tareas del semestre son básicamente configuración y es recomendable
+hacerlas si no cuentan con experiencia en: ~Git~, ~Github~, y ~R~ base.
+
+* Pregunta incómoda
+
+¿Espero que sepan programar?
 
 
