@@ -1,0 +1,162 @@
+#+TITLE: EST-24107: Simulación
+#+AUTHOR: Prof. Alfredo Garbuno Iñigo
+#+EMAIL:  agarbuno@itam.mx
+#+DATE: ~Introducción~
+#+STARTUP: showall
+:REVEAL_PROPERTIES:
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
+:END:
+:LATEX_PROPERTIES:
+#+OPTIONS: toc:nil date:nil author:nil tasks:nil
+#+LANGUAGE: sp
+#+LATEX_CLASS: handout
+#+LATEX_HEADER: \usepackage[spanish]{babel}
+#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
+#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
+#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
+#+LATEX_HEADER: \decimalpoint
+#+LATEX_HEADER:\usepackage{framed}
+#+LaTeX_HEADER: \usepackage{listings}
+#+LATEX_HEADER: \usepackage{fancyvrb}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
+#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
+#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
+#+LaTeX_HEADER: {}
+#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
+#+LaTeX_HEADER: {}
+#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
+#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
+#+EXPORT_FILE_NAME: ../docs/00-introduccion.pdf
+:END:
+#+PROPERTY: header-args:R :session introduccion :exports both :results output org :tangle ../rscripts/00-introduccion.R :mkdirp yes :dir ../
+#+EXCLUDE_TAGS: toc
+
+#+BEGIN_NOTES
+*Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | Introducción.\\
+*Objetivo*: Que veremos.\\
+*Lectura recomendada*: Capítulo 1 de citep:Sullivan2015. Capítulo 1-4 de citep:Smith2013
+#+END_NOTES
+
+
+
+* Contenido                                                             :toc:
+:PROPERTIES:
+:TOC:      :include all  :ignore this :depth 3
+:END:
+:CONTENTS:
+- [[#introducción][Introducción]]
+- [[#notación][Notación]]
+- [[#repaso-de-probabilidad][Repaso de probabilidad]]
+  - [[#definición-espacio-de-probabilidad][Definición [Espacio de Probabilidad]:]]
+  - [[#definición-variable-aleatoria][Definición [Variable aleatoria]:]]
+  - [[#definición-función-de-acumulación][Definición [Función de acumulación]:]]
+  - [[#definición-función-de-densidad][Definición [Función de densidad]:]]
+:END:
+
+* Introducción
+
+Un curso típico de 
+
+* Notación
+
+Denotamos por $x$ una ~variable aleatoria~ y por $\mathbb{P}(\cdot)$ una ~función de distribución~. Escribimos $x \sim \mathbb{P}$ para denotar que la variable aleatoria $x$ tiene distribución $\mathbb{P}(\cdot)$. Denotamos por $\mathbb{E}[\cdot]$ el ~valor esperado~ del argumento con respecto a la distribución que estamos considerando. Durante el curso seremos explícitos en la variable aleatoria y usaremos
+\begin{align}
+\mathbb{E}_x[\cdot] = \int_\mathcal{X} \cdot \, \pi(x) \, \text{d}x\,,
+\end{align}
+o bien, haremos énfasis en la distribución por medio de lo siguiente
+\begin{align}
+\mathbb{E}_\pi[\cdot] = \int_\mathcal{X} \cdot \, \pi(x) \, \text{d}x\,,
+\end{align}
+de acuerdo al contexto. 
+
+\medskip
+
+#+BEGIN_NOTES
+Nota que en las ecuaciones anteriores estamos considerando el término $\pi(\cdot)$ como la ~función de densidad~ de la ~función de probabilidad~ $\mathbb{P}(\cdot)$. 
+#+END_NOTES
+
+Nos será útil la siguiente notación para evaluar valores esperados
+\begin{align}
+\pi(f)  = \mathbb{E}_\pi[f(x)] = \int_\mathcal{X} f(x) \, \pi(x) \, \text{d}x\,,
+\end{align}
+pues será el objetivo general para los métodos que estudiaremos en el curso. 
+
+* Repaso de probabilidad
+
+Consideraremos como requisitos el contenido de Cálculo de Probabilidades II y
+Álgebra Lineal (o equivalentes). En particular lo que requerimos como base es lo siguiente.
+
+*** *Definición [Espacio de Probabilidad]*:
+Un espacio de probabilidad está definido por la terna $(\Omega, \mathcal{X}, \pi)$:
+1. El espacio muestral, $\Omega$ (elementos). 
+2. El espacio de eventos medibles, $\mathcal{X}$ (subconjuntos). 
+3. La medida de probabilidad, $\mathbb{P}: \mathcal{X} \rightarrow [0, 1]$. 
+
+*** *Definición [Variable aleatoria]*:
+Una variable aleatoria es una función $X:
+\mathcal{X} \rightarrow \mathbb{R}$ con la propiedad de que las pre-imágenes
+bajo $X$ son eventos medibles. Es decir,
+\begin{align}
+\{w \in \mathcal{X} : X(w) \leq x \} \in \mathcal{X} \qquad \forall x \in \mathbb{R}. 
+\end{align}
+   
+\newpage
+
+*** *Definición [Función de acumulación]*:
+Para toda variable aleatoria $X$ tenemos una función de acumulación
+$\mathbb{P}_{_X}: \mathbb{R} \rightarrow [0, 1]$ dada por
+\begin{align}
+\mathbb{P}_{_X}(x) = \mathbb{P} \big( \{w \in \mathcal{X} : X(w) \leq x\} \big)\,.
+\end{align}
+Esto usualmente lo escribimos como $\mathbb{P}_{_X}(x) = \mathbb{P}\{X \leq x\}$. 
+
+*** *Definición [Función de densidad]*:
+Una variable aleatoria es continua si su función de acumulación es ~absolutamente
+continua~ y puede ser expresada por medio de
+\begin{align}
+\mathbb{P}_{_X} (x) = \int_{- \infty}^x \pi (s) \, \text{d}s\,, 
+\end{align}
+donde la anti-derivada $\pi:\mathbb{R} \rightarrow [0, \infty)$ se llama la ~función de
+densidad~ de la variable aleatoria $X$. 
+
+Las propiedades generales de las distribuciones de probabilidad se pueden
+especificar por medio de su centralidad (localización), su dispersión, su rango
+de valores, su simetría y el comportamiento de valores extremos.
+
+En general esto lo podemos extraer de los momentos
+\begin{align}
+\mathbb{E}(X^n) = \int_{\mathbb{R}}^{} x^n \, \pi(x) \, \text{d}x\,,
+\end{align}
+o los momentos centrales. Por ejemplo: media y varianza. 
+
+
+*Definición [Valores Esperados]*: El valor esperado de una distribución 
+
+
+
+Uno de los resultados que espero recuerden bien de sus cursos anteriores es el
+de la Ley de los Grandes Números. La cual podemos enunciar como:
+
+#+begin_quote
+*Teorema [Ley de los Grandes Números]*: Sea $X_1, X_2, \ldots$ una colección de
+variables aleatorias independientes e idénticamente distribuidas
+($\mathsf{iid}$) y sea $\bar X_n$ el promedio de un subconjunto de $n$ ellas.
+Si denotamos por $\theta$ el valor promedio de $X_i$ dentro de esa colección, entonces tenemos que
+\begin{align}
+\bar X_n  \rightarrow \theta \quad (\text{casi seguramente})\,.
+\end{align}
+#+end_quote
+
+
+
+bibliographystyle:abbrvnat
+bibliography:references.bib
