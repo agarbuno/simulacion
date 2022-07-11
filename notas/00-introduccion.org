@@ -1,4 +1,4 @@
-#+TITLE: EST-24107: Simulación (Cuantificación de Incertidumbre)
+#+TITLE: EST-24107: Simulación 
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Introducción~
