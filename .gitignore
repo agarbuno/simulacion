@@ -337,3 +337,4 @@ TSWLatexianTemp*
 *.xwm
 
 ltximg*
+.DS_Store
