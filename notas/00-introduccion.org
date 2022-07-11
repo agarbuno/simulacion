@@ -330,6 +330,5 @@ Sea $X_1, \ldots, X_n$ una colección de $n$ variables aleatorias $\mathsf{iid}$
 \end{align}
 para $n$ suficientemente grande. 
 
-
 bibliographystyle:abbrvnat
 bibliography:references.bib
