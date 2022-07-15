@@ -1,6 +1,10 @@
 install.packages(
   c(
+  "ggplot2",  
   "patchwork",
   "scales",
-  "tidyverse")
+  "tibble",  
+  "tidyr", 
+  "rsample", 
+  "R6")
 )
