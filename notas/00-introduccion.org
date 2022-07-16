@@ -1,4 +1,4 @@
-#+TITLE: EST-24107: Simulación (Cuantificación de Incertidumbre)
+#+TITLE: EST-24107: Simulación
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Introducción~
@@ -45,6 +45,31 @@
 *Objetivo*: En esta primera  sesión estableceremos una idea general del alcance del curso. Esto nos llevará a encuadrar ciertos conceptos de simulación con el objetivo de cuantificar de incertidumbre.\\
 *Lectura recomendada*: Capítulo 1 de citep:Sullivan2015. Capítulo 1--4 de citep:Smith2013. 
 #+END_NOTES
+ 
+#+begin_src R :exports none :results none
+  ## Setup --------------------------------------------
+  library(tibble)
+  library(purrr)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(patchwork)
+  library(scales)
+  ## Cambia el default del tamaño de fuente 
+  theme_set(theme_linedraw(base_size = 25))
+
+  ## Cambia el número de decimales para mostrar
+  options(digits = 2)
+
+  sin_lineas <- theme(panel.grid.major = element_blank(),
+                      panel.grid.minor = element_blank())
+  color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
+
+  sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  sin_leyenda <- theme(legend.position = "none")
+  sin_ejes <- theme(axis.ticks = element_blank(), axis.text = element_blank())
+  #+end_src
+
 
 * Contenido                                                             :toc:
 :PROPERTIES:
@@ -172,13 +197,14 @@ sentido nuestro modelo lo podemos abstraer como
 f(x ; \theta) \approx z\,,
 \end{align}
 donde $f: X \times \Theta \rightarrow Z$ y pensamos que existe una configuración
-de $\theta$ que nos acerca los mas posible al fenómeno que nos
-interesa. Distintas configuraciones de $\theta$ generan distintas trayectorias
-planetarias como se muestra en la [[fig:planets]].
+de $\theta$ --- que muchas veces le llamamos $\theta^\star$ --- que acerca
+nuestra $f$ lo mas posible$^\dagger$ al fenómeno que nos interesa. Por ejemplo,
+distintas configuraciones de $\theta$ generan distintas trayectorias planetarias
+como se muestra en la [[fig:planets]].
 
 Por último, consideremos que los registros de las posiciones de los planetas no
 son exactas. Esto se debe a que nuestras mediciones están sujetas al error de
-nuestros instrumentos de registro.
+nuestros instrumentos de medición o registro.
 
 #+DOWNLOADED: screenshot @ 2022-06-27 17:25:22
 #+name: fig:planets
@@ -187,32 +213,55 @@ nuestros instrumentos de registro.
 [[file:images/20220627-172522_screenshot.png]]
 
 
-Entonces, la precisión con la que nuestro modelo puede aproximar la realidad, ~la
-discrepancia~ entre modelo y realidad, se debe a la ~incertidumbre~ inherente en
-nuestro proceso de modelado. Dicha incertidumbre la podemos considerar como
-consecuencia de dos tipos:
+Entonces, la precisión con la que nuestro modelo puede aproximar la realidad,
+esto es la diferencia o ~la discrepancia~ entre modelo y realidad, se debe a la
+~incertidumbre~ inherente en nuestro proceso de modelado. Dicha incertidumbre la
+podemos considerar como consecuencia de dos tipos:
 1. ~Incertidumbre aleatoria~: también conocida como incertidumbre estadística,
    estocástica o irreducible. Se refiere a la incertidumbre que es natural para nuestro
    proceso y que no podemos reducir por medio de un mejor modelo.
 2. ~Incertidumbre epistémica~: se refiere a la incertidumbre derivada de nuestra
-   simplificación del problema. Usualmente está asociada a los métodos numéricos
-   con los que implementamos nuestros modelos.
+   simplificación del problema, nuestro estado de conocimiento o supuestos. En
+   algunas ocasiones está asociada a los métodos numéricos con los que
+   implementamos nuestros modelos. En otras, está asociada con los supuestos con
+   lo que contamos para resolver un problema.
+
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/numerics-epistemic.jpeg :exports results :results output graphics file
+  genera_circulo <- function(n = 10){
+    tibble(angulo = seq(0, 2*pi, length.out = n),
+           x = sin(angulo), y = cos(angulo))
+  }
+
+  tibble(n = 2**c(3, 4, 8)) |>
+    mutate(datos = map(n, genera_circulo)) |>
+    unnest(datos) |>
+    ggplot(aes(x, y)) + 
+    geom_path(aes(group = n, lty = factor(n))) +
+    coord_equal() + xlab(expression(x[1])) + ylab(expression(x[2])) + 
+    sin_lineas + sin_leyenda + sin_ejes
+#+end_src
+#+caption: Aproximación a un circulo mediante una trayectoria discretizada. 
+#+RESULTS:
+[[file:../images/numerics-epistemic.jpeg]]
+
 
 Esta distinción nos ayuda a visualizar dos conceptos:
-1. Identificar la necesidad de plantear incertidumbre en nuestro proceso de modelado. 
+1. Identificar la necesidad de modelar incertidumbre en nuestros procesos. 
 2. Identificar el origen de dicha incertidumbre.
 
 
-Lamentablemente en la práctica olvidamos estas nociones y siempre es importante
-considerar las limitaciones de nuestros modelos para representar correctamente
-la realidad.
+Lamentablemente en la práctica, al momento de generar simulaciones, nos
+olvidamos estas nociones y siempre es importante considerar las limitaciones de
+nuestros modelos para representar correctamente la realidad.
 
-Ahora, la pregunta natural es ¿cómo modelamos la incertidumbre? En este curso
-utilizaremos el ~lenguaje de probabilidad~ para ~expresar incertidumbre~. En este
-enfoque, es usual considerar incertidumbre aleatoria. Por otro lado, un curso
-como el de cálculo numérico nos permitirá cuantificar la incertidumbre
-epistémica. Sin embargo, también veremos en este curso que con herramientas
-probabilísticas podemos cuantificar ciertas nociones de incertidumbre de ambos tipos. 
+Ahora, la pregunta natural es ¿cómo modelamos la incertidumbre? En este curso (y
+en general en cualquier otras aplicaciones) utilizaremos el ~lenguaje de
+probabilidad~ para ~expresar incertidumbre~ citep:Jaynes2003. En este enfoque, es usual considerar
+incertidumbre aleatoria. Por otro lado, un curso como el de cálculo numérico nos
+permitirá cuantificar la incertidumbre epistémica. Sin embargo, también veremos
+en este curso que con herramientas probabilísticas podemos cuantificar ciertas
+nociones de incertidumbre de ambos tipos.
 
 * Notación
 
@@ -271,7 +320,7 @@ Consideraremos como requisitos el contenido de Cálculo de Probabilidades II y
 Álgebra Lineal (o equivalentes). En particular lo que requerimos como base es lo siguiente.
 
 *** *Definición [Espacio de Probabilidad]*:
-Un espacio de probabilidad está definido por la terna $(\Omega, \mathcal{X}, \pi)$:
+Un espacio de probabilidad está definido por la terna $(\Omega, \mathcal{X}, \mathbb{P})$:
 1. El espacio muestral, $\Omega$ (elementos). 
 2. El espacio de eventos medibles, $\mathcal{X}$ (subconjuntos). 
 3. La medida de probabilidad, $\mathbb{P}: \mathcal{X} \rightarrow [0, 1]$. 
