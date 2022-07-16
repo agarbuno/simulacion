@@ -1,4 +1,4 @@
-#+TITLE: EST-24107: Simulación
+#+TITLE: EST-24107: Simulación 
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Introducción~
@@ -378,6 +378,6 @@ Sea $X_1, \ldots, X_n$ una colección de $n$ variables aleatorias $\mathsf{iid}$
 \bar X_n \sim \mathsf{N}\left( \mu, \frac{\sigma^2}{n} \right)\,,
 \end{align}
 para $n$ suficientemente grande. 
- 
+
 bibliographystyle:abbrvnat
 bibliography:references.bib
