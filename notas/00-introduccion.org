@@ -127,10 +127,10 @@ huracanes (ver [[fig:forecast]]).
 [[file:images/20220627-102953_screenshot.png]]
 
 Por medio de herramientas computacionales podemos generar una colección de
-situaciones ficticias y con esto estudiar una colección de situaciones
-hipotéticas. Usualmente nos interesa establecer comportamientos promedio y
-conocer dispersiones. Por ejemplo, la imagen anterior se puede resumir como en
-la [[fig:mean-trajectory]]
+situaciones ficticias y con esto estudiar un conjunto de situaciones hipotéticas
+(ver [[fig:forecast]]). Usualmente nos interesa estudiar el comportamientos promedio
+y conocer la dispersión alrededor de este promedio. Por ejemplo, la imagen
+anterior se puede resumir como en la [[fig:mean-trajectory]]
 
 #+DOWNLOADED: screenshot @ 2022-06-27 10:57:29
 #+name: fig:mean-trajectory 
