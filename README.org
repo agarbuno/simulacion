@@ -17,8 +17,6 @@
 
 #+EXCLUDE_TAGS: toc
 
-[[https://mybinder.org/v2/gh/agarbuno/simulacion/binder-rocker?urlpath=rstudio][https://mybinder.org/badge_logo.svg]]
-
 * Contenido                                                             :toc:
 :PROPERTIES:
 :TOC:      :include all  :ignore this :depth 3
@@ -42,8 +40,10 @@
   - [[#configuración-renv][Configuración renv]]
 - [[#tareas][Tareas]]
 - [[#pregunta-incómoda][Pregunta incómoda]]
+- [[#referencias][Referencias]]
 :END:
 
+[[https://mybinder.org/v2/gh/agarbuno/simulacion/binder-rocker?urlpath=rstudio][https://mybinder.org/badge_logo.svg]]
 
 * Introducción 
 
@@ -61,6 +61,7 @@ herramientas útiles y bien fundamentadas que pueden utilizarse en distintas
 aplicaciones en matemáticas aplicadas, actuaría, estadística o ciencia de
 datos.
 
+#+REVEAL: split
 El curso, además, utilizará distintas herramientas computacionales para
 brindar al estudiante un marco de trabajo reproducible. Al final del curso, lxs
 estudiantes tendrán las competencias para: 1) implementar principios de modelado
@@ -69,10 +70,12 @@ aplicado; 2) ser capaces de interpretar resultados computacionales basados en
 simulación estocástica; 3) apreciar la necesidad de un ambiente reproducible de entrega
 de resultados; por nombrar algunas. 
 
-El curso en particular utilizará herramientas de código abierto como ~R~ como
+#+REVEAL: split
+El curso en particular utilizará herramientas de código abierto:  ~R~ como
 lenguaje de programación y ~GitHub~ como gestor de entrega y avance de tareas y
 trabajos.
 
+#+REVEAL: split
 El curso está pensando para cursarse después de haber acreditado Cálculo de
 Probabilidades II (o equivalente). Sin embargo, se aprovechará mejor si se
 lleva a la par junto con Procesos Estocásticos I y Estadística Matemática (o
@@ -91,18 +94,23 @@ explorar realizaciones aleatorias de modelos de probabilidad. Esto nos permitir�
 2. Resolver problemas numéricos de ~integración~.
 3. Resolver problemas numéricos de ~optimización~.
 
+#+REVEAL: split
 El enfoque del curso es poder utilizar lo que sabemos de modelado probabilístico
 y utilizarlo en tareas donde es necesario /cuantificar/ la /incertidumbre/ expresada
-en dicho modelo. 
+en dicho modelo. Además de [[cref:fig-uq]] 
 
 #+DOWNLOADED: screenshot @ 2022-06-24 17:44:20
-#+attr_html: :width 700 :align center
+#+name: fig-uq
+#+attr_html: :width 1200 :align center
 [[file:images/20220624-174420_screenshot.png]]
 
 ** ¿Tenemos un libro de texto?
 
+No hay un libro que utilice la misma línea argumentativa que seguiremos en el
+curso, pero secciones se tomarán de [[cite:&Glasserman2013;&Robert2013a;&Efron1993]].
+
 #+DOWNLOADED: screenshot @ 2022-06-24 18:30:51
-#+attr_html: :width 700 :align center
+#+attr_html: :width 1200 :align center
 [[file:images/20220624-183051_screenshot.png]]
 
 
@@ -125,14 +133,14 @@ tree -L 1 -d
 ├── images   
 ├── notas    # Código fuente que utilizo para generar las notas. 
 ├── renv     # Archivos de estructura de proyecto de R. 
-└── rscripts # Scripts con el código de clase que veamos a lo largo del curso. 
+└── rscripts # Scripts con el código de clase. 
 
 6 directories
 #+end_src
 
 * Horarios
 
-Las clases serán Martes y Jueves en un horario de 4:00pm a 5:30pm. 
+Las clases serán Martes y Jueves en un horario de 11:30am a 1:00pm. 
 
 ** Formato
 
@@ -164,6 +172,7 @@ ofrece un ambiente unificado de distintas librerías enfocadas al manejo de
 estructura de datos y visualizaciones, lo cual será muy útil para las
 aplicaciones de nuestro curso.
 
+#+REVEAL: split
 En particular utilizaremos:
 1. [[https://tibble.tidyverse.org/][tibble]] para estructura de datos. 
 2. [[https://dplyr.tidyverse.org/][dplyr]] para manipular las estructuras de datos. 
@@ -208,14 +217,16 @@ administrar sus entregas como directorios de ~Git~. Además, habrá ejercicios d
 tareas que tendrán mecanismos de calificación automatizada.
 
 #+DOWNLOADED: screenshot @ 2022-06-24 18:23:16
-#+attr_html: :width 200 :align center
+#+attr_html: :width 400 :align center
 [[file:images/20220624-182316_screenshot.png]]
 
 
+#+REVEAL: split
 Para esto necesito que obtengan su usuario de ~GitHub~. Les recomiendo utilizar su
 correo del ITAM para que tengan acceso al ambiente de desarrollo educativo de
 ~GitHub~ y tengan acceso a otras aplicaciones.
 
+#+REVEAL: split
 Las primeras tareas del semestre son básicamente configuración y es recomendable
 hacerlas si no cuentan con experiencia en: ~Git~, ~Github~, y ~R~ base.
 
@@ -224,3 +235,7 @@ hacerlas si no cuentan con experiencia en: ~Git~, ~Github~, y ~R~ base.
 ¿Espero que sepan programar?
 
 
+* Referencias                                                      :latex:
+
+bibliographystyle:abbrvnat
+bibliography:references.bib
