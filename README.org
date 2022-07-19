@@ -15,8 +15,6 @@
 #+STARTUP: showall
 #+EXCLUDE_TAGS: toc github latex
 
-#+EXCLUDE_TAGS: toc
-
 * Contenido                                                             :toc:
 :PROPERTIES:
 :TOC:      :include all  :ignore this :depth 3
