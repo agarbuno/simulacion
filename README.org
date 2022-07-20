@@ -4,14 +4,29 @@
 #+DATE: ~Otoño, 2022~
 :REVEAL_PROPERTIES:
 #+LANGUAGE: es
-#+OPTIONS: num:nil toc:nil timestamp:nil
-#+REVEAL_EXTRA_CSS: ./notas/mods.css
+#+OPTIONS: num:nil toc:nil 
+#+OPTIONS: reveal_slide_number:nil 
+#+OPTIONS: reveal_history:t reveal_fragmentinurl:t
+#+OPTIONS: reveal_mousewheel:t reveal_inter_presentation_links:t
+#+OPTIONS: reveal_width:1600 reveal_height:900
+#+OPTIONS: timestamp:nil
+
 #+REVEAL_THEME: night
+#+REVEAL_MARGIN: .2
+#+REVEAL_TRANS: slide
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulacion">
+#+REVEAL_ROOT: https://cdn.jsdelivr.net/npm/reveal.js
+#+REVEAL_VERSION: 4
+
 #+REVEAL_SLIDE_NUMBER: t
-#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
-#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
-#+REVEAL_PLUGINS: (notes)
+#+REVEAL_PLUGINS: (notes search)
+#+REVEAL_EXTRA_CSS: ./notas/mods.css
+
+#+bibliography: references.bib
+#+cite_export: csl
 :END:
+
+
 #+STARTUP: showall
 #+EXCLUDE_TAGS: toc github latex
 
@@ -105,7 +120,7 @@ en dicho modelo. Además de [[cref:fig-uq]]
 ** ¿Tenemos un libro de texto?
 
 No hay un libro que utilice la misma línea argumentativa que seguiremos en el
-curso, pero secciones se tomarán de [[cite:&Glasserman2013;&Robert2013a;&Efron1993]].
+curso, pero secciones se tomarán de [cite:@Glasserman2013;@Robert2013a;@Efron1993].
 
 #+DOWNLOADED: screenshot @ 2022-06-24 18:30:51
 #+attr_html: :width 1200 :align center
@@ -232,8 +247,9 @@ hacerlas si no cuentan con experiencia en: ~Git~, ~Github~, y ~R~ base.
 
 ¿Espero que sepan programar?
 
+* Referencias
+:PROPERTIES:
+:CUSTOM_ID: bibliography
+:END:
 
-* Referencias                                                      :latex:
-
-bibliographystyle:abbrvnat
-bibliography:references.bib
+#+print_bibliography:
