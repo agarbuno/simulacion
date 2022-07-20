@@ -20,13 +20,11 @@
 
 #+REVEAL_SLIDE_NUMBER: t
 #+REVEAL_PLUGINS: (notes search)
-#+REVEAL_EXTRA_CSS: ./notas/mods.css
+#+REVEAL_EXTRA_CSS: ./notas/mods-citeproc.css
 
 #+bibliography: references.bib
 #+cite_export: csl
 :END:
-
-
 #+STARTUP: showall
 #+EXCLUDE_TAGS: toc github latex
 
