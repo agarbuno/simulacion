@@ -200,7 +200,7 @@ de =orgfiles= (archivos con sufijo ~.org~) pero pueden ser visualizados en ~Gith
 
 ** Versión de ~R~
 
-*Importante*: Es necesario tener instalada la versión ~4.1.1~ de ~R~ para tener la mejor
+*Importante*: Es necesario tener instalada la versión ~4.2.1~ de ~R~ para tener la mejor
 compatibilidad con el código del curso.
 
 ** Todos trabajando igual
