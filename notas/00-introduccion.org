@@ -2,8 +2,9 @@
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Introducción~
-#+STARTUP: showall
 :REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
 #+LANGUAGE: es
 #+OPTIONS: num:nil toc:nil timestamp:nil
 #+REVEAL_REVEAL_JS_VERSION: 4
@@ -37,8 +38,9 @@
 #+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
 #+EXPORT_FILE_NAME: ../docs/00-introduccion.pdf
 :END:
+#+STARTUP: showall
 #+PROPERTY: header-args:R :session introduccion :exports both :results output org :tangle ../rscripts/00-introduccion.R :mkdirp yes :dir ../
-#+EXCLUDE_TAGS: toc reveal
+#+EXCLUDE_TAGS: toc 
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | Introducción.\\
@@ -94,7 +96,6 @@
   - [[#teorema-ley-de-los-grandes-números][Teorema [Ley de los Grandes Números]:]]
   - [[#teorema-límite-central][Teorema [Límite Central]:]]
 - [[#conclusiones][Conclusiones]]
-- [[#referencias][Referencias]]
 :END:
 
 * Introducción
@@ -117,7 +118,7 @@ la única manera que tenemos de resolverlas es por medio de métodos numéricos 
 #+caption: Imagen tomada de citep:Smith2013. 
 #+attr_html: :width 700 :align center
 #+attr_latex: :width .65\linewidth
-[[file:images/20220625-222450_screenshot.png]]
+[[file:../images/20220625-222450_screenshot.png]]
 
 #+BEGIN_NOTES
 Por supuesto la representación matemática tiene sus limitaciones. Además, los
@@ -134,7 +135,7 @@ huracanes (ver [[fig:forecast]]).
 #+name: fig:forecast
 #+caption: Imagen tomada de citep:Smith2013. 
 #+attr_html: :width 700 :align center
-[[file:images/20220627-102953_screenshot.png]]
+[[file:../images/20220627-102953_screenshot.png]]
 
 #+REVEAL: split
 Por medio de herramientas computacionales podemos generar una colección de
@@ -148,7 +149,7 @@ anterior se puede resumir como en la [[fig:mean-trajectory]]
 #+caption: Imagen tomada de citep:Smith2013. 
 #+attr_html: :width 700 :align center
 #+attr_latex: :width .45\linewidth
-[[file:images/20220627-105729_screenshot.png]]
+[[file:../images/20220627-105729_screenshot.png]]
 
 #+REVEAL: split
 Una gran cantidad de problemas de modelado se reduce en poder resolver
@@ -160,7 +161,7 @@ escenarios (ver [[fig:rendering-eq]]).
 #+name: fig:rendering-eq
 #+caption: Imagen tomada del material del curso [[http://15462.courses.cs.cmu.edu/fall2020/courseinfo][Gráficos por Computadora]] impartido en Carnegie Mellon. 
 #+attr_html: :width 700 :align center
-[[file:images/20220627-110455_screenshot.png]]
+[[file:../images/20220627-110455_screenshot.png]]
 
 #+REVEAL: split
 Por último, en aplicaciones como finanzas, telecomunicaciones o seguros nos
@@ -226,7 +227,7 @@ nuestros instrumentos de medición o registro.
 #+name: fig:planets
 #+caption: Configuraciones distintas del sistema de movimiento planetario. Ejemplo tomado de una formulación estadística en la [[https://mc-stan.org/users/documentation/case-studies/planetary_motion/planetary_motion.html][documentación de Stan]]. 
 #+attr_html: :width 700 :align center
-[[file:images/20220627-172522_screenshot.png]]
+[[file:../images/20220627-172522_screenshot.png]]
 
 #+REVEAL: split
 Entonces, la precisión con la que nuestro modelo puede aproximar la realidad,
@@ -425,10 +426,10 @@ bibliographystyle:abbrvnat
 bibliography:references.bib
 
 
-* Referencias                                                      :reveal:
-:PROPERTIES:
-:CUSTOM_ID: bibliography
-:END:
+# * Referencias                                                    
+# :PROPERTIES:
+# :CUSTOM_ID: bibliography
+# :END:
 
-#+print_bibliography:
+# #+print_bibliography:
 
