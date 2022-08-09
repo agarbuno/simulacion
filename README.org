@@ -35,6 +35,7 @@
 :END:
 :CONTENTS:
 - [[#introducción][Introducción]]
+- [[#contexto][Contexto]]
 - [[#objetivo][Objetivo]]
 - [[#temario][Temario]]
   - [[#de-qué-trata-el-curso][¿De qué trata el curso?]]
@@ -44,24 +45,36 @@
   - [[#formato][Formato]]
   - [[#canvas][Canvas]]
   - [[#fechas-importantes][Fechas importantes]]
+  - [[#atención-de-alumnos][Atención de alumnos]]
 - [[#evaluación][Evaluación]]
 - [[#ambiente-de-trabajo][Ambiente de trabajo]]
-  - [[#ambiente-de-desarrollo-gráfico-ide][Ambiente de desarrollo gráfico (IDE)]]
+  - [[#ambiente-de-desarrollo-gráfico-integrado-ide][Ambiente de desarrollo gráfico integrado (IDE)]]
   - [[#versión-de-r][Versión de R]]
   - [[#todos-trabajando-igual][Todos trabajando igual]]
   - [[#configuración-renv][Configuración renv]]
 - [[#tareas][Tareas]]
+  - [[#primera-tarea][Primera tarea]]
+  - [[#segunda-tarea][Segunda tarea]]
 - [[#pregunta-incómoda][Pregunta incómoda]]
 - [[#referencias][Referencias]]
 :END:
 
 [[https://mybinder.org/v2/gh/agarbuno/simulacion/binder-rocker?urlpath=rstudio][https://mybinder.org/badge_logo.svg]]
 
-* Introducción 
+* Introducción                                                       :github:
 
 Este es el repositorio con el contenido del curso en simulación de la
-licenciatura en Actuaría del ITAM impartido por el Prof. Alfredo Garbuno. Esta
-materia también es ofrecida de manera simultánea para alumnos en las
+licenciatura en Actuaría del ITAM impartido por el Prof. Alfredo Garbuno.
+
+* Contexto
+
+Este el curso de ~EST-24107: Simulación~. Lo conoceremos como ~simulación
+estocástica~ o ~cuantificación de incertidumbre~.
+
+
+#+REVEAL: split
+El curso se imparte en el plan de estudios de Actuaría (~sexto semestre~).
+Esta materia también es ofrecida de manera simultánea para alumnos en las
 licenciaturas de matemáticas aplicadas, ciencia de datos y economía como materia
 optativa.
 
@@ -76,11 +89,14 @@ datos.
 #+REVEAL: split
 El curso, además, utilizará distintas herramientas computacionales para
 brindar al estudiante un marco de trabajo reproducible. Al final del curso, lxs
-estudiantes tendrán las competencias para: 1) implementar principios de modelado
-estadístico de ciertos fenómenos relevantes en el quehacer de un científico
-aplicado; 2) ser capaces de interpretar resultados computacionales basados en
-simulación estocástica; 3) apreciar la necesidad de un ambiente reproducible de entrega
-de resultados; por nombrar algunas. 
+estudiantes tendrán las competencias para:
+
+1. ~implementar~ principios de modelado estadístico de ciertos fenómenos
+   relevantes en el quehacer de un científico aplicado;
+2. ser capaces de ~interpretar~ resultados computacionales basados en simulación
+   estocástica;
+3. ~apreciar~ la necesidad de un ambiente reproducible de entrega de resultados;
+   por nombrar algunas.
 
 #+REVEAL: split
 El curso en particular utilizará herramientas de código abierto:  ~R~ como
@@ -88,8 +104,8 @@ lenguaje de programación y ~GitHub~ como gestor de entrega y avance de tareas y
 trabajos.
 
 #+REVEAL: split
-El curso está pensando para cursarse después de haber acreditado Cálculo de
-Probabilidades II (o equivalente). Sin embargo, se aprovechará mejor si se
+El curso está pensando para cursarse después de haber acreditado ~Cálculo de
+Probabilidades II~ (o equivalente). Sin embargo, se aprovechará mejor si se
 lleva a la par junto con Procesos Estocásticos I y Estadística Matemática (o
 equivalentes).
 
@@ -128,11 +144,11 @@ curso, pero secciones se tomarán de [cite:@Glasserman2013;@Robert2013a;@Efron19
 
 * Recursos
 
-El curso se gestionará en ~Canvas LMS~ y los recursos de la materia de esta
-iteración (Otoño 2022) se encontrarán en la rama [[https://github.com/agarbuno/simulacion][fall-2022]] del repositorio de
-~GitHub~ en mi usuario. Es decir, en =agarbuno/simulacion=.
+La comunicación del curso se gestionará en ~Canvas LMS~ y los recursos de la
+materia de esta iteración (Otoño 2022) se encontrarán en la rama [[https://github.com/agarbuno/simulacion][fall-2022]] del
+repositorio de ~GitHub~ en mi usuario. Es decir, en =agarbuno/simulacion=.
 
-El repositorio tiene la siguiente estructura
+El repositorio tiene la siguiente estructura:
 #+begin_src bash :exports results :results org :eval never
 tree -L 1 -d 
 #+end_src
@@ -140,14 +156,13 @@ tree -L 1 -d
 #+RESULTS:
 #+begin_src org
 .
-├── css      
 ├── docs     # Handouts de las notas de clase. 
 ├── images   
 ├── notas    # Código fuente que utilizo para generar las notas. 
-├── renv     # Archivos de estructura de proyecto de R. 
-└── rscripts # Scripts con el código de clase. 
+├── renv     # Archivos de estructura del proyecto. 
+└── rscripts # Scripts de R con el código de clase. 
 
-6 directories
+5 directories
 #+end_src
 
 * Horarios
@@ -166,7 +181,21 @@ Utilizaremos este LMS para gestionar la comunicación fuera de los horarios de c
 
 ** Fechas importantes
 
-- La sesión del ~Jueves 15 de Septiembre~ no habrá clases. 
+- La sesión del ~Jueves 15 de Septiembre~ no habrá clases.
+- La sesión del ~Martes 22 de Noviembre~ posiblemente se cancele.  
+
+
+** Atención de alumnos
+
+El horario de atención a alumnos será Lunes y Miércoles en un horario de 11:00am
+a 1:00pm. Recomiendo utilizar el sitio de ~calendly~:
+[[https://calendly.com/alfredo-garbuno/entrevistas][https:calendly.com/alfredo-garbuno/entrevistas]]. Por supuesto, si no les queda
+algún horario podemos agendar por correo electrónico.
+
+#+DOWNLOADED: screenshot @ 2022-08-09 10:19:38
+#+attr_html: :width 700 :align center
+[[file:images/20220809-101938_screenshot.png]]
+
 
 * Evaluación
 
@@ -177,12 +206,11 @@ La evaluación del curso será por medio de:
 
 * Ambiente de trabajo
 
-El curso es agnóstico al lenguaje de programación. Sin embargo, las notas y el
-material estará construido a partir de [[https://www.r-project.org/][R]]. En particular, utilizaremos algunas
-herramientas del [[https://www.tidyverse.org/][tidyverse]] como herramienta de programación dentro de ~R~. Esto
-ofrece un ambiente unificado de distintas librerías enfocadas al manejo de
-estructura de datos y visualizaciones, lo cual será muy útil para las
-aplicaciones de nuestro curso.
+Las notas y el material estará construido a partir de [[https://www.r-project.org/][R]]. En particular,
+utilizaremos algunas herramientas del [[https://www.tidyverse.org/][tidyverse]] como herramienta de programación
+dentro de ~R~. Esto ofrece un ambiente unificado de distintas librerías enfocadas
+al manejo de estructura de datos y visualizaciones, lo cual será muy útil para
+las aplicaciones de nuestro curso.
 
 #+REVEAL: split
 En particular utilizaremos:
@@ -193,7 +221,7 @@ En particular utilizaremos:
 5. [[https://ggplot2.tidyverse.org/][ggplot2]] para crear visualizaciones con una gramática.
 6. [[https://rsample.tidymodels.org/][rsample]] para utilizar técnicas de remuestreo. 
 
-** Ambiente de desarrollo gráfico (IDE)
+** Ambiente de desarrollo gráfico integrado (IDE)
 
 Se sugiere utilizar [[https://www.rstudio.com/products/rstudio/download/][Rstudio]] para poder trabajar en sus proyectos y sus
 tareas. En particular, el material de clase será editado en [[https://www.gnu.org/software/emacs/][GNU Emacs]] a través
@@ -225,20 +253,24 @@ lugar centralizado
 * Tareas
 
 Las tareas las gestionaremos a través de ~Github Classroom~ lo cual me permite
-administrar sus entregas como directorios de ~Git~. Además, habrá ejercicios de las
+administrar sus entregas como proyectos de ~Git~. Además, habrá ejercicios de las
 tareas que tendrán mecanismos de calificación automatizada.
 
+#+REVEAL: split
 #+DOWNLOADED: screenshot @ 2022-06-24 18:23:16
 #+attr_html: :width 400 :align center
 [[file:images/20220624-182316_screenshot.png]]
 
 
-#+REVEAL: split
+** Primera tarea
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
 Para esto necesito que obtengan su usuario de ~GitHub~. Les recomiendo utilizar su
 correo del ITAM para que tengan acceso al ambiente de desarrollo educativo de
 ~GitHub~ y tengan acceso a otras aplicaciones.
 
-#+REVEAL: split
+** Segunda tarea
 Las primeras tareas del semestre son básicamente configuración y es recomendable
 hacerlas si no cuentan con experiencia en: ~Git~, ~Github~, y ~R~ base.
 
