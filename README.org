@@ -3,6 +3,7 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Otoño, 2022~
 :REVEAL_PROPERTIES:
+# Template uses citeproc export with export option <v b>
 #+LANGUAGE: es
 #+OPTIONS: num:nil toc:nil 
 #+OPTIONS: reveal_slide_number:nil 
@@ -20,7 +21,7 @@
 
 #+REVEAL_SLIDE_NUMBER: t
 #+REVEAL_PLUGINS: (notes search)
-#+REVEAL_EXTRA_CSS: ./notas/mods-citeproc.css
+#+REVEAL_EXTRA_CSS: ./notas/mods.css
 
 #+bibliography: references.bib
 #+cite_export: csl
@@ -121,7 +122,7 @@ No hay un libro que utilice la misma línea argumentativa que seguiremos en el
 curso, pero secciones se tomarán de [cite:@Glasserman2013;@Robert2013a;@Efron1993].
 
 #+DOWNLOADED: screenshot @ 2022-06-24 18:30:51
-#+attr_html: :width 1200 :align center
+#+attr_html: :width 900 :align center
 [[file:images/20220624-183051_screenshot.png]]
 
 
