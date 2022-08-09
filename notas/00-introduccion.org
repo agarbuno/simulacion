@@ -42,8 +42,11 @@
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | Introducción.\\
-*Objetivo*: En esta primera  sesión estableceremos una idea general del alcance del curso. Esto nos llevará a encuadrar ciertos conceptos de simulación con el objetivo de cuantificar de incertidumbre.\\
-*Lectura recomendada*: Capítulo 1 de citep:Sullivan2015. Capítulo 1--4 de citep:Smith2013. 
+*Objetivo*: En esta primera sesión estableceremos una idea general del alcance del
+ curso. Esto nos llevará a encuadrar ciertos conceptos de simulación con el
+ objetivo de cuantificar incertidumbre.\\
+*Lectura recomendada*: Capítulo 1 de citep:Sullivan2015. Capítulo 1--4 de
+ citep:Smith2013.
 #+END_NOTES
  
 #+begin_src R :exports none :results none
@@ -90,12 +93,13 @@
 
 * Introducción
 
-Un curso típico de ~simulación estocástica~ hace énfasis en los métodos de
-inferencia estadística y simulación de procesos estocásticos. En contraste, este
+Un curso típico de ~simulación estocástica~ hace énfasis en los /métodos de
+inferencia estadística/ y /simulación de procesos estocásticos/. En contraste, este
 curso tomará énfasis en el uso de estas herramientas computacionales con el
 objetivo de ~cuantificar incertidumbre~. Este marco de trabajo nos permitirá dejar
 a futuro aplicaciones de inferencia y procesos estocásticos.
 
+#+REVEAL: split
 Como modeladores matemáticos nos interesa abstraer y representar matemáticamente
 procesos o fenómenos. Por ejemplo, nos interesa modelar el clima (procesos y
 características atmosféricas en el largo plazo) lo cual podemos simplificar por
@@ -115,10 +119,10 @@ métodos numéricos que resuelven estos métodos son aproximaciones
 computacionales. 
 #+END_NOTES
 
+#+REVEAL: split
 El modelado de procesos nos permite tomar decisiones informadas. Por ejemplo, el
 modelado meteorológico nos permite tomar informar sobre eventos extremos como
 huracanes (ver [[fig:forecast]]). 
-
 
 #+DOWNLOADED: screenshot @ 2022-06-27 10:29:53
 #+name: fig:forecast
@@ -126,10 +130,11 @@ huracanes (ver [[fig:forecast]]).
 #+attr_html: :width 700 :align center
 [[file:images/20220627-102953_screenshot.png]]
 
+#+REVEAL: split
 Por medio de herramientas computacionales podemos generar una colección de
-situaciones ficticias y con esto estudiar un conjunto de situaciones hipotéticas
-(ver [[fig:forecast]]). Usualmente nos interesa estudiar el comportamientos promedio
-y conocer la dispersión alrededor de este promedio. Por ejemplo, la imagen
+situaciones ficticias y con esto estudiar un conjunto de escenarios hipotéticos
+(ver [[fig:forecast]]). Usualmente nos interesa estudiar el ~comportamiento promedio~
+y conocer la ~dispersión~ alrededor de este promedio. Por ejemplo, la imagen
 anterior se puede resumir como en la [[fig:mean-trajectory]]
 
 #+DOWNLOADED: screenshot @ 2022-06-27 10:57:29
@@ -139,6 +144,7 @@ anterior se puede resumir como en la [[fig:mean-trajectory]]
 #+attr_latex: :width .45\linewidth
 [[file:images/20220627-105729_screenshot.png]]
 
+#+REVEAL: split
 Una gran cantidad de problemas de modelado se reduce en poder resolver
 integrales de varias dimensiones. Por ejemplo, en generación de gráficos por
 computadora se tiene que resolver la ecuación de representación bajo distintos
@@ -150,11 +156,12 @@ escenarios (ver [[fig:rendering-eq]]).
 #+attr_html: :width 700 :align center
 [[file:images/20220627-110455_screenshot.png]]
 
-
+#+REVEAL: split
 Por último, en aplicaciones como finanzas, telecomunicaciones o seguros nos
 interesa estimar la probabilidad de ocurrencia de algún evento muy raro
 (probabilidad $\approx 10^{-3}$).
 
+#+REVEAL: split
 En resumen, los métodos que veremos en el curso serán su primera aproximación
 para resolver estos problemas con énfasis en los algoritmos y la formulación
 basada en probabilidad.
@@ -173,6 +180,7 @@ realidad hasta ~cierto nivel de precisión~. Por otro lado, utilizamos el supues
 que nuestro modelo matemático recibe /entradas/ especificas ($x$) que nos permiten
 /reproducir/ los resultados con el modelo que hemos especificado.
 
+#+REVEAL: split
 Por ejemplo, consideremos el ~movimiento de los planetas alrededor del sol~ por
 medio de las ecuaciones de movimiento de Newton. En dicho sistema denotamos
 por $y \in \mathbb{R}^2$ el vector posición del planeta y por $p \in
@@ -187,12 +195,13 @@ planetaria y solar; y $r$ la distancia entre el planeta y el sol. En este
 ejemplo, la función $f(x)$ es la solución del sistema de ecuaciones que nos da para
 cada $x$. En este caso consideremos $x$ como el tiempo.
 
+#+REVEAL: split
 En nuestra caricatura anterior nos falta definir una colección de valores para
 que nuestro modelo represente, por ejemplo, la trayectoria de la Tierra
 alrededor del Sol. Para esto consideremos un vector de parámetros $\theta = (m,
 k , y_\star) \in \mathbb{R}^3$. Estos parámetros usualmente se ajustan de
-acuerdo a algún criterio o procedimiento de inferencia. En este
-sentido nuestro modelo lo podemos abstraer como
+acuerdo a algún criterio o procedimiento de inferencia. En este sentido nuestro
+modelo lo podemos abstraer como
 \begin{align}
 f(x ; \theta) \approx z\,,
 \end{align}
@@ -202,6 +211,7 @@ nuestra $f$ lo mas posible$^\dagger$ al fenómeno que nos interesa. Por ejemplo,
 distintas configuraciones de $\theta$ generan distintas trayectorias planetarias
 como se muestra en la [[fig:planets]].
 
+#+REVEAL: split
 Por último, consideremos que los registros de las posiciones de los planetas no
 son exactas. Esto se debe a que nuestras mediciones están sujetas al error de
 nuestros instrumentos de medición o registro.
@@ -212,7 +222,7 @@ nuestros instrumentos de medición o registro.
 #+attr_html: :width 700 :align center
 [[file:images/20220627-172522_screenshot.png]]
 
-
+#+REVEAL: split
 Entonces, la precisión con la que nuestro modelo puede aproximar la realidad,
 esto es la diferencia o ~la discrepancia~ entre modelo y realidad, se debe a la
 ~incertidumbre~ inherente en nuestro proceso de modelado. Dicha incertidumbre la
@@ -246,15 +256,17 @@ podemos considerar como consecuencia de dos tipos:
 [[file:../images/numerics-epistemic.jpeg]]
 
 
+#+REVEAL: split
 Esta distinción nos ayuda a visualizar dos conceptos:
 1. Identificar la necesidad de modelar incertidumbre en nuestros procesos. 
 2. Identificar el origen de dicha incertidumbre.
 
-
+#+REVEAL: split
 Lamentablemente en la práctica, al momento de generar simulaciones, nos
 olvidamos estas nociones y siempre es importante considerar las limitaciones de
 nuestros modelos para representar correctamente la realidad.
 
+#+REVEAL: split
 Ahora, la pregunta natural es ¿cómo modelamos la incertidumbre? En este curso (y
 en general en cualquier otras aplicaciones) utilizaremos el ~lenguaje de
 probabilidad~ para ~expresar incertidumbre~ citep:Jaynes2003. En este enfoque, es usual considerar
@@ -288,6 +300,7 @@ $\pi(\cdot)$ como la ~función de densidad~ de la ~función de probabilidad~
 $\mathbb{P}(\cdot)$.
 #+END_NOTES
 
+#+REVEAL: split
 Nos será útil la siguiente notación para evaluar valores esperados
 \begin{align}
 \pi(f)  = \mathbb{E}_\pi[f(x)] = \int_\mathcal{X} f(x) \, \pi(x) \, \text{d}x\,,
@@ -297,14 +310,16 @@ pues será el ~objetivo general~ para los métodos que estudiaremos en el curso.
 Por ejemplo, utilizaremos la noción de aproximar integrales por medio de algún
 procedimiento de muestreo de tal forma que esperaremos construir un estimación
 $\hat \pi (f)$ con cierto grado de refinamiento. Por ejemplo, veremos el ~método
-Monte Carlo~ con $N$ simulaciones para aproximar la integral anterior. Esto lo
-denotaremos por
+Monte Carlo~ que utiliza una colección de $N$ simulaciones para aproximar la
+integral anterior. Esto lo denotaremos por
 \begin{align}
-\hat \pi_{N}^{\mathsf{MC}} (f) \approx \pi(f)\,,
+\hat \pi_{N}^{\mathsf{MC}} (f) \approx \pi(f)\,. 
 \end{align}
-donde esperaríamos:
 
-1. Mejorar nuestra estimación con mas muestras
+
+#+REVEAL: split
+En general, nos interesa, y esperamos que, podamos
+1. Mejorar nuestra estimación con mas muestras (simulaciones)
    \begin{align}
    \lim_{N \rightarrow \infty} \hat \pi_{N}^{\mathsf{MC}} (f) = \pi(f)\,
    \end{align}
@@ -316,8 +331,8 @@ donde esperaríamos:
 
 * Repaso de probabilidad
 
-Consideraremos como requisitos el contenido de Cálculo de Probabilidades II y
-Álgebra Lineal (o equivalentes). En particular lo que requerimos como base es lo siguiente.
+Consideraremos como requisitos el contenido de ~Cálculo de Probabilidades II~ y
+~Álgebra Lineal~ (o equivalentes). En particular lo que requerimos como base es lo siguiente.
 
 *** *Definición [Espacio de Probabilidad]*:
 Un espacio de probabilidad está definido por la terna $(\Omega, \mathcal{X}, \mathbb{P})$:
@@ -350,10 +365,12 @@ continua~ y puede ser expresada por medio de
 donde la anti-derivada $\pi:\mathbb{R} \rightarrow [0, \infty)$ se llama la ~función de
 densidad~ de la variable aleatoria $X$. 
 
+#+REVEAL: split
 Las propiedades generales de las distribuciones de probabilidad se pueden
 especificar por medio de su centralidad (localización), su dispersión, su rango
 de valores, su simetría y el comportamiento de valores extremos.
 
+#+REVEAL: split
 En general esto lo podemos extraer de los momentos
 \begin{align}
 \mathbb{E}(X^p) = \int_{\mathbb{R}}^{} x^p \, \pi(x) \, \text{d}x\,,
@@ -361,7 +378,7 @@ En general esto lo podemos extraer de los momentos
 o los momentos centrales. Por ejemplo: media y varianza. 
 
 Uno de los resultados que espero recuerden bien de sus cursos anteriores es el
-de la Ley de los Grandes Números. La cual podemos enunciar como:
+de la ~Ley de los Grandes Números~. La cual podemos enunciar como:
 
 *** *Teorema [Ley de los Grandes Números]*:
 Sea $X_1, X_2, \ldots$ una colección de variables aleatorias independientes e
