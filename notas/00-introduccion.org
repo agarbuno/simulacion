@@ -38,15 +38,19 @@
 #+EXPORT_FILE_NAME: ../docs/00-introduccion.pdf
 :END:
 #+PROPERTY: header-args:R :session introduccion :exports both :results output org :tangle ../rscripts/00-introduccion.R :mkdirp yes :dir ../
-#+EXCLUDE_TAGS: toc
+#+EXCLUDE_TAGS: toc reveal
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | Introducción.\\
-*Objetivo*: En esta primera sesión estableceremos una idea general del alcance del
- curso. Esto nos llevará a encuadrar ciertos conceptos de simulación con el
- objetivo de cuantificar incertidumbre.\\
-*Lectura recomendada*: Capítulo 1 de citep:Sullivan2015. Capítulo 1--4 de
- citep:Smith2013.
+*Objetivo*: Estableceremos una idea general del alcance del curso. Esto nos
+ llevará a encuadrar ciertos conceptos de simulación con el objetivo de
+ cuantificar incertidumbre.\\
+*Lectura recomendada*: El capítulo 1 de citet:Sullivan2015 brinda una introducción
+ al área de cuantificación de incertidumbre (UQ). Los capítulos 1--4 de
+ citet:Smith2013 tienen una bonita discusión (y un repaso) que sintoniza muy
+ bien con lo expuesto en estas notas. El capítulo 1 de [[citet:&Hennig2022]] tiene
+ una discusión interesante sobre el uso de simulación estocástica como proceso
+ de cómputo numérico.
 #+END_NOTES
  
 #+begin_src R :exports none :results none
@@ -89,6 +93,8 @@
   - [[#definición-función-de-densidad][Definición [Función de densidad]:]]
   - [[#teorema-ley-de-los-grandes-números][Teorema [Ley de los Grandes Números]:]]
   - [[#teorema-límite-central][Teorema [Límite Central]:]]
+- [[#conclusiones][Conclusiones]]
+- [[#referencias][Referencias]]
 :END:
 
 * Introducción
@@ -396,5 +402,33 @@ Sea $X_1, \ldots, X_n$ una colección de $n$ variables aleatorias $\mathsf{iid}$
 \end{align}
 para $n$ suficientemente grande. 
 
+* Conclusiones
+
+En este curso estudiaremos las aproximaciones numéricas a problemas de
+integración y optimización utilizando herramientas estocásticas (basadas en
+variables aleatorias).
+
+#+REVEAL: split
+Cuantificar la incertidumbre de nuestras aproximaciones numéricas nos permite
+utilizar variables aleatorias para caracterizar dicha incertidumbre. Esto nos
+permite propagar incertidumbre a lo largo de todo un proceso de toma de
+decisiones.
+
+#+REVEAL: split
+Las ventajas de esta metodología (simulación estocástica) son:
+
+1. utilizar probabilidad para caracterizar escenarios posibles;
+2. utilizar nuestras computadoras para realizar dichas simulaciones; 
+3. determinar hasta qué momento estamos satisfechos con nuestra aproximación. 
+
 bibliographystyle:abbrvnat
 bibliography:references.bib
+
+
+* Referencias                                                      :reveal:
+:PROPERTIES:
+:CUSTOM_ID: bibliography
+:END:
+
+#+print_bibliography:
+
