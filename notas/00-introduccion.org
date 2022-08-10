@@ -1,19 +1,30 @@
 #+TITLE: EST-24107: Simulación 
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
-#+DATE: ~Introducción~
+#+DATE: ~Introducción~ 
 :REVEAL_PROPERTIES:
-# Template uses org export with export option <R B>
-# Alternatives: use with citeproc
+# Template uses citeproc export with export option <v b>
 #+LANGUAGE: es
-#+OPTIONS: num:nil toc:nil timestamp:nil
-#+REVEAL_REVEAL_JS_VERSION: 4
+#+OPTIONS: num:nil toc:nil 
+#+OPTIONS: reveal_slide_number:nil 
+#+OPTIONS: reveal_history:t reveal_fragmentinurl:t
+#+OPTIONS: reveal_mousewheel:t reveal_inter_presentation_links:t
+#+OPTIONS: reveal_width:1600 reveal_height:900
+#+OPTIONS: timestamp:nil
+
 #+REVEAL_THEME: night
+#+REVEAL_MARGIN: .2
+#+REVEAL_TRANS: slide
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulacion">
+#+REVEAL_ROOT: https://cdn.jsdelivr.net/npm/reveal.js
+#+REVEAL_VERSION: 4
+
 #+REVEAL_SLIDE_NUMBER: t
-#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
-#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
-#+REVEAL_EXTRA_CSS: ./mods.css
 #+REVEAL_PLUGINS: (notes)
+#+REVEAL_EXTRA_CSS: mods-citeproc.css
+
+#+bibliography: ./references.bib
+#+cite_export: csl
 :END:
 :LATEX_PROPERTIES:
 #+OPTIONS: toc:nil date:nil author:nil tasks:nil
@@ -24,7 +35,7 @@
 #+LATEX_HEADER: \usepackage[utf8]{inputenc} 
 #+LATEX_HEADER: \usepackage[capitalize]{cleveref}
 #+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER: \usepackage{framed}
+#+LATEX_HEADER:\usepackage{framed}
 #+LaTeX_HEADER: \usepackage{listings}
 #+LATEX_HEADER: \usepackage{fancyvrb}
 #+LATEX_HEADER: \usepackage{xcolor}
@@ -40,19 +51,12 @@
 :END:
 #+STARTUP: showall
 #+PROPERTY: header-args:R :session introduccion :exports both :results output org :tangle ../rscripts/00-introduccion.R :mkdirp yes :dir ../
-#+EXCLUDE_TAGS: toc 
+#+EXCLUDE_TAGS: toc latex
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | Introducción.\\
-*Objetivo*: Estableceremos una idea general del alcance del curso. Esto nos
- llevará a encuadrar ciertos conceptos de simulación con el objetivo de
- cuantificar incertidumbre.\\
-*Lectura recomendada*: El capítulo 1 de citet:Sullivan2015 brinda una introducción
- al área de cuantificación de incertidumbre (UQ). Los capítulos 1--4 de
- citet:Smith2013 tienen una bonita discusión (y un repaso) que sintoniza muy
- bien con lo expuesto en estas notas. El capítulo 1 de [[citet:&Hennig2022]] tiene
- una discusión interesante sobre el uso de simulación estocástica como proceso
- de cómputo numérico.
+*Objetivo*: Estableceremos una idea general del alcance del curso. Esto nos llevará a encuadrar ciertos conceptos de simulación con el objetivo de cuantificar incertidumbre.\\
+*Lectura recomendada*: El capítulo 1 de citet:Sullivan2015 brinda una introducción al área de cuantificación de incertidumbre (UQ). Los capítulos 1--4 de citet:Smith2013 tienen una bonita discusión (y un repaso) que sintoniza muy bien con lo expuesto en estas notas. El capítulo 1 de [[citet:&Hennig2022]] tiene una discusión interesante sobre el uso de simulación estocástica como proceso de cómputo numérico.
 #+END_NOTES
  
 #+begin_src R :exports none :results none
@@ -77,7 +81,7 @@
   sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   sin_leyenda <- theme(legend.position = "none")
   sin_ejes <- theme(axis.ticks = element_blank(), axis.text = element_blank())
-  #+end_src
+#+end_src
 
 
 * Contenido                                                             :toc:
@@ -85,30 +89,34 @@
 :TOC:      :include all  :ignore this :depth 3
 :END:
 :CONTENTS:
-- [[#introducción][Introducción]]
+- [[#motivación][Motivación]]
 - [[#formulación][Formulación]]
 - [[#notación][Notación]]
 - [[#repaso-de-probabilidad][Repaso de probabilidad]]
-  - [[#definición-espacio-de-probabilidad][Definición [Espacio de Probabilidad]:]]
-  - [[#definición-variable-aleatoria][Definición [Variable aleatoria]:]]
-  - [[#definición-función-de-acumulación][Definición [Función de acumulación]:]]
-  - [[#definición-función-de-densidad][Definición [Función de densidad]:]]
-  - [[#teorema-ley-de-los-grandes-números][Teorema [Ley de los Grandes Números]:]]
-  - [[#teorema-límite-central][Teorema [Límite Central]:]]
+  - [[#definición-espacio-de-probabilidad][~Definición~ [Espacio de Probabilidad]:]]
+  - [[#definición-variable-aleatoria][~Definición~ [Variable aleatoria]:]]
+  - [[#definición-función-de-acumulación][~Definición~ [Función de acumulación]:]]
+  - [[#definición-función-de-densidad][~Definición~ [Función de densidad]:]]
+  - [[#teorema-ley-de-los-grandes-números][~Teorema~ [Ley de los Grandes Números]:]]
+  - [[#teorema-límite-central][~Teorema~ [Límite Central]:]]
 - [[#conclusiones][Conclusiones]]
+- [[#referencias][Referencias]]
 :END:
 
-* Introducción
+* Motivación 
 
 Un curso típico de ~simulación estocástica~ hace énfasis en los /métodos de
 inferencia estadística/ y /simulación de procesos estocásticos/. En contraste, este
-curso tomará énfasis en el uso de estas herramientas computacionales con el
-objetivo de ~cuantificar incertidumbre~. Este marco de trabajo nos permitirá dejar
-a futuro aplicaciones de inferencia y procesos estocásticos.
+curso tomará énfasis en el uso de herramientas con el objetivo de ~cuantificar
+incertidumbre~. Este marco de trabajo nos permitirá dejar a futuro aplicaciones
+de inferencia y procesos estocásticos.
 
 #+REVEAL: split
-Como modeladores matemáticos nos interesa abstraer y representar matemáticamente
-procesos o fenómenos. Por ejemplo, nos interesa modelar el clima (procesos y
+Como modeladores matemáticos nos interesa ~abstraer y representar matemáticamente~
+procesos o fenómenos.
+
+#+REVEAL: split
+Por ejemplo, nos interesa modelar el clima (procesos y
 características atmosféricas en el largo plazo) lo cual podemos simplificar por
 medio de ecuaciones diferenciales. Estas ecuaciones son un modelo matemático y
 la única manera que tenemos de resolverlas es por medio de métodos numéricos (ver [[fig:gcm]]).
@@ -128,21 +136,20 @@ computacionales.
 
 #+REVEAL: split
 El modelado de procesos nos permite tomar decisiones informadas. Por ejemplo, el
-modelado meteorológico nos permite tomar informar sobre eventos extremos como
+~modelado meteorológico~ nos permite tomar informar sobre ~eventos extremos~ como
 huracanes (ver [[fig:forecast]]). 
 
 #+DOWNLOADED: screenshot @ 2022-06-27 10:29:53
 #+name: fig:forecast
 #+caption: Imagen tomada de citep:Smith2013. 
-#+attr_html: :width 700 :align center
+#+attr_html: :width 1200 :align center
 [[file:../images/20220627-102953_screenshot.png]]
 
 #+REVEAL: split
 Por medio de herramientas computacionales podemos generar una colección de
-situaciones ficticias y con esto estudiar un conjunto de escenarios hipotéticos
-(ver [[fig:forecast]]). Usualmente nos interesa estudiar el ~comportamiento promedio~
-y conocer la ~dispersión~ alrededor de este promedio. Por ejemplo, la imagen
-anterior se puede resumir como en la [[fig:mean-trajectory]]
+~situaciones ficticias~ y con esto estudiar un conjunto de ~escenarios hipotéticos~
+(ver [[fig:forecast]]). Por ejemplo, nos interesa estudiar el ~comportamiento promedio~
+y conocer la ~dispersión~ alrededor de este promedio. 
 
 #+DOWNLOADED: screenshot @ 2022-06-27 10:57:29
 #+name: fig:mean-trajectory 
@@ -153,25 +160,25 @@ anterior se puede resumir como en la [[fig:mean-trajectory]]
 
 #+REVEAL: split
 Una gran cantidad de problemas de modelado se reduce en poder resolver
-integrales de varias dimensiones. Por ejemplo, en generación de gráficos por
-computadora se tiene que resolver la ecuación de representación bajo distintos
+~integrales de varias dimensiones~. Por ejemplo, en ~generación de gráficos por
+computadora~ se tiene que resolver la ~ecuación de representación~ bajo distintos
 escenarios (ver [[fig:rendering-eq]]).
 
 #+DOWNLOADED: screenshot @ 2022-06-27 11:04:55
 #+name: fig:rendering-eq
 #+caption: Imagen tomada del material del curso [[http://15462.courses.cs.cmu.edu/fall2020/courseinfo][Gráficos por Computadora]] impartido en Carnegie Mellon. 
-#+attr_html: :width 700 :align center
+#+attr_html: :width 1200 :align center
 [[file:../images/20220627-110455_screenshot.png]]
 
 #+REVEAL: split
 Por último, en aplicaciones como finanzas, telecomunicaciones o seguros nos
-interesa estimar la probabilidad de ocurrencia de algún evento muy raro
+interesa estimar la probabilidad de ocurrencia de algún ~evento muy raro~
 (probabilidad $\approx 10^{-3}$).
 
 #+REVEAL: split
 En resumen, los métodos que veremos en el curso serán su primera aproximación
-para resolver estos problemas con énfasis en los algoritmos y la formulación
-basada en probabilidad.
+para resolver estos problemas con ~énfasis en los algoritmos~ y la ~formulación
+basada en probabilidad~.
 
 * Formulación 
 
@@ -205,8 +212,9 @@ cada $x$. En este caso consideremos $x$ como el tiempo.
 #+REVEAL: split
 En nuestra caricatura anterior nos falta definir una colección de valores para
 que nuestro modelo represente, por ejemplo, la trayectoria de la Tierra
-alrededor del Sol. Para esto consideremos un vector de parámetros $\theta = (m,
-k , y_\star) \in \mathbb{R}^3$. Estos parámetros usualmente se ajustan de
+alrededor del Sol. Para esto consideremos un ~vector de parámetros~ $\theta = (m,
+k , y_\star) \in \mathbb{R}^3$.
+Estos parámetros usualmente se ajustan de
 acuerdo a algún criterio o procedimiento de inferencia. En este sentido nuestro
 modelo lo podemos abstraer como
 \begin{align}
@@ -234,6 +242,8 @@ Entonces, la precisión con la que nuestro modelo puede aproximar la realidad,
 esto es la diferencia o ~la discrepancia~ entre modelo y realidad, se debe a la
 ~incertidumbre~ inherente en nuestro proceso de modelado. Dicha incertidumbre la
 podemos considerar como consecuencia de dos tipos:
+
+#+REVEAL: split
 1. ~Incertidumbre aleatoria~: también conocida como incertidumbre estadística,
    estocástica o irreducible. Se refiere a la incertidumbre que es natural para nuestro
    proceso y que no podemos reducir por medio de un mejor modelo.
@@ -243,6 +253,7 @@ podemos considerar como consecuencia de dos tipos:
    implementamos nuestros modelos. En otras, está asociada con los supuestos con
    lo que contamos para resolver un problema.
 
+#+REVEAL: split
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/numerics-epistemic.jpeg :exports results :results output graphics file
   genera_circulo <- function(n = 10){
@@ -276,7 +287,7 @@ nuestros modelos para representar correctamente la realidad.
 #+REVEAL: split
 Ahora, la pregunta natural es ¿cómo modelamos la incertidumbre? En este curso (y
 en general en cualquier otras aplicaciones) utilizaremos el ~lenguaje de
-probabilidad~ para ~expresar incertidumbre~ citep:Jaynes2003. En este enfoque, es usual considerar
+probabilidad~ para ~expresar incertidumbre~ (citep:Jaynes2003). En este enfoque, es usual considerar
 incertidumbre aleatoria. Por otro lado, un curso como el de cálculo numérico nos
 permitirá cuantificar la incertidumbre epistémica. Sin embargo, también veremos
 en este curso que con herramientas probabilísticas podemos cuantificar ciertas
@@ -299,7 +310,7 @@ o bien, haremos énfasis en la distribución por medio de lo siguiente
 \end{align}
 de acuerdo al contexto. 
 
-\medskip
+# \medskip
 
 #+BEGIN_NOTES
 Nota que en las ecuaciones anteriores estamos considerando el término
@@ -310,11 +321,12 @@ $\mathbb{P}(\cdot)$.
 #+REVEAL: split
 Nos será útil la siguiente notación para evaluar valores esperados
 \begin{align}
-\pi(f)  = \mathbb{E}_\pi[f(x)] = \int_\mathcal{X} f(x) \, \pi(x) \, \text{d}x\,,
+\pi(f)  := \mathbb{E}_\pi[f(x)] = \int_\mathcal{X} f(x) \, \pi(x) \, \text{d}x\,,
 \end{align}
 pues será el ~objetivo general~ para los métodos que estudiaremos en el curso. 
 
-Por ejemplo, utilizaremos la noción de aproximar integrales por medio de algún
+#+REVEAL: split
+Por ejemplo, utilizaremos la noción de ~aproximar integrales~ por medio de algún
 procedimiento de muestreo de tal forma que esperaremos construir un estimación
 $\hat \pi (f)$ con cierto grado de refinamiento. Por ejemplo, veremos el ~método
 Monte Carlo~ que utiliza una colección de $N$ simulaciones para aproximar la
@@ -325,7 +337,7 @@ integral anterior. Esto lo denotaremos por
 
 
 #+REVEAL: split
-En general, nos interesa, y esperamos que, podamos
+En general, nos interesa, y esperamos que, podamos: 
 1. Mejorar nuestra estimación con mas muestras (simulaciones)
    \begin{align}
    \lim_{N \rightarrow \infty} \hat \pi_{N}^{\mathsf{MC}} (f) = \pi(f)\,
@@ -341,13 +353,13 @@ En general, nos interesa, y esperamos que, podamos
 Consideraremos como requisitos el contenido de ~Cálculo de Probabilidades II~ y
 ~Álgebra Lineal~ (o equivalentes). En particular lo que requerimos como base es lo siguiente.
 
-*** *Definición [Espacio de Probabilidad]*:
+*** *~Definición~ [Espacio de Probabilidad]*:
 Un espacio de probabilidad está definido por la terna $(\Omega, \mathcal{X}, \mathbb{P})$:
 1. El espacio muestral, $\Omega$ (elementos). 
 2. El espacio de eventos medibles, $\mathcal{X}$ (subconjuntos). 
 3. La medida de probabilidad, $\mathbb{P}: \mathcal{X} \rightarrow [0, 1]$. 
 
-*** *Definición [Variable aleatoria]*:
+*** *~Definición~ [Variable aleatoria]*:
 Una variable aleatoria es una función $X:
 \mathcal{X} \rightarrow \mathbb{R}$ con la propiedad de que las pre-imágenes
 bajo $X$ son eventos medibles. Es decir,
@@ -355,7 +367,7 @@ bajo $X$ son eventos medibles. Es decir,
 \{w \in \mathcal{X} : X(w) \leq x \} \in \mathcal{X} \qquad \forall x \in \mathbb{R}. 
 \end{align}
    
-*** *Definición [Función de acumulación]*:
+*** *~Definición~ [Función de acumulación]*:
 Para toda variable aleatoria $X$ tenemos una función de acumulación
 $\mathbb{P}_{_X}: \mathbb{R} \rightarrow [0, 1]$ dada por
 \begin{align}
@@ -363,7 +375,7 @@ $\mathbb{P}_{_X}: \mathbb{R} \rightarrow [0, 1]$ dada por
 \end{align}
 Esto usualmente lo escribimos como $\mathbb{P}_{_X}(x) = \mathbb{P}\{X \leq x\}$. 
 
-*** *Definición [Función de densidad]*:
+*** *~Definición~ [Función de densidad]*:
 Una variable aleatoria es continua si su función de acumulación es ~absolutamente
 continua~ y puede ser expresada por medio de
 \begin{align}
@@ -384,19 +396,20 @@ En general esto lo podemos extraer de los momentos
 \end{align}
 o los momentos centrales. Por ejemplo: media y varianza. 
 
+#+REVEAL: split
 Uno de los resultados que espero recuerden bien de sus cursos anteriores es el
 de la ~Ley de los Grandes Números~. La cual podemos enunciar como:
 
-*** *Teorema [Ley de los Grandes Números]*:
+*** *~Teorema~ [Ley de los Grandes Números]*:
 Sea $X_1, X_2, \ldots$ una colección de variables aleatorias independientes e
 idénticamente distribuidas ($\mathsf{iid}$) y sea $\bar X_n$ el promedio de un
-subconjunto de $n$.  Si denotamos por $\theta$ el valor promedio de $X_i$
+subconjunto de $n$.  Si denotamos por $\mu$ el valor promedio de $X_i$
 dentro de esa colección, entonces tenemos que
 \begin{align}
-\bar X_n  \rightarrow \theta \quad (\text{casi seguramente})\,.
+\bar X_n  \rightarrow \mu \quad (\text{casi seguramente})\,.
 \end{align}
 
-*** *Teorema [Límite Central]*:
+*** *~Teorema~ [Límite Central]*:
 Sea $X_1, \ldots, X_n$ una colección de $n$ variables aleatorias $\mathsf{iid}$ con $\mathbb{E}[X_i] = \mu$ y $\mathbb{V}[X_i] = \sigma^2 < \infty$. Entonces
 \begin{align}
 \bar X_n \sim \mathsf{N}\left( \mu, \frac{\sigma^2}{n} \right)\,,
@@ -426,10 +439,10 @@ bibliographystyle:abbrvnat
 bibliography:references.bib
 
 
-# * Referencias                                                    
-# :PROPERTIES:
-# :CUSTOM_ID: bibliography
-# :END:
+* Referencias                                                    :latex:
+:PROPERTIES:
+:CUSTOM_ID: bibliography
+:END:
 
-# #+print_bibliography:
+#+print_bibliography:
 

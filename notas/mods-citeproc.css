@@ -1,16 +1,15 @@
-/* Code blocks */
 .reveal pre {
-    font-size: 0.8em;
-    font-family: "Fira Code";
-    background:#2a2727;
-    width: 99%;
     display: block; 
-    padding: 1em;
+    width: 99%;
+    padding: 0.5em;
+    background:#2a2727;
+    block-size: 120%;
+    border-radius: 25px;
+    font-size: .8em;
     overflow: auto;
     word-wrap: normal;
     color:white;
-    block-size: 120%;
-    border-radius: 25px;
+    font-family: "Fira Code";
 }
 
 /* Org highlights */
@@ -23,4 +22,5 @@
 /* Code blocks */
 .reveal pre code{
     color:white;
+    font-family: "Fira Code";
 }
