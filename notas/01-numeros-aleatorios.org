@@ -33,7 +33,8 @@
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | Números aleatorios.\\
 *Objetivo*: Que veremos.\\
-*Lectura recomendada*: Referencia.
+*Lectura recomendada*: Capítulo 3 de citep:Ross2013a. Capítulo 2 de citep:Robert2010a.
+- source :: [[file:~/bibliography/Book/Rubinstein - Simulation and the Monte Carlo Method2.pdf][Rubinstein]], [[file:~/bibliography/Book/Robert2010 - Introducing Monte Carlo Methods with R.pdf][RobertR]], [[file:~/bibliography/Book/Ross2013 - Simulation.pdf][Ross]]. 
 #+END_NOTES
 
 
@@ -46,7 +47,7 @@
   theme_set(theme_linedraw(base_size = 25))
 
   ## Cambia el número de decimales para mostrar
-  options(digits = 2)
+  options(digits = 4)
 
   sin_lineas <- theme(panel.grid.major = element_blank(),
                       panel.grid.minor = element_blank())
@@ -70,6 +71,132 @@
 
 * Introducción
 
+Es posible, que cuando pensamos en generar números aleatorios, idealizamos con
+lanzar una moneda, un dado, una baraja o una rueda giratoria estilo /Jeopardy!/.
+
+#+DOWNLOADED: screenshot @ 2022-08-13 14:09:11
+#+attr_html: :width 500 :align center
+#+attr_latex: :width .33\linewidth
+[[file:images/20220813-140911_screenshot.png]]
+
+#+REVEAL: split
+En nuestra computadora, los ~números pseudo-aleatorios~ son secuencias generadas
+de manera determinista de tal forma que /parecen/ ser variables uniformes
+independientes. Es decir, parecen ser
+\begin{align}
+x_i \overset{\mathsf{iid}}{\sim} \mathsf{U}(0,1)\,.
+\end{align}
+
+#+REVEAL: split
+El procedimiento mas común es utilizar una semilla $x_0$ y calcular
+recursivamente valores $x_n$ con $n \geq 1$ por medio de
+\begin{align}
+x_n = a x_{n-1} \mod m \,,
+\end{align}
+donde $a$ y $m$ son enteros positivos.
+
+#+BEGIN_NOTES
+Nota que $x_n$ es un valor entre $0, 1, \ldots, m-1$. Llamamos a la cantidad $x_n/m$  un número pseudo-aleatorio. Esto nos da un valor en el intervalo $(0,1)$. 
+#+END_NOTES
+
+#+REVEAL: split
+Las constantes $a$ y $m$ se escogen de tal forma que:
+1. Para cualquier punto inicial, la secuencia /parece/ ser un secuencia de números aleatorios uniformes.
+2. Para cualquier punto inicial, el tiempo estimado para ver una repetición es muy largo.
+3. Se puede calcular la secuencia eficientemente.
+
+#+REVEAL: split
+\newpage
+La constante $m$ está asociada al periodo de la secuencia. Por ejemplo, podemos utilizar
+\begin{align}
+x_{n} = 3 x_{n-1} \mod 5\,,
+\end{align}
+para generar la secuencia a partir de $x_0 = 3$,
+
+#+begin_src R :exports both :results org 
+  x0 <- 3; a <- 3; m <- 5;
+  x <- x0; 
+  for (jj in 2:10){
+    x[jj] <- (a * x[jj-1]) %% m
+  }
+  x
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+ [1] 3 4 2 1 3 4 2 1 3 4
+#+end_src
+
+#+REVEAL: split
+Si cambiamos los valores podemos conseguir un periodo mas largo y por lo tanto
+un mayor colección de números aleatorios.
+#+begin_src R :exports both :results org 
+  x0 <- 3; a <- 2; m <- 11;
+  x <- x0; 
+  for (jj in 2:20){
+    x[jj] <- (a * x[jj-1]) %% m
+  }
+  x
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+ [1]  3  6  1  2  4  8  5 10  9  7  3  6  1  2  4  8  5 10  9  7
+#+end_src
+
+
+#+REVEAL: split
+Usualmente $m$ se escoge como un ~número primo~ de longitud igual al máximo número representable en una computadora.
+
+#+BEGIN_NOTES
+Por ejemplo, en una máquina de 32-bits se ha visto que $m = 2^{31} - 1$ y $a =
+7^5 = 16,807$ funcionan bien.
+#+END_NOTES
+
+#+REVEAL: split
+Los lenguajes de programación tienen funciones para generar números
+aleatorios. Por ejemplo, en ~Matlab~ el enfoque es cómputo numérico por lo tanto
+el generador de aleatorios uniformes es la opción estándar.
+
+#+begin_src octave :exports both :results org :session octave.random
+  rand         
+#+end_src
+
+#+begin_src org
+0.4616637206465595
+#+end_src
+
+#+REVEAL: split
+El lenguaje de ~python~ es multi-propósito. Por lo tanto, no es una opción /natural/
+y se llaman módulos especializados para generar números aleatorios. El módulo
+para generar números aleatorios tiene cierto nivel de compatibilidad con otros
+lenguajes.
+#+begin_src python :export both :results org :session ptyhon.random :eval never
+  import numpy as np
+  np.random.random()
+#+end_src
+
+#+begin_src org
+0.9820617713830841
+#+end_src
+
+#+RESULTS:
+Por último, ~R~ es un lenguaje que se originó en la comunidad estadística. Por lo tanto, se la generación de números aleatorios requiere de la distribución de interés.
+
+#+begin_src R :exports both :results org 
+  runif(1)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 0.35
+#+end_src
+
 
 
 * Conclusiones
+
+
+bibliographystyle:abbrvnat
+bibliography:references.bib
+
