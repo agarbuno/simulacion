@@ -83,7 +83,6 @@
   - [[#teorema][Teorema:]]
   - [[#propiedades][Propiedades:]]
   - [[#teorema-glivenko-cantelli][Teorema [Glivenko-Cantelli]:]]
-- [[#conclusiones][Conclusiones]]
 :END:
 
 * Material                                                         :noexport:
@@ -196,14 +195,16 @@ x_n = a x_{n-1} \mod m \,,
 donde $a$ y $m$ son enteros positivos.
 
 #+BEGIN_NOTES
-Nota que $x_n$ es un valor entre $0, 1, \ldots, m-1$. Llamamos a la cantidad $x_n/m$  un número pseudo-aleatorio. Esto nos da un valor en el intervalo $(0,1)$. 
+Nota que $x_n$ es un valor entre $0, 1, \ldots, m-1$. Llamamos a la cantidad
+$x_n/m$ un número pseudo-aleatorio uniforme. Esto nos da un valor en el
+intervalo $(0,1)$.
 #+END_NOTES
 
 #+REVEAL: split
 Las constantes $a$ y $m$ se escogen de tal forma que:
-1. Para cualquier punto inicial, la secuencia /parece/ ser un secuencia de números aleatorios uniformes.
-2. Para cualquier punto inicial, el tiempo estimado para ver una repetición es muy largo.
-3. Se puede calcular la secuencia eficientemente.
+1. Para cualquier punto inicial, la secuencia /parezca/ ser un secuencia de números aleatorios uniformes.
+2. Para cualquier punto inicial, el tiempo estimado para ver una repetición sea muy largo.
+3. Se pueda calcular la secuencia eficientemente.
 
 #+REVEAL: split
 La constante $m$ está asociada al periodo de la secuencia. Por ejemplo, podemos utilizar
@@ -214,7 +215,7 @@ para generar la secuencia a partir de $x_0 = 3$,
 
 #+begin_src R :exports both :results org 
   x0 <- 3; a <- 3; m <- 5;
-  x <- x0; 
+  x  <- x0; 
   for (jj in 2:10){
     x[jj] <- (a * x[jj-1]) %% m
   }
@@ -231,7 +232,7 @@ Si cambiamos los valores podemos conseguir un periodo mas largo y por lo tanto
 un mayor colección de números aleatorios.
 #+begin_src R :exports both :results org 
   x0 <- 3; a <- 2; m <- 11;
-  x <- x0; 
+  x  <- x0; 
   for (jj in 2:20){
     x[jj] <- (a * x[jj-1]) %% m
   }
@@ -433,15 +434,25 @@ Sea $\hat{\mathbb{P}}_n$ la función de acumulación empírica para una muestra 
 \end{align}
 
 *** ~Propiedades~:
+El estimador $\hat{\mathbb{P}}_n$ es un estimador insesgado puntual y por el teorema del límite central
+\begin{align}
+\hat{\mathbb{P}}_n (x) \sim \mathsf{N}\left( \mathbb{P}(x), \frac{{\mathbb{P}}_n (x) (1 - {\mathbb{P}}_n (x))}{n} \right)\,.
+\end{align}
 
 *** ~Teorema~ [Glivenko-Cantelli]:
+El estimador $\hat{\mathbb{P}}_n (x)$ converge a $\mathbb{P}(x)$ uniformemente casi seguramente. Es decir,
+\begin{align}
+\mathsf{Prob}\left( \lim_{n \rightarrow \infty} \sup_{x \in \mathbb{R}} |\hat{\mathbb{P}}_n (x) - {\mathbb{P}}_n (x)|  = 0\right) = 1\,.
+\end{align}
+
 
 ** Comparación
 
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/ks-statistic.jpeg  :exports results :results output graphics file
   set.seed(10)
-  g1 <- tibble(x = runif(30)) |>
+  samples <- tibble(x = runif(30))
+  g1 <- samples |>
     ggplot(aes(x)) +
     stat_ecdf(geom = "step") +
     geom_abline(intercept = 0, slope = 1, lty = 2) + 
@@ -461,7 +472,92 @@ Sea $\hat{\mathbb{P}}_n$ la función de acumulación empírica para una muestra 
 #+RESULTS:
 [[file:../images/ks-statistic.jpeg]]
 
+#+REVEAL: split
+Por lo tanto, si medimos la ~distancia máxima~ entre la función de acumulación
+empírica y la teórica en el largo plazo la diferencia será 0.
 
+Para el panel de la izquierda, la distancia máxima es
+#+begin_src R :exports both :results org 
+  Pn <- ecdf(samples$x)
+  sq <- seq(0, 1, length = 1000)
+  Dn <- max(abs(Pn(sq) - punif(sq)))
+  print(paste("Distancia: ", Dn))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] "Distancia:  0.136236236236236"
+#+end_src
+
+#+REVEAL: split
+Esta cantidad estimada de la muestra, $D_n$, depende precisamente de la muestra
+que generamos. ¿Qué tan extraño fue haber observado dicha muestra? 
+
+#+REVEAL: split
+Si asumimos que los datos son generados por una uniforme observaríamos una distribución
+de posibles valores $D_n$ como se muestra 
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/ks-histogram.jpeg :exports results :results output graphics file
+  set.seed(10)
+  experiment <- function(id){
+       Fn <- ecdf(runif(30))
+       max(abs(Fn(sq) - punif(sq)))
+    }
+  replicas <- tibble(id = 1:5000) |>
+    mutate(estadistico = map_dbl(id, experiment))
+
+  replicas |>
+    ggplot(aes(estadistico)) +
+    geom_histogram() + sin_lineas +
+    geom_vline(xintercept = Dn, lty = 2, color = 'red', lwd = 1.5)
+#+end_src
+
+#+RESULTS:
+[[file:../images/ks-histogram.jpeg]]
+
+#+REVEAL: split
+Utilizando los datos que construyeron el histograma podemos calcular la
+probabilidad de haber observado un estadístico tan extremo. Es decir,
+la probabilidad de haber observado lo que observamos si el generador fuera
+el generador  uniforme. 
+
+#+begin_src R :exports both :results org 
+  print(paste("Probabilidad: ", mean(replicas$estadistico >= Dn)))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] "Probabilidad:  0.577"
+#+end_src
+
+#+REVEAL: split
+Este análisis se conoce como ~prueba Kolmogorov-Smirnov~, y como vimos, sirve para
+detectar cuando una muestra aleatoria proviene de una distribución en
+particular. Como vamos empezando el curso, nos interesa saber si nuestro
+generador de datos es un buen generador de muestras uniformes. 
+
+#+begin_src R :exports both :results org 
+  ks.test(samples$x, "punif")
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+
+	Exact one-sample Kolmogorov-Smirnov test
+
+data:  samples$x
+D = 0.14, p-value = 0.6
+alternative hypothesis: two-sided
+#+end_src
+
+#+REVEAL: split
+La prueba KS es una ejercicio estadístico típico de ~prueba de hipótesis~ donde contrastamos
+\begin{align}
+H_0: \mathbb{P}(x) = \mathbb{P}_0(x) \,\, \forall x\, \quad \text{ contra } \quad H_1: \mathbb{P}(x) \neq \mathbb{P}_0(x) \text{ para alguna } x\,.
+\end{align}
+
+bibliographystyle:abbrvnat
+bibliography:references.bib
 
 
 * Documentación                                                    :noexport:
@@ -473,6 +569,7 @@ Puedes consultar la documentación de ~R~, utilizando el comando ~?Random~ en la
 #+attr_latex: :width .95 \linewidth
 #+CAPTION: Documentación de ~Random~. 
 [[file:images/20220815-190149_screenshot.png]]
+
 
 
 * Generación de variables no uniformes                             :noexport:
@@ -490,10 +587,8 @@ Puedes consultar la documentación de ~R~, utilizando el comando ~?Random~ en la
 ** Método de transformada inversa
 
 
+# * Conclusiones                                                    
 
-* Conclusiones
 
 
-bibliographystyle:abbrvnat
-bibliography:references.bib
 
