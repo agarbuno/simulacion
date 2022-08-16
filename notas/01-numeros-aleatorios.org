@@ -3,28 +3,18 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Generación de números aleatorios~
 #+STARTUP: showall
-:LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
-#+LANGUAGE: sp
-#+LATEX_CLASS: handout
-#+LATEX_HEADER: \usepackage[spanish]{babel}
-#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
-#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
-#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
-#+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
-#+LaTeX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{fancyvrb}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
-#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
-#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
-#+LaTeX_HEADER: {}
-#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
-#+LaTeX_HEADER: {}
-#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
-#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/01-numeros-aleatorios.pdf
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulacion">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
 :END:
 #+EXCLUDE_TAGS: toc noexport
 #+PROPERTY: header-args:R :session random :exports both :results output org :tangle ../rscripts/01-numeros-aleatorios.R :mkdirp yes :dir ../
@@ -83,6 +73,8 @@
   - [[#teorema][Teorema:]]
   - [[#propiedades][Propiedades:]]
   - [[#teorema-glivenko-cantelli][Teorema [Glivenko-Cantelli]:]]
+- [[#documentación][Documentación]]
+- [[#referencias][Referencias]]
 :END:
 
 * Material                                                         :noexport:
@@ -96,6 +88,8 @@ Veremos un poco sobre el ambiente de trabajo. Veremos :
 2. familiaridad con ~R~.
 3. generación de variables aleatorias. 
 
+
+#+REVEAL: split
 
 * Control de versiones
 
@@ -111,11 +105,11 @@ Aunque no exploraremos /todo/ lo que se puede hacer con ~Git~ y ~GitHub~ lo usar
 para llevar un control del desarrollo y de entrega de tareas. Usaremos los
 principios mas básicos. 
 
-# #+REVEAL: split
-# #+DOWNLOADED: screenshot @ 2022-08-15 19:40:19
-# #+attr_html: :width 700 :align center
-# #+attr_latex: :width .33 \linewidth
-# [[file:images/20220815-194019_screenshot.png]]
+#+REVEAL: split
+#+DOWNLOADED: screenshot @ 2022-08-15 19:40:19
+#+attr_html: :width 700 :align center
+#+attr_latex: :width .33 \linewidth
+[[file:images/20220815-194019_screenshot.png]]
 
 # #+REVEAL: split
 # #+DOWNLOADED: screenshot @ 2022-08-15 19:37:37
@@ -132,7 +126,7 @@ gráficos estadísticos. Está escrito para interactuar por medio de ejecución 
 [[fig-terminal]].
 
 #+DOWNLOADED: screenshot @ 2022-08-15 19:54:14
-#+attr_html: :width 700 :align center
+#+attr_html: :width 1200 :align center
 #+name: fig-terminal
 #+caption: Dos ventanas, un editor de texto y una consola de ~R~.
 [[file:images/20220815-195840_screenshot.png]]
@@ -143,7 +137,7 @@ lenguaje. Para ~R~ el mas común es ~Rstudio~ el cual tiene además algunas
 extensiones útiles para el desarrollo de análisis estadístico.  Ver [[fig-ide]]. 
 
 #+DOWNLOADED: screenshot @ 2022-08-15 19:56:38
-#+attr_html: :width 700 :align center
+#+attr_html: :width 1200 :align center
 #+name: fig-ide
 #+caption: Un ambiente de desarrollo, ~Rstudio~. 
 [[file:images/20220815-195638_screenshot.png]]
@@ -153,7 +147,7 @@ extensiones útiles para el desarrollo de análisis estadístico.  Ver [[fig-ide
 de análisis estadístico en ~R~. Ver [[fig-browser]]. 
 
 #+DOWNLOADED: screenshot @ 2022-08-15 20:02:39
-#+attr_html: :width 700 :align center
+#+attr_html: :width 1200 :align center
 #+name: fig-browser
 #+caption: Un ambiente de desarrollo general, ~Visual Code Studio~. En la imagen se muestra una sesión en un explorador de internet. 
 [[file:images/20220815-200239_screenshot.png]]
@@ -163,7 +157,7 @@ Y habemos los que nos /conformamos/ con un buen editor de texto como ambiente de
 desarrollo. Ver [[fig-emacs]]. 
 
 #+DOWNLOADED: screenshot @ 2022-08-15 20:09:14
-#+attr_html: :width 700 :align center
+#+attr_html: :width 1200 :align center
 #+name: fig-emacs
 #+caption: Ambiente de desarrollo basado en ~Emacs~. 
 [[file:images/20220815-200914_screenshot.png]]
@@ -194,6 +188,8 @@ x_n = a x_{n-1} \mod m \,,
 \end{align}
 donde $a$ y $m$ son enteros positivos.
 
+Métodos que utilizan procedimientos similares se llaman ~generadores congruenciales lineales~. 
+
 #+BEGIN_NOTES
 Nota que $x_n$ es un valor entre $0, 1, \ldots, m-1$. Llamamos a la cantidad
 $x_n/m$ un número pseudo-aleatorio uniforme. Esto nos da un valor en el
@@ -207,7 +203,8 @@ Las constantes $a$ y $m$ se escogen de tal forma que:
 3. Se pueda calcular la secuencia eficientemente.
 
 #+REVEAL: split
-La constante $m$ está asociada al periodo de la secuencia. Por ejemplo, podemos utilizar
+La constante $m$ está asociada al periodo de la secuencia y depende del valor de
+$a$ para garantizar que se alcanza (~periodo completo~).  Por ejemplo, podemos utilizar
 \begin{align}
 x_{n} = 3 x_{n-1} \mod 5\,,
 \end{align}
@@ -290,7 +287,7 @@ lenguajes.
 0.9820617713830841
 #+end_src
 
-#+RESULTS:
+#+REVEAL: split
 Por último, ~R~ es un lenguaje que se originó en la comunidad estadística. Por lo tanto, la generación de números aleatorios requiere de la distribución de interés.
 
 #+begin_src R :exports both :results org 
@@ -444,11 +441,9 @@ El estimador $\hat{\mathbb{P}}_n (x)$ converge a $\mathbb{P}(x)$ uniformemente c
 \begin{align}
 \mathsf{Prob}\left( \lim_{n \rightarrow \infty} \sup_{x \in \mathbb{R}} |\hat{\mathbb{P}}_n (x) - {\mathbb{P}}_n (x)|  = 0\right) = 1\,.
 \end{align}
-
-
 ** Comparación
 
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/ks-statistic.jpeg  :exports results :results output graphics file
   set.seed(10)
   samples <- tibble(x = runif(30))
@@ -479,8 +474,8 @@ empírica y la teórica en el largo plazo la diferencia será 0.
 Para el panel de la izquierda, la distancia máxima es
 #+begin_src R :exports both :results org 
   Pn <- ecdf(samples$x)
-  sq <- seq(0, 1, length = 1000)
-  Dn <- max(abs(Pn(sq) - punif(sq)))
+  x_ <- seq(0, 1, length = 1000)
+  Dn <- max(abs(Pn(x_) - punif(x_)))
   print(paste("Distancia: ", Dn))
 #+end_src
 
@@ -501,7 +496,7 @@ de posibles valores $D_n$ como se muestra
   set.seed(10)
   experiment <- function(id){
        Fn <- ecdf(runif(30))
-       max(abs(Fn(sq) - punif(sq)))
+       max(abs(Fn(x_) - punif(x_)))
     }
   replicas <- tibble(id = 1:5000) |>
     mutate(estadistico = map_dbl(id, experiment))
@@ -556,21 +551,23 @@ La prueba KS es una ejercicio estadístico típico de ~prueba de hipótesis~ don
 H_0: \mathbb{P}(x) = \mathbb{P}_0(x) \,\, \forall x\, \quad \text{ contra } \quad H_1: \mathbb{P}(x) \neq \mathbb{P}_0(x) \text{ para alguna } x\,.
 \end{align}
 
-bibliographystyle:abbrvnat
-bibliography:references.bib
-
-
-* Documentación                                                    :noexport:
+* Documentación                                                 
 
 Puedes consultar la documentación de ~R~, utilizando el comando ~?Random~ en la consola. 
 
 #+DOWNLOADED: screenshot @ 2022-08-15 19:01:49
-#+attr_html: :width 700 :align center
+#+attr_html: :width 1200 :align center
 #+attr_latex: :width .95 \linewidth
 #+CAPTION: Documentación de ~Random~. 
 [[file:images/20220815-190149_screenshot.png]]
 
+#+REVEAL: split
+El método /default/ en muchos lenguajes de programación es el de ~Mersenne-Twister~ y en particular presenta un periodo de $2^{19937} - 1$. 
 
+* Referencias
+
+bibliographystyle:abbrvnat
+bibliography:references.bib
 
 * Generación de variables no uniformes                             :noexport:
 
@@ -582,7 +579,6 @@ Puedes consultar la documentación de ~R~, utilizando el comando ~?Random~ en la
 #+attr_latex: :width .95 \linewidth
 #+caption: Catálogo de distribuciones en ~R~. 
 [[file:images/20220815-190350_screenshot.png]]
-
 
 ** Método de transformada inversa
 
