@@ -26,21 +26,20 @@
 #+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
 #+EXPORT_FILE_NAME: ../docs/01-numeros-aleatorios.pdf
 :END:
-#+EXCLUDE_TAGS: toc
+#+EXCLUDE_TAGS: toc noexport
 #+PROPERTY: header-args:R :session random :exports both :results output org :tangle ../rscripts/01-numeros-aleatorios.R :mkdirp yes :dir ../
-
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | Números aleatorios.\\
-*Objetivo*: Que veremos.\\
+*Objetivo*: En esta sección veremos conceptos básicos del curso. Tanto para el trabajo computacional que realizaremos y la entrega de tareas, como las nociones básicas de generación de números aleatorios en una computadora. 
 *Lectura recomendada*: Capítulo 3 de citep:Ross2013a. Capítulo 2 de citep:Robert2010a.
-- source :: [[file:~/bibliography/Book/Rubinstein - Simulation and the Monte Carlo Method2.pdf][Rubinstein]], [[file:~/bibliography/Book/Robert2010 - Introducing Monte Carlo Methods with R.pdf][RobertR]], [[file:~/bibliography/Book/Ross2013 - Simulation.pdf][Ross]]. 
 #+END_NOTES
 
 
 #+begin_src R :exports none :results none
   ## Setup --------------------------------------------
   library(tidyverse)
+  library(ggplot2)
   library(patchwork)
   library(scales)
   ## Cambia el default del tamaño de fuente 
@@ -64,12 +63,113 @@
 :TOC:      :include all  :ignore this :depth 3
 :END:
 :CONTENTS:
-- [[#introducción][Introducción]]
+- [[#agenda][Agenda]]
+- [[#control-de-versiones][Control de versiones]]
+- [[#r-statistical-programming-language][R statistical programming language]]
+- [[#números-aleatorios][Números aleatorios]]
+  - [[#aleatorios-en-lenguajes-de-programación][Aleatorios en lenguajes de programación]]
+  - [[#transformación-de-uniformes][Transformación de uniformes]]
+    - [[#pregunta][Pregunta:]]
+  - [[#reproducibilidad][Reproducibilidad]]
+  - [[#aleatoriedad-o-pseudo-aleatoriedad][Aleatoriedad o pseudo-aleatoriedad]]
+    - [[#definición-generador-pseudo-aleatorio][Definición [Generador pseudo-aleatorio]:]]
+  - [[#comportamiento-uniforme][Comportamiento uniforme]]
+  - [[#ideas][Ideas]]
+- [[#prueba-de-kolmogorov-smirnov][Prueba de Kolmogorov-Smirnov]]
+  - [[#definición-función-de-acumulación-de-una-variable-uniforme][Definición [Función de acumulación de una variable uniforme]:]]
+  - [[#definición-función-de-acumulación-empírica][Definición [Función de acumulación empírica]:]]
+  - [[#nota][Nota:]]
+  - [[#definición-estadísticos-de-orden][Definición [Estadísticos de orden]:]]
+  - [[#teorema][Teorema:]]
+  - [[#propiedades][Propiedades:]]
+  - [[#teorema-glivenko-cantelli][Teorema [Glivenko-Cantelli]:]]
 - [[#conclusiones][Conclusiones]]
 :END:
 
+* Material                                                         :noexport:
 
-* Introducción
+- source :: [[file:~/bibliography/Book/Rubinstein - Simulation and the Monte Carlo Method2.pdf][Rubinstein]], [[file:~/bibliography/Book/Robert2010 - Introducing Monte Carlo Methods with R.pdf][RobertR]], [[file:~/bibliography/Book/Ross2013 - Simulation.pdf][Ross]].
+
+* Agenda
+
+Veremos un poco sobre el ambiente de trabajo. Veremos :
+1. nociones básicas ~Git~ y ~GitHub~;
+2. familiaridad con ~R~.
+3. generación de variables aleatorias. 
+
+
+* Control de versiones
+
+Los /softwares/ de ~control de versiones~ nos permiten llevar un registro y
+administración de cambios en archivos. Usualmente para proyectos de
+programación.
+
+#+REVEAL: split
+Ayudan a trabajar colaborativamente en ambientes de equipos de trabajo.
+
+#+REVEAL: split
+Aunque no exploraremos /todo/ lo que se puede hacer con ~Git~ y ~GitHub~ lo usaremos
+para llevar un control del desarrollo y de entrega de tareas. Usaremos los
+principios mas básicos. 
+
+# #+REVEAL: split
+# #+DOWNLOADED: screenshot @ 2022-08-15 19:40:19
+# #+attr_html: :width 700 :align center
+# #+attr_latex: :width .33 \linewidth
+# [[file:images/20220815-194019_screenshot.png]]
+
+# #+REVEAL: split
+# #+DOWNLOADED: screenshot @ 2022-08-15 19:37:37
+# #+attr_html: :width 200 :align center
+# #+attr_latex: :width .33 \linewidth
+# [[file:images/20220815-193737_screenshot.png]]
+
+
+* ~R~ statistical programming language
+
+~R~ es un lenguaje de programación orientado a cómputo estadístico y generación de
+gráficos estadísticos. Está escrito para interactuar por medio de ejecución de
+/scripts/ (archivos de texto con instrucciones) o la consola interactiva. Ver
+[[fig-terminal]].
+
+#+DOWNLOADED: screenshot @ 2022-08-15 19:54:14
+#+attr_html: :width 700 :align center
+#+name: fig-terminal
+#+caption: Dos ventanas, un editor de texto y una consola de ~R~.
+[[file:images/20220815-195840_screenshot.png]]
+
+#+REVEAL: split
+Es usual utilizar un ambiente de desarrollo para programar e interactuar con el
+lenguaje. Para ~R~ el mas común es ~Rstudio~ el cual tiene además algunas
+extensiones útiles para el desarrollo de análisis estadístico.  Ver [[fig-ide]]. 
+
+#+DOWNLOADED: screenshot @ 2022-08-15 19:56:38
+#+attr_html: :width 700 :align center
+#+name: fig-ide
+#+caption: Un ambiente de desarrollo, ~Rstudio~. 
+[[file:images/20220815-195638_screenshot.png]]
+
+#+REVEAL: split
+~Visual Studio Code~ es una alternativa multi-lenguaje para desarrollar proyectos
+de análisis estadístico en ~R~. Ver [[fig-browser]]. 
+
+#+DOWNLOADED: screenshot @ 2022-08-15 20:02:39
+#+attr_html: :width 700 :align center
+#+name: fig-browser
+#+caption: Un ambiente de desarrollo general, ~Visual Code Studio~. En la imagen se muestra una sesión en un explorador de internet. 
+[[file:images/20220815-200239_screenshot.png]]
+
+#+REVEAL: split
+Y habemos los que nos /conformamos/ con un buen editor de texto como ambiente de
+desarrollo. Ver [[fig-emacs]]. 
+
+#+DOWNLOADED: screenshot @ 2022-08-15 20:09:14
+#+attr_html: :width 700 :align center
+#+name: fig-emacs
+#+caption: Ambiente de desarrollo basado en ~Emacs~. 
+[[file:images/20220815-200914_screenshot.png]]
+
+* Números aleatorios
 
 Es posible, que cuando pensamos en generar números aleatorios, idealizamos con
 lanzar una moneda, un dado, una baraja o una rueda giratoria estilo /Jeopardy!/.
@@ -81,7 +181,7 @@ lanzar una moneda, un dado, una baraja o una rueda giratoria estilo /Jeopardy!/.
 
 #+REVEAL: split
 En nuestra computadora, los ~números pseudo-aleatorios~ son secuencias generadas
-de manera determinista de tal forma que /parecen/ ser variables uniformes
+de manera determinista de tal forma que /parecen/ ser variables aleatorias uniformes
 independientes. Es decir, parecen ser
 \begin{align}
 x_i \overset{\mathsf{iid}}{\sim} \mathsf{U}(0,1)\,.
@@ -106,7 +206,6 @@ Las constantes $a$ y $m$ se escogen de tal forma que:
 3. Se puede calcular la secuencia eficientemente.
 
 #+REVEAL: split
-\newpage
 La constante $m$ está asociada al periodo de la secuencia. Por ejemplo, podemos utilizar
 \begin{align}
 x_{n} = 3 x_{n-1} \mod 5\,,
@@ -144,6 +243,16 @@ un mayor colección de números aleatorios.
  [1]  3  6  1  2  4  8  5 10  9  7  3  6  1  2  4  8  5 10  9  7
 #+end_src
 
+#+begin_src R :exports both :results org 
+  u <- x[1:(m-1)] / m
+  u
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+ [1] 0.27273 0.54545 0.09091 0.18182 0.36364 0.72727 0.45455 0.90909 0.81818
+[10] 0.63636
+#+end_src
 
 #+REVEAL: split
 Usualmente $m$ se escoge como un ~número primo~ de longitud igual al máximo número representable en una computadora.
@@ -154,16 +263,16 @@ Por ejemplo, en una máquina de 32-bits se ha visto que $m = 2^{31} - 1$ y $a =
 #+END_NOTES
 
 #+REVEAL: split
+Esta elección nos permite generar una gran densidad en el intervalo $(0,1)$. ¿Por qué?
+
+** Aleatorios en lenguajes de programación 
+
 Los lenguajes de programación tienen funciones para generar números
 aleatorios. Por ejemplo, en ~Matlab~ el enfoque es cómputo numérico por lo tanto
 el generador de aleatorios uniformes es la opción estándar.
 
-#+begin_src octave :exports both :results org :session octave.random
+#+begin_src octave :exports both :results org :session octave.random 
   rand         
-#+end_src
-
-#+begin_src org
-0.4616637206465595
 #+end_src
 
 #+REVEAL: split
@@ -181,7 +290,7 @@ lenguajes.
 #+end_src
 
 #+RESULTS:
-Por último, ~R~ es un lenguaje que se originó en la comunidad estadística. Por lo tanto, se la generación de números aleatorios requiere de la distribución de interés.
+Por último, ~R~ es un lenguaje que se originó en la comunidad estadística. Por lo tanto, la generación de números aleatorios requiere de la distribución de interés.
 
 #+begin_src R :exports both :results org 
   runif(1)
@@ -189,8 +298,196 @@ Por último, ~R~ es un lenguaje que se originó en la comunidad estadística. Po
 
 #+RESULTS:
 #+begin_src org
-[1] 0.35
+[1] 0.8014
 #+end_src
+
+** Transformación de uniformes
+Es natural considerar la generación de números aleatorios en el intervalo $[a, b]$: 
+
+#+begin_src R :exports both :results org 
+  runif(100, min = 7, max = 10)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+  [1] 9.286 9.048 8.911 9.859 7.916 7.920 9.439 9.622 8.246 8.244 7.902 7.878
+ [13] 7.183 8.307 9.108 8.722 9.362 8.579 7.768 7.476 7.094 7.044 9.368 9.498
+ [25] 8.931 8.322 8.872 9.668 7.170 8.253 8.487 9.462 9.806 8.967 9.830 8.391
+ [37] 8.056 7.042 7.899 8.021 9.580 8.690 9.086 7.447 9.765 7.560 9.530 9.146
+ [49] 9.000 7.353 8.293 9.743 8.181 7.550 8.636 9.807 7.536 7.317 9.299 7.965
+ [61] 9.591 7.963 8.752 9.045 9.170 9.009 7.347 7.335 9.810 7.066 7.398 9.235
+ [73] 9.664 8.769 9.089 9.171 7.732 8.858 7.685 7.202 9.073 9.853 9.047 9.387
+ [85] 8.046 8.176 7.220 8.025 9.501 8.183 9.928 8.396 8.588 8.326 8.094 7.745
+ [97] 7.649 9.783 8.565 9.753
+#+end_src
+
+*** Pregunta:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+#+begin_quote
+¿Cuál es la relación que existe entre $X \sim \mathsf{U}(0,1)$ y $Y\sim \mathsf{U}(a, b)$?
+#+end_quote
+
+** Reproducibilidad
+
+Hemos establecido que la generación de números /pseudo-aleatorios/ es un
+procedimiento determinista. Si sabemos la semilla que generó la secuencia y el
+algoritmo que la genera, podemos generar dos secuencias idénticas. Por lo tanto,
+variables aleatorias completamente dependientes.
+
+#+begin_src R :exports both :results org 
+  runif(5)
+  runif(5)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 0.02314 0.51438 0.23307 0.50082 0.47310
+[1] 0.8952 0.3630 0.7224 0.8002 0.6188
+#+end_src
+
+#+begin_src R :exports both :results org 
+  set.seed(108); runif(5)
+  set.seed(108); runif(5)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 0.4551 0.4040 0.3513 0.6643 0.4635
+[1] 0.4551 0.4040 0.3513 0.6643 0.4635
+#+end_src
+
+** Aleatoriedad o pseudo-aleatoriedad
+
+Consideremos una secuencia generada $X_1, \ldots, X_n$ . Entonces el
+conocimiento de $X_n$ entonces no debería de dar información sobre $X_{n+1}$ ~si
+no conocemos el generador~.
+
+#+REVEAL: split
+La pseudo-aleatoriedad de nuestra secuencia es ~limitada~. Pues dos muestras
+$(X_1, \ldots, X_n)$ y $(Y_1, \ldots, Y_n)$ que sean producidas por el mismo
+algoritmo no son independientes, ni idénticamente distribuidas o comparables en
+algún sentido probabilístico.
+
+#+REVEAL: split
+La validez de un generador se basa en una secuencia $X_1, \ldots, X_n$ con $n
+\rightarrow \infty$ . No en una colección infinita de réplicas con longitud fija.
+
+#+BEGIN_NOTES
+La distribución de esta colección de tuplas depende únicamente de la
+distribución de las semillas iniciales. Ver Capítulo 2 de citep:Robert2013a.
+#+END_NOTES
+
+*** ~Definición~ [Generador pseudo-aleatorio]:
+Decimos que un algoritmo es un generador de números uniformes pseudo-aleatorios
+si para algún valor inicial $u_0$ y la aplicación de una transformación $D :
+\mathbb{R} \rightarrow \mathbb{R}$ produce una secuencia
+\begin{align}
+u_n = D^n (u_0) = \underbrace{(D \circ \cdots \circ D)}_{n \text{ veces}} (u_0)\,,
+\end{align}
+de valores en el intervalo $(0,1)$. Además, el comportamiento de los valores
+$(u_1, \ldots, u_n)$ se comportan como si fueran una muestra $\mathsf{iid}$ de
+variables uniformes $(V_1, \ldots, V_n)$ .
+
+** Comportamiento uniforme
+
+Para validar que el generador de pseudo-aleatorios es válido tendremos que
+comparar las muestras generadas contra una distribución de probabilidad
+uniforme. ¿Qué podemos hacer?
+
+** Ideas
+
+Podemos comparar contra la distribución teórica que estamos generando. Esto es
+para tratar de garantizar estadísticamente que nuestra muestra se /ve/ como una
+realización de números aleatorios uniformes.
+
+* Prueba de Kolmogorov-Smirnov
+
+Para comparar una muestra de números aleatorios podemos utilizar la prueba Kolmogorov-Smirnov (KS). La idea es sencilla: contrastar la ~función de acumulación empírica~ contra la ~función de acumulación de una uniforme~.
+
+*** ~Definición~ [Función de acumulación de una variable uniforme]:
+
+*** ~Definición~ [Función de acumulación empírica]:
+
+Dada una muestra aleatoria $X_1, \ldots, X_n$ de variables con función de distribución $\mathbb{P}$, definimos
+\begin{align}
+\hat{\mathbb{P}}_n(x) = \frac{\text{muestras menores o iguales a } x}{n}\,.
+\end{align}
+
+*** Nota:
+La función de acumulación empírica (EDF) la podemos definir a través de los
+~estadísticos de orden~.
+
+*** ~Definición~ [Estadísticos de orden]:
+Dada una muestra aleatoria $X_1, \ldots, X_n$ los estadísticos de orden se
+definen como el reordenamiento $X_{(1)} \leq \cdots \leq X_{(n)}$, donde
+\begin{align}
+X_{(1)} = \min \{ X_1, \ldots, X_n\}, \qquad \ldots \qquad, X_{(n)} = \max \{ X_1, \ldots, X_n\}\,.
+\end{align}
+
+*** ~Teorema~:
+Sea $\hat{\mathbb{P}}_n$ la función de acumulación empírica para una muestra aleatoria de $X_1, \ldots, X_n$ de $\mathbb{P}$. Entonces:
+\begin{align}
+\mathsf{Prob}\Big\{ \hat{\mathbb{P}}_n = \frac{k}{n}\Big\} = {n \choose k} \mathbb{P}(x)^k ( 1- \mathbb{P}(x))^{n-k}\,.
+\end{align}
+
+*** ~Propiedades~:
+
+*** ~Teorema~ [Glivenko-Cantelli]:
+
+** Comparación
+
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/ks-statistic.jpeg  :exports results :results output graphics file
+  set.seed(10)
+  g1 <- tibble(x = runif(30)) |>
+    ggplot(aes(x)) +
+    stat_ecdf(geom = "step") +
+    geom_abline(intercept = 0, slope = 1, lty = 2) + 
+    sin_lineas +
+    ylab("Función de acumulación") + xlab("x") +
+    ggtitle("n = 30") + xlim(0,1)
+  g2 <- tibble(x = runif(500)) |>
+    ggplot(aes(x)) +
+    stat_ecdf(geom = "step") +
+    geom_abline(intercept = 0, slope = 1, lty = 2) + 
+    sin_lineas +
+    ylab("Función de acumulación") + xlab("x") +
+    ggtitle("n = 500")
+  g1 + g2
+#+end_src
+
+#+RESULTS:
+[[file:../images/ks-statistic.jpeg]]
+
+
+
+
+* Documentación                                                    :noexport:
+
+Puedes consultar la documentación de ~R~, utilizando el comando ~?Random~ en la consola. 
+
+#+DOWNLOADED: screenshot @ 2022-08-15 19:01:49
+#+attr_html: :width 700 :align center
+#+attr_latex: :width .95 \linewidth
+#+CAPTION: Documentación de ~Random~. 
+[[file:images/20220815-190149_screenshot.png]]
+
+
+* Generación de variables no uniformes                             :noexport:
+
+~R~, por ejemplo, tiene distintos generadores de variables aleatorias. Un catálogo nos muestra
+
+
+#+DOWNLOADED: screenshot @ 2022-08-15 19:03:50
+#+attr_html: :width 700 :align center
+#+attr_latex: :width .95 \linewidth
+#+caption: Catálogo de distribuciones en ~R~. 
+[[file:images/20220815-190350_screenshot.png]]
+
+
+** Método de transformada inversa
 
 
 
