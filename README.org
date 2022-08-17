@@ -285,7 +285,7 @@ hacerlas si no cuentan con experiencia en: ~Git~, ~Github~, y ~R~ base.
 
 #+print_bibliography:
 
-* Agenda                                                           :noexport:
+* COMMENT Agenda                                                           :noexport:
 
 |      Fecha | Tema                         |
 |------------+------------------------------|
