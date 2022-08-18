@@ -1,0 +1,244 @@
+#+TITLE: EST-24107: Simulación
+#+AUTHOR: Prof. Alfredo Garbuno Iñigo
+#+EMAIL:  agarbuno@itam.mx
+#+DATE: ~Números aleatorios no uniformes~
+#+STARTUP: showall
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulacion">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
+:END:
+#+PROPERTY: header-args:R :session transformacion :exports both :results output org :tangle ../rscripts/02-aleatorios-nouniformes.R :mkdirp yes :dir ../
+#+EXCLUDE_TAGS: toc
+
+#+BEGIN_NOTES
+*Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | Números no uniformes.\\
+*Objetivo*: Que veremos.\\
+*Lectura recomendada*: Referencia.
+#+END_NOTES
+
+#+begin_src R :exports none :results none
+  ## Setup --------------------------------------------
+  library(tidyverse)
+  library(patchwork)
+  library(scales)
+  ## Cambia el default del tamaño de fuente 
+  theme_set(theme_linedraw(base_size = 25))
+
+  ## Cambia el número de decimales para mostrar
+  options(digits = 4)
+
+  sin_lineas <- theme(panel.grid.major = element_blank(),
+                      panel.grid.minor = element_blank())
+  color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
+
+  sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  sin_leyenda <- theme(legend.position = "none")
+  sin_ejes <- theme(axis.ticks = element_blank(), axis.text = element_blank())
+#+end_src
+
+* Table of Contents                                                             :toc:
+:PROPERTIES:
+:TOC:      :include all  :ignore this :depth 3
+:END:
+:CONTENTS:
+- [[#generación-de-variables-no-uniformes][Generación de variables no uniformes]]
+  - [[#método-de-transformada-inversa][Método de transformada inversa]]
+- [[#distribuciones-continuas][Distribuciones continuas]]
+  - [[#prueba-ks][Prueba KS]]
+- [[#distribuciones-discretas][Distribuciones discretas]]
+- [[#prueba-chi2][Prueba $\chi^2$]]
+  - [[#procedimiento-de-la-prueba-chi2][Procedimiento de la prueba $\chi^2$]]
+    - [[#pregunta][Pregunta:]]
+  - [[#aplicación-de-la-prueba][Aplicación de la prueba]]
+  - [[#aplicación-de-pruebas][Aplicación de pruebas]]
+- [[#references][References]]
+:END:
+
+* Generación de variables no uniformes                           
+
+~R~, por ejemplo, tiene distintos generadores de variables aleatorias. Un catálogo nos muestra que podemos
+generar mucho mas variables que solamente una variable uniforme.
+
+#+DOWNLOADED: screenshot @ 2022-08-15 19:03:50
+#+attr_html: :width 700 :align center
+#+attr_latex: :width .95 \linewidth
+#+caption: Catálogo de distribuciones en ~R~. 
+[[file:images/20220815-190350_screenshot.png]]
+
+#+REVEAL: split
+En esta sección exploraremos los mecanismos tradicionales para generar números
+pseudo-aleatorios de distribuciones un poco mas generales que una distribución
+uniforme.
+
+** Método de transformada inversa
+
+* Distribuciones continuas
+
+** Prueba ~KS~ 
+
+* Distribuciones discretas
+
+* Prueba $\chi^2$
+
+Podemos usar otro mecanismo para probar estadísticamente si nuestros números
+pseudo aleatorios siguen la distribución que deseamos.
+
+Podemos pensar en esta alternativa como la versión ~discreta~ de la prueba ~KS~.
+
+Lo que estamos poniendo a prueba es
+\begin{align}
+H_0: \mathbb{P}(x) = \mathbb{P}_0(x) \,\, \forall x\, \quad \text{ contra } \quad H_1: \mathbb{P}(x) \neq \mathbb{P}_0(x) \text{ para alguna } x\,.
+\end{align}
+
+** Procedimiento de la prueba $\chi^2$
+
+1. Hacemos una partición del rango de la distribución supuesta en $k$
+   subintervalos con límites $\{a_0, a_1, \ldots, a_k\}$, y definimos $N_j$ como
+   el número de observaciones (de nuestro generador de pseudo-aleatorios) en
+   cada subintervalo.
+
+2. Calculamos la proporción esperada de observaciones en el intervalo $(a_{j-1},
+   a_j]$ como
+   \begin{align}
+   p_j = \int_{a_{j-1}}^{a_j} \text{d} \mathbb{P}(x)\,.
+   \end{align}
+
+3. La estadística de prueba es
+   \begin{align}
+   \chi^2 = \sum_{j = 1}^{k} \frac{(N_j - p_j)^2}{n p_j}\,.
+   \end{align}  
+
+#+BEGIN_NOTES
+Nota que estamos comparando dos histogramas. El histograma observado que
+construimos a partir de nuestros números pseudo-aleatorios contra el histograma
+que esperaríamos de la distirbución. ¿Puedes pensar en algún problema con esta
+prueba?
+#+END_NOTES
+
+*** Pregunta:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+¿Qué esperaríamos de nuestro estadístico $\chi^2$ si nuestro generado de pseudo-aleatorios es incorrecto?
+
+** Aplicación de la prueba
+
+#+begin_src R :exports code :results none 
+  ## Esto es para poner a prueba un pseudo generador =============================
+  rpseudo.uniform <- function(nsamples, seed = 108727){
+    x0 <- seed; a <- 7**5; m <- (2**31)-1;
+    x  <- x0; 
+    for (jj in 2:nsamples){
+      x[jj] <- (a * x[jj-1]) %% m
+    }
+    x/m
+  }
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none 
+  nsamples <- 30; nbreaks <- 10
+  samples <- data.frame(x = rpseudo.uniform(nsamples))
+
+  Fn <- hist(samples$x, breaks = nbreaks, plot = FALSE)$counts/nsamples
+  F0 <- 1/nbreaks
+
+  X2.obs <- (nsamples*nbreaks)*sum((Fn - F0)**2)  
+#+end_src
+
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  ## Esto es para generar datos observados de la distribucion que queremos =======
+  experiment <- function(nsamples){
+    nbreaks <- 10
+    samples <- data.frame(x = runif(nsamples))
+    Fn <- hist(samples$x, breaks = nbreaks, plot = FALSE)$counts/nsamples
+    F0 <- 1/nbreaks
+    X2 <- (nsamples*nbreaks)*sum((Fn - F0)**2)
+    return(X2)
+  }
+
+  X2 <- c()
+  for (jj in 1:1000){
+    X2[jj] <- experiment(nsamples)
+  }
+#+end_src
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/chi2-histograma.jpeg :exports results :results output graphics file
+  data.frame(estadistica = X2) |>
+    ggplot(aes(estadistica)) +
+    geom_histogram() +
+    geom_vline(xintercept = X2.obs, lty = 2, color = 'red', lwd = 1.5) +
+    sin_lineas + xlab(expression(chi^{2}))
+#+end_src
+
+#+RESULTS:
+[[file:../images/chi2-histograma.jpeg]]
+
+#+REVEAL: split
+Por lo tanto, la probabilidad de haber observador una estadístico $\chi^2$ tan extremo como el que observamos si el generador hubiera sido el que suponemos es:
+#+begin_src R :exports results :results org 
+  print(paste("Estadistico: ", round(X2.obs, 4), ", Probabilidad: ", mean(X2 >= X2.obs), sep =''))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] "Estadistico: 12.6667, Probabilidad: 0.177"
+#+end_src
+
+Que podemos comparar contra el que obtenemos de una prueba "tradicional":
+#+begin_src R :exports both :results org 
+  counts.obs <- Fn*nsamples 
+  chisq.test(counts.obs, p = rep(1, nbreaks)/nbreaks, simulate.p.value = TRUE)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+
+	Chi-squared test for given probabilities with simulated p-value (based
+	on 2000 replicates)
+
+data:  counts.obs
+X-squared = 13, df = NA, p-value = 0.2
+#+end_src
+
+#+REVEAL: split
+- La prueba $\chi^2$  pues usualmente no es buena cuando el número de observaciones es menor a 50.
+- La prueba ~KS~ tiene mejor potencia que la prueba $\chi^2$:
+  #+begin_src R :exports both :results org 
+     ks.test(samples$x, "punif")
+  #+end_src
+
+  #+RESULTS:
+  #+begin_src org
+
+          Exact one-sample Kolmogorov-Smirnov test
+
+  data:  samples$x
+  D = 0.16, p-value = 0.4
+  alternative hypothesis: two-sided
+  #+end_src
+
+** Aplicación de pruebas
+
+En la práctica se utiliza una colección de pruebas pues cada una es sensible a
+cierto tipo de desviaciones. La bateria de pruebas mas utilizada es la colección
+de pruebas ~DieHARD~ que desarrolló [[https://en.wikipedia.org/wiki/Diehard_tests][George Marsaglia]] y que se ha ido
+complementando con los años.
+
+* References 
+
+bibliographystyle:abbrvnat
+bibliography:references.bib
