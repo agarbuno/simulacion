@@ -3,18 +3,28 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Números aleatorios no uniformes~
 #+STARTUP: showall
-:REVEAL_PROPERTIES:
-# Template uses org export with export option <R B>
-# Alternatives: use with citeproc
-#+LANGUAGE: es
-#+OPTIONS: num:nil toc:nil timestamp:nil
-#+REVEAL_REVEAL_JS_VERSION: 4
-#+REVEAL_THEME: night
-#+REVEAL_SLIDE_NUMBER: t
-#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulacion">
-#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
-#+REVEAL_EXTRA_CSS: ./mods.css
-#+REVEAL_PLUGINS: (notes)
+:LATEX_PROPERTIES:
+#+OPTIONS: toc:nil date:nil author:nil tasks:nil
+#+LANGUAGE: sp
+#+LATEX_CLASS: handout
+#+LATEX_HEADER: \usepackage[spanish]{babel}
+#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
+#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
+#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
+#+LATEX_HEADER: \decimalpoint
+#+LATEX_HEADER:\usepackage{framed}
+#+LaTeX_HEADER: \usepackage{listings}
+#+LATEX_HEADER: \usepackage{fancyvrb}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
+#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
+#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
+#+LaTeX_HEADER: {}
+#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
+#+LaTeX_HEADER: {}
+#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
+#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
+#+EXPORT_FILE_NAME: ../docs/02-aleatorios-nouniformes.pdf
 :END:
 #+PROPERTY: header-args:R :session transformacion :exports both :results output org :tangle ../rscripts/02-aleatorios-nouniformes.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc
@@ -51,10 +61,15 @@
 :END:
 :CONTENTS:
 - [[#generación-de-variables-no-uniformes][Generación de variables no uniformes]]
-  - [[#método-de-transformada-inversa][Método de transformada inversa]]
+  - [[#método-de-la-transformada-inversa][Método de la transformada inversa]]
+    - [[#ejercicio][Ejercicio:]]
+    - [[#tarea][Tarea:]]
+  - [[#generalización][Generalización]]
+    - [[#definición-función-inversa-generalizada][Definición [Función inversa generalizada]:]]
+    - [[#teorema-de-la-función-inversa-generalizada][Teorema [de la función inversa generalizada]:]]
 - [[#distribuciones-continuas][Distribuciones continuas]]
-  - [[#prueba-ks][Prueba KS]]
 - [[#distribuciones-discretas][Distribuciones discretas]]
+- [[#distribución-normal-multivariada][Distribución normal multivariada]]
 - [[#prueba-chi2][Prueba $\chi^2$]]
   - [[#procedimiento-de-la-prueba-chi2][Procedimiento de la prueba $\chi^2$]]
     - [[#pregunta][Pregunta:]]
@@ -79,13 +94,79 @@ En esta sección exploraremos los mecanismos tradicionales para generar números
 pseudo-aleatorios de distribuciones un poco mas generales que una distribución
 uniforme.
 
-** Método de transformada inversa
+** Método de la transformada inversa
+
+De su curso de cálculo de probabilidades se acordarán que si tenemos una
+variable aleatoria $X$ con función de acumulación $\mathbb{P}$ y utilizamos $U =
+\mathbb{P}(X)$, entonces $U$ es una variable aleatoria con distribución
+$\mathsf{U}(0,1)$.
+
+*** Ejercicio:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+Considera $X \sim \mathsf{Exp}(1)$, de tal forma que $\mathbb{P}(x) = 1 -
+e^{-x}$. Si sólo sabemos generar números uniformes, ¿cómo generarías números de
+$X$?
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/exp-comparison.jpeg :exports results :results output graphics file
+  g1 <- tibble(x = rexp(1000, 1)) |>
+    ggplot(aes(x)) +
+    geom_histogram() + sin_lineas +
+    xlim(0, 8) + ggtitle("Exponencial R")
+
+  g2 <- tibble(u = runif(1000),
+               x = -log(u)) |>
+    ggplot(aes(x)) +
+    geom_histogram() + sin_lineas +
+    xlim(0, 8) + ggtitle("Exponencial = f(Uniforme)")
+
+  g1 + g2
+#+end_src
+
+#+RESULTS:
+[[file:../images/exp-comparison.jpeg]]
+
+*** Tarea:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+Considera las siguientes distribuciones:
+1. Logística con $\mu, \beta$ y función de acumulación
+   \begin{align}
+   \mathbb{P}(x) = \frac{1}{1 + e^{-(x - \mu)/\beta}}\,.
+   \end{align}
+2. Cauchy con parámetros $\mu, \beta$ y función de acumulación
+   \begin{align}
+   \mathbb{P}(x) = \frac{1}{2} + \frac{1}{\pi} \mathsf{arctan}((x - \mu)/\beta)\,.
+   \end{align}
+
+Genera números aleatorios con valores $\mu = 1$, $\beta = 2$ y comenta el rol de
+cada parámetro en cada distribución.
+
+** Generalización
+
+En el caso anterior asumimos que la función inversa de la función de acumulación
+existe. Sin embargo, no siempre es el caso. Necesitamos definir lo siguiente.
+
+*** ~Definición~ [Función inversa generalizada]:
+Sea $X$ una variable aleatoria con función de acumulación $\mathbb{P}$. La función inversa generalizada
+\begin{align}
+\mathbb{P}^{-1}(u) = \inf \{ x | F(x) \geq u\}\,. 
+\end{align}
+
+
+*** ~Teorema~ [de la función inversa generalizada]:
+Sea $\mathbb{P}$ una función de distribución. Sea $\mathbb{P}^{-1}(\cdot)$  la función inversa generalizada de $\mathbb{P}$ y $U \sim \mathsf{U}(0,1)$ . Entonces, la variable aleatoria
+$X = \mathbb{P}^{-1}(U)$ tiene distribución  $\mathbb{P}$. 
 
 * Distribuciones continuas
 
-** Prueba ~KS~ 
-
 * Distribuciones discretas
+
+* Distribución normal multivariada
 
 * Prueba $\chi^2$
 
@@ -120,9 +201,45 @@ H_0: \mathbb{P}(x) = \mathbb{P}_0(x) \,\, \forall x\, \quad \text{ contra } \qua
 #+BEGIN_NOTES
 Nota que estamos comparando dos histogramas. El histograma observado que
 construimos a partir de nuestros números pseudo-aleatorios contra el histograma
-que esperaríamos de la distirbución. ¿Puedes pensar en algún problema con esta
+que esperaríamos de la distribución. ¿Puedes pensar en algún problema con esta
 prueba?
 #+END_NOTES
+
+#+REVEAL: split
+La visualización correspondiente sería lo siguiente. Utilizamos nuestro generador para obtener muestras. 
+
+#+begin_src R :exports code :results none 
+  ## Esto es para poner a prueba un pseudo generador 
+  rpseudo.uniform <- function(nsamples, seed = 108727){
+    x0 <- seed; a <- 7**5; m <- (2**31)-1;
+    x  <- x0; 
+    for (jj in 2:nsamples){
+      x[jj] <- (a * x[jj-1]) %% m
+    }
+    x/m
+  }
+#+end_src
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/pseudo-uniform-hist.jpeg :exports results :results output graphics file
+  nsamples <- 30;  nbins <- 10;
+  samples <- data.frame(x = rpseudo.uniform(nsamples, seed = 166136))
+  samples |>
+  ggplot(aes(x)) +
+    geom_hline(yintercept = nsamples/nbins, color = "darkgray", lty = 2) +
+    annotate("rect",
+             ymin = qbinom(.95, nsamples, 1/nbins),
+             ymax = qbinom(.05, nsamples, 1/nbins),
+             xmin = -Inf, xmax = Inf,
+             alpha = .4, fill = "gray") + 
+    geom_histogram(bins = nbins, color = "white") + sin_lineas +
+    ggtitle("Semilla: 166136")
+#+end_src
+
+#+RESULTS:
+[[file:../images/pseudo-uniform-hist.jpeg]]
+
 
 *** Pregunta:
 :PROPERTIES:
@@ -132,7 +249,7 @@ prueba?
 
 ** Aplicación de la prueba
 
-#+begin_src R :exports code :results none 
+#+begin_src R :exports none :results none 
   ## Esto es para poner a prueba un pseudo generador =============================
   rpseudo.uniform <- function(nsamples, seed = 108727){
     x0 <- seed; a <- 7**5; m <- (2**31)-1;
@@ -158,7 +275,7 @@ prueba?
 
 #+REVEAL: split
 #+begin_src R :exports code :results none
-  ## Esto es para generar datos observados de la distribucion que queremos =======
+  ## Esto es para generar datos observados de la distribucion que queremos 
   experiment <- function(nsamples){
     nbreaks <- 10
     samples <- data.frame(x = runif(nsamples))
@@ -175,15 +292,22 @@ prueba?
 #+end_src
 
 #+REVEAL: split
+En la [[fig-chisq-hist]] se muestra el histograma de las réplicas del estadístico
+$\chi^2$ bajo el generador uniforme (lo tomamos como la distribución de la
+hipótesis nula) y comparamos contra el observado (línea punteada). Adicional, se
+incorpora la densidad de una $\chi^2_{k-1}$ (leáse ji-cuadrada con $k-1$ grados
+de libertad) que es la distribución asintótica del estadístico.
+
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/chi2-histograma.jpeg :exports results :results output graphics file
   data.frame(estadistica = X2) |>
     ggplot(aes(estadistica)) +
-    geom_histogram() +
+    geom_histogram(aes(y = ..density..)) +
     geom_vline(xintercept = X2.obs, lty = 2, color = 'red', lwd = 1.5) +
+    stat_function(fun = dchisq, args = list(df = nbreaks - 1), color = 'salmon', lwd = 1.5) +
     sin_lineas + xlab(expression(chi^{2}))
 #+end_src
-
+#+name: fig-chisq-hist
 #+RESULTS:
 [[file:../images/chi2-histograma.jpeg]]
 
