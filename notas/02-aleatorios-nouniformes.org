@@ -3,18 +3,28 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Números aleatorios no uniformes~
 #+STARTUP: showall
-:REVEAL_PROPERTIES:
-# Template uses org export with export option <R B>
-# Alternatives: use with citeproc
-#+LANGUAGE: es
-#+OPTIONS: num:nil toc:nil timestamp:nil
-#+REVEAL_REVEAL_JS_VERSION: 4
-#+REVEAL_THEME: night
-#+REVEAL_SLIDE_NUMBER: t
-#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
-#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
-#+REVEAL_EXTRA_CSS: ./mods.css
-#+REVEAL_PLUGINS: (notes)
+:LATEX_PROPERTIES:
+#+OPTIONS: toc:nil date:nil author:nil tasks:nil
+#+LANGUAGE: sp
+#+LATEX_CLASS: handout
+#+LATEX_HEADER: \usepackage[spanish]{babel}
+#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
+#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
+#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
+#+LATEX_HEADER: \decimalpoint
+#+LATEX_HEADER:\usepackage{framed}
+#+LaTeX_HEADER: \usepackage{listings}
+#+LATEX_HEADER: \usepackage{fancyvrb}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
+#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
+#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
+#+LaTeX_HEADER: {}
+#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
+#+LaTeX_HEADER: {}
+#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
+#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
+#+EXPORT_FILE_NAME: ../docs/02-aleatorios-nouniformes.pdf
 :END:
 #+PROPERTY: header-args:R :session transformacion :exports both :results output org :tangle ../rscripts/02-aleatorios-nouniformes.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc
@@ -70,12 +80,12 @@
     - [[#propiedad-regla-empírica-o-regla-de-citetpukelsheim1994][Propiedad [Regla Empírica o regla de citet:Pukelsheim1994]:]]
 - [[#mezclas][Mezclas]]
   - [[#binomial-negativa][Binomial negativa]]
+    - [[#tarea][Tarea]]
 - [[#prueba-chi2][Prueba $\chi^2$]]
   - [[#procedimiento-de-la-prueba-chi2][Procedimiento de la prueba $\chi^2$]]
     - [[#pregunta][Pregunta:]]
   - [[#aplicación-de-la-prueba][Aplicación de la prueba]]
   - [[#aplicación-de-pruebas][Aplicación de pruebas]]
-- [[#referencias][Referencias]]
 :END:
 
 * Generación de variables no uniformes                           
@@ -99,9 +109,8 @@ uniforme.
 ** Método de la transformada inversa
 
 De su curso de cálculo de probabilidades se acordarán que si tenemos una
-variable aleatoria $X$ con función de acumulación $\mathbb{P}$ y utilizamos $U =
-\mathbb{P}(X)$, entonces $U$ es una variable aleatoria con distribución
-$\mathsf{U}(0,1)$.
+variable aleatoria $X$ y una función de acumulación $\mathbb{P}$. Si utilizamos $U =
+\mathbb{P}(X)$, con $U$ una variable aleatoria con distribución $\mathsf{U}(0,1)$. Entonces, $X \sim \mathbb{P}$. 
 
 *** Ejercicio:
 :PROPERTIES:
@@ -232,7 +241,6 @@ variables.
     log() |>                # Calcula logaritmos
     apply(2, function(x){-2 * sum(x)} ) |> 
     summary()
-
 #+end_src
 
 #+RESULTS:
@@ -304,8 +312,7 @@ Supongamos que nos interesa $X \sim \mathsf{Bin}(10, 0.3)$, el vector de probabi
 
 #+begin_src R :exports both :results org 
   k <- 1:10
-  probs <- pbinom(k, 10, .3)
-  probs
+  pbinom(k, 10, .3)
 #+end_src
 
 #+RESULTS:
@@ -316,7 +323,7 @@ Supongamos que nos interesa $X \sim \mathsf{Bin}(10, 0.3)$, el vector de probabi
 #+REVEAL: split
 #+begin_src R :exports code :results none
   rbinomial <- function(nsamples, size, theta){
-    probs <- pbinom(k, size, theta)
+    probs <- pbinom(1:10, size, theta)
     x <- c()
     for (jj in 1:nsamples){
       u <- runif(1)
@@ -450,6 +457,13 @@ donde $\beta = (1-\theta)/\theta$.
 
 #+RESULTS:
 [[file:../images/rbinneg-histogram.jpeg]]
+
+*** Tarea
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+Prueba que una binomial negativa puede ser expresada como una mezcla
+Poisson-Gamma. 
 
 
 * Prueba $\chi^2$
@@ -646,7 +660,6 @@ cierto tipo de desviaciones. La bateria de pruebas mas utilizada es la colecció
 de pruebas ~DieHARD~ que desarrolló [[https://en.wikipedia.org/wiki/Diehard_tests][George Marsaglia]] y que se ha ido
 complementando con los años.
 
-* Referencias
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
