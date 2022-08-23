@@ -3,28 +3,18 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Números aleatorios no uniformes~
 #+STARTUP: showall
-:LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
-#+LANGUAGE: sp
-#+LATEX_CLASS: handout
-#+LATEX_HEADER: \usepackage[spanish]{babel}
-#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
-#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
-#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
-#+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
-#+LaTeX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{fancyvrb}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
-#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
-#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
-#+LaTeX_HEADER: {}
-#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
-#+LaTeX_HEADER: {}
-#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
-#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/02-aleatorios-nouniformes.pdf
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
 :END:
 #+PROPERTY: header-args:R :session transformacion :exports both :results output org :tangle ../rscripts/02-aleatorios-nouniformes.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc
@@ -85,6 +75,7 @@
     - [[#pregunta][Pregunta:]]
   - [[#aplicación-de-la-prueba][Aplicación de la prueba]]
   - [[#aplicación-de-pruebas][Aplicación de pruebas]]
+- [[#referencias][Referencias]]
 :END:
 
 * Generación de variables no uniformes                           
@@ -93,7 +84,7 @@
 generar mucho mas variables que solamente una variable uniforme.
 
 #+DOWNLOADED: screenshot @ 2022-08-15 19:03:50
-#+attr_html: :width 700 :align center
+#+attr_html: :width 1200 :align center
 #+attr_latex: :width .95 \linewidth
 #+caption: Catálogo de distribuciones en ~R~. 
 [[file:images/20220815-190350_screenshot.png]]
@@ -102,6 +93,8 @@ generar mucho mas variables que solamente una variable uniforme.
 En esta sección exploraremos los mecanismos tradicionales para generar números
 pseudo-aleatorios de distribuciones un poco mas generales que una distribución
 uniforme.
+
+#+REVEAL: split
 
 ** Método de la transformada inversa
 
@@ -161,7 +154,7 @@ En el caso anterior asumimos que la función inversa de la función de acumulaci
 existe. Sin embargo, no siempre es el caso. Necesitamos definir lo siguiente.
 
 *** ~Definición~ [Función inversa generalizada]:
-Sea $X$ una variable aleatoria con función de acumulación $\mathbb{P}$. La función inversa generalizada
+Sea $X$ una variable aleatoria con función de acumulación $\mathbb{P}$. La función inversa generalizada está definida como
 \begin{align}
 \mathbb{P}^{-1}(u) = \inf \{ x | F(x) \geq u\}\,. 
 \end{align}
@@ -175,7 +168,7 @@ $X = \mathbb{P}^{-1}(U)$ tiene distribución  $\mathbb{P}$.
 
 Hay situaciones donde generar números aleatorios puede ser extremadamente
 sencillo pues existe una relación entre la distribución que queremos generar y
-ciertos componentes mas sencillos.
+ciertos componentes fáciles de simular.
 
 ** Variables $\chi^2$
 
@@ -421,7 +414,7 @@ f(x) = \int_\mathcal{Y} g(x | y) \, p(y) \, \text{d}y\,, \quad \text{ o } \quad 
 siempre y cuando sea sencillo generar números aleatorios de las marginales.
 
 #+REVEAL: split
-Por ejemplo, para generar números aleatorios de una $t$-Student con $\nu$ grados
+Por ejemplo, para generar números aleatorios de una $t$ Student con $\nu$ grados
 de libertad. Podemos usar la representación
 \begin{align}
 X | y \sim \mathsf{N}(0, \nu/y)\,, \quad Y \sim \chi^2_\nu\,.
@@ -442,6 +435,7 @@ donde $\beta = (1-\theta)/\theta$.
   x <- rpois(nsamples, y)
 #+end_src
 
+#+REVEAL: split
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/rbinneg-histogram.jpeg :exports results :results output graphics file
   tibble(samples = x) |>
@@ -652,7 +646,7 @@ cierto tipo de desviaciones. La bateria de pruebas mas utilizada es la colecció
 de pruebas ~DieHARD~ que desarrolló [[https://en.wikipedia.org/wiki/Diehard_tests][George Marsaglia]] y que se ha ido
 complementando con los años.
 
-
+* Referencias
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
