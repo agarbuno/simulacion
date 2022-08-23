@@ -31,8 +31,8 @@
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | Números no uniformes.\\
-*Objetivo*: Que veremos.\\
-*Lectura recomendada*: Referencia.
+*Objetivo*: En esta sección del curso veremos métodos para generar números aleatorios de distribuciones un poco mas generales que una distribución uniforme. En particular veremos algunos ejemplos de distribuciones continuas, discretas y mezclas. Además veremos una prueba de uniformidad adicional a la prueba Kolmogorov-Smirnov.\\
+*Lectura recomendada*: Capítulo 2 de citep:Robert2010a. 
 #+END_NOTES
 
 #+begin_src R :exports none :results none
@@ -68,14 +68,23 @@
     - [[#definición-función-inversa-generalizada][Definición [Función inversa generalizada]:]]
     - [[#teorema-de-la-función-inversa-generalizada][Teorema [de la función inversa generalizada]:]]
 - [[#distribuciones-continuas][Distribuciones continuas]]
+  - [[#variables-chi2][Variables $\chi^2$]]
+  - [[#variables-gamma][Variables gamma]]
+  - [[#variables-beta][Variables beta]]
+    - [[#tarea][Tarea:]]
+    - [[#código][Código:]]
+  - [[#variables-gaussianas-correlacionadas][Variables Gaussianas correlacionadas]]
 - [[#distribuciones-discretas][Distribuciones discretas]]
-- [[#distribución-normal-multivariada][Distribución normal multivariada]]
+  - [[#binomial][Binomial]]
+  - [[#poisson][Poisson]]
+    - [[#propiedad-regla-empírica-o-regla-de-citetpukelsheim1994][Propiedad [Regla Empírica o regla de citet:Pukelsheim1994]:]]
+- [[#mezclas][Mezclas]]
+  - [[#binomial-negativa][Binomial negativa]]
 - [[#prueba-chi2][Prueba $\chi^2$]]
   - [[#procedimiento-de-la-prueba-chi2][Procedimiento de la prueba $\chi^2$]]
     - [[#pregunta][Pregunta:]]
   - [[#aplicación-de-la-prueba][Aplicación de la prueba]]
   - [[#aplicación-de-pruebas][Aplicación de pruebas]]
-- [[#references][References]]
 :END:
 
 * Generación de variables no uniformes                           
@@ -164,9 +173,290 @@ $X = \mathbb{P}^{-1}(U)$ tiene distribución  $\mathbb{P}$.
 
 * Distribuciones continuas
 
+Hay situaciones donde generar números aleatorios puede ser extremadamente
+sencillo pues existe una relación entre la distribución que queremos generar y
+ciertos componentes mas sencillos.
+
+** Variables $\chi^2$
+
+Recordarán de su curso de cálculo de probabilidades que si $X_i \sim \mathsf{Exp}(1)$ entonces
+\begin{align}
+Y = 2 \sum_{j = 1}^{\nu}X_j \sim \chi_{2 \nu}^2\,, 
+\end{align}
+con $\nu \in \mathbb{N}$.
+
+** Variables gamma
+
+También recordarán que si $X_i \sim \mathsf{Exp}(1)$ entonces
+\begin{align}
+Y = \beta \sum_{j = 1}^{\alpha} X_j \sim \mathsf{Gamma}(\alpha, \beta)\,,
+\end{align}
+con $\alpha \in \mathbb{N}$.
+
+** Variables beta
+
+También recordarán que si $X_i \sim \mathsf{Exp}(1)$ entonces
+\begin{align}
+Y = \frac{\sum_{j = 1}^{\alpha} X_j}{\sum_{j = 1}^{\alpha + \beta}X_j} \sim \mathsf{Beta}(\alpha, \beta)\,,
+\end{align}
+con $\alpha, \beta \in \mathbb{N}$.
+
+*** Tarea:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+Prueba las igualdades anteriores.
+
+*** Código:
+
+Por ejemplo, podemos utilizar el siguiente código para generar variables de una $\chi^2_6$ . 
+
+#+begin_src R :exports both :results org
+  set.seed(108)
+  U <- runif(3 * 10^4)      # Genera uniformes
+  U <- matrix(U, nrow = 3)  # Transforma a matriz
+  X <- -log(U)              # Transforma a exponenciales
+  X <- 2 * apply(X, 2, sum) # Suma los tres renglones
+  summary(X) 
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.151   3.505   5.420   6.064   7.926  27.904
+#+end_src
+
+#+REVEAL: split
+
+A partir de la versión 4.1.1 ~R~ cuenta con un operador especial (~|>~) llamado ~pipe~ el
+cual permite /anidar/ ciertas funciones y evitar la asignación repetitiva de
+variables. 
+
+#+begin_src R :exports both :results org
+  set.seed(108)
+  runif(3 * 10^4) |>        # Genera uniformes 
+    matrix(nrow = 3) |>     # Transforma a matriz
+    log() |>                # Calcula logaritmos
+    apply(2, function(x){-2 * sum(x)} ) |> 
+    summary()
+
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.151   3.505   5.420   6.064   7.926  27.904
+#+end_src
+
+** Variables Gaussianas correlacionadas
+
+Supongamos que queremos generar un par de variables $X \in \mathbb{R}^2$ de tal forma que
+\begin{align}
+X \sim \mathsf{N}\left( 0, \Sigma \right)\,,
+\end{align}
+donde $\Sigma_{ii} = 1$ para $i \in \{1,2\}$ y $\Sigma_{ij} = \rho$ con $i\neq
+j$. Supongamos que sólo sabemos generar números aleatorios $\mathsf{N}(0,1)$.
+
+#+REVEAL: split
+¿Cómo generaríamos los vectores aleatorios que necesitamos?
+
+#+REVEAL: split
+¿Qué saben de propiedades matriciales de vectores aleatorios?
+
+#+REVEAL: split
+#+begin_src R :exports both :results org 
+  set.seed(108)
+  Sigma <- diag(2); Sigma[1,2] <- .75; Sigma[2,1] <- .75;
+  L <- chol(Sigma)
+
+  Z <- rnorm(2 * 10^4)      # Generamos vectores estandar
+  Z <- matrix(Z, nrow = 2)  # Reacomodamos en matriz
+  X <- t(L) %*% Z           # Transformacion lineal
+  cov(t(X))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+       [,1]   [,2]
+[1,] 1.0173 0.7772
+[2,] 0.7772 1.0312
+#+end_src
+
+#+BEGIN_NOTES
+El operador ~%*%~ ejemplifica uno de las limitantes por diseño de ~R~. Pues no está
+hecho para realizar operaciones vectoriales de manera nativa. Por ejemplo, en
+~Matlab~ las operaciones son nativas y en ~python~ a través de ~numpy~ las operaciones
+matriciales también (y parte de los métodos).
+#+END_NOTES
+
 * Distribuciones discretas
 
-* Distribución normal multivariada
+Ahora, veremos algunas técnicas generales para distribuciones discretas. O mejor
+dicho, para generar números aleatorios con soporte en los enteros.
+
+#+REVEAL: split
+Supongamos que nuestro objetivo es poder generar de una $X\sim
+\mathbb{P}_\theta$ donde $X\in \mathbb{Z}$. La estrategia es ~guardar todas las
+probabilidades del soporte~. Es decir, calcular
+\begin{align}
+p_0 = \mathbb{P}_\theta(X \leq 0)\,, \quad p_1 = \mathbb{P}_\theta(X \leq 1)\,, \,\ldots\,,
+\end{align}
+generar $U \sim \mathsf{U}(0,1)$ y establecer
+\begin{align}
+X = k \text{ si } \, p_{k-1} < U < p_k\,.
+\end{align}
+
+** Binomial
+Supongamos que nos interesa $X \sim \mathsf{Bin}(10, 0.3)$, el vector de probabilidades lo podemos calcular con la función ~pbinom(k, 10, .3)~.
+
+#+begin_src R :exports both :results org 
+  k <- 1:10
+  probs <- pbinom(k, 10, .3)
+  probs
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+ [1] 0.1493 0.3828 0.6496 0.8497 0.9527 0.9894 0.9984 0.9999 1.0000 1.0000
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  rbinomial <- function(nsamples, size, theta){
+    probs <- pbinom(k, size, theta)
+    x <- c()
+    for (jj in 1:nsamples){
+      u <- runif(1)
+      x[jj] <- which(probs > u)[1]
+    }
+    return(x)
+  }
+#+end_src
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/pseudobinomial-histogram.jpeg :exports results :results output graphics file
+  set.seed(108)
+  x <- rbinomial(1000, 10, .3)
+  tibble(samples = x) |>
+    ggplot(aes(samples)) +
+    geom_histogram(aes(y = ..density..),
+                   binwidth = 1,
+                   color = 'white') +
+    geom_line(data = tibble(x_ = 1:8, y_ = dbinom(x_, 10, .3)),
+            aes(x_, y_), lwd = 1.5, lty = 2, 
+            colour = "salmon") + 
+    sin_lineas
+#+end_src
+
+#+RESULTS:
+[[file:../images/pseudobinomial-histogram.jpeg]]
+
+** Poisson
+
+Ahora supongamos que nos interesa simular de una Poisson con parámetro $\lambda = 7$.
+
+#+REVEAL: split
+¿Cuál es el soporte de una $\mathsf{Bin}(10, .3)$? ¿Cuál es el soporte de una $\mathsf{Poisson}(7)$?
+
+#+REVEAL: split
+Tenemos que guardar las probabilidades
+#+begin_src R :exports both :results org
+  k <- 1:24
+  ppois(k, 7)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+ [1] 0.007295 0.029636 0.081765 0.172992 0.300708 0.449711 0.598714 0.729091
+ [9] 0.830496 0.901479 0.946650 0.973000 0.987189 0.994283 0.997593 0.999042
+[17] 0.999638 0.999870 0.999956 0.999986 0.999995 0.999999 1.000000 1.000000
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  rpoisson <- function(nsamples, lambda){
+    probs <- ppois(1:30, lambda)
+    x <- c()
+    for (jj in 1:nsamples){
+      u <- runif(1)
+      x[jj] <- which(probs > u)[1]
+    }
+    return(x)
+  }
+#+end_src
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/pseudopoisson-histogram.jpeg :exports results :results output graphics file
+  set.seed(108)
+  x <- rpoisson(1000, 7)
+  tibble(samples = x) |>
+    ggplot(aes(samples)) +
+    geom_histogram(aes(y = ..density..),
+                   binwidth = 1,
+                   color = 'white') +
+    geom_line(data = tibble(x_ = 1:30, y_ = dpois(x_, 7)),
+            aes(x_, y_), lwd = 1.5, lty = 2, 
+            colour = "salmon") + 
+    sin_lineas
+#+end_src
+
+#+RESULTS:
+[[file:../images/pseudopoisson-histogram.jpeg]]
+
+#+REVEAL: split
+El problema de generar números aleatorios de la manera anterior es la necesidad de /guardar/ el vector de probabilidades. Por ejemplo, una $\mathsf{Poisson}(100)$. El intervalo $\lambda \pm 3 \sqrt{\lambda}$ es $(70, 130)$.
+
+*** ~Propiedad~ [Regla Empírica o regla de citet:Pukelsheim1994]:
+Si $X$ es una variable aleatoria con media y varianza finitas. Entonces, la probabilidad de que una realización de $X$ se encuentre a mas de 3 desviaciones estándar de la media es a lo mas $5\%$. 
+
+* Mezclas 
+
+Otra familia de distribuciones que es muy interesante de simular son las
+mezclas. Es decir, cuando podemos escribir
+\begin{align}
+f(x) = \int_\mathcal{Y} g(x | y) \, p(y) \, \text{d}y\,, \quad \text{ o } \quad f(x) = \sum_{i \in \mathcal{Y}}^{} p_i \, f_i(x)\,,
+\end{align}
+siempre y cuando sea sencillo generar números aleatorios de las marginales.
+
+#+REVEAL: split
+Por ejemplo, para generar números aleatorios de una $t$-Student con $\nu$ grados
+de libertad. Podemos usar la representación
+\begin{align}
+X | y \sim \mathsf{N}(0, \nu/y)\,, \quad Y \sim \chi^2_\nu\,.
+\end{align}
+
+** Binomial negativa
+
+La variable aleatoria $X\sim \mathsf{BinNeg}(n, \theta)$ tiene una representación
+\begin{align}
+X | y \sim \mathsf{Poisson}(y)\,, \quad Y \sim \mathsf{Gamma}(n , \beta )\,,
+\end{align}
+donde $\beta = (1-\theta)/\theta$.
+
+#+begin_src R :exports code :results none
+  nsamples <- 10^4
+  n <- 6; theta <- .3
+  y <- rgamma(nsamples, n, rate = theta/(1-theta))
+  x <- rpois(nsamples, y)
+#+end_src
+
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/rbinneg-histogram.jpeg :exports results :results output graphics file
+  tibble(samples = x) |>
+  ggplot(aes(x)) +
+    geom_histogram(aes(y = ..density..),
+                   binwidth = 1, color = "white") +
+    geom_line(data = tibble(x_ = 1:60, y_ = dnbinom(x_, n, theta)),
+              aes(x_, y_), lwd = 1.5, lty = 2, 
+              colour = "salmon") +
+    sin_lineas
+#+end_src
+
+#+RESULTS:
+[[file:../images/rbinneg-histogram.jpeg]]
+
 
 * Prueba $\chi^2$
 
@@ -245,7 +535,7 @@ La visualización correspondiente sería lo siguiente. Utilizamos nuestro genera
 :PROPERTIES:
 :reveal_background: #00468b
 :END:
-¿Qué esperaríamos de nuestro estadístico $\chi^2$ si nuestro generado de pseudo-aleatorios es incorrecto?
+¿Qué esperaríamos de nuestro estadístico $\chi^2$ si nuestro generador de pseudo-aleatorios es incorrecto?
 
 ** Aplicación de la prueba
 
@@ -286,7 +576,7 @@ La visualización correspondiente sería lo siguiente. Utilizamos nuestro genera
   }
 
   X2 <- c()
-  for (jj in 1:1000){
+  for (jj in 1:5000){
     X2[jj] <- experiment(nsamples)
   }
 #+end_src
@@ -362,7 +652,7 @@ cierto tipo de desviaciones. La bateria de pruebas mas utilizada es la colecció
 de pruebas ~DieHARD~ que desarrolló [[https://en.wikipedia.org/wiki/Diehard_tests][George Marsaglia]] y que se ha ido
 complementando con los años.
 
-* References 
+
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
