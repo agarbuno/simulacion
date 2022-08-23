@@ -576,19 +576,6 @@ El método /default/ en muchos lenguajes de programación es el de ~Mersenne-Twi
 bibliographystyle:abbrvnat
 bibliography:references.bib
 
-* Generación de variables no uniformes                             :noexport:
-
-~R~, por ejemplo, tiene distintos generadores de variables aleatorias. Un catálogo nos muestra
-
-
-#+DOWNLOADED: screenshot @ 2022-08-15 19:03:50
-#+attr_html: :width 700 :align center
-#+attr_latex: :width .95 \linewidth
-#+caption: Catálogo de distribuciones en ~R~. 
-[[file:images/20220815-190350_screenshot.png]]
-
-** Método de transformada inversa
-
 
 # * Conclusiones                                                    
 
