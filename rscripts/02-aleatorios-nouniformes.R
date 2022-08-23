@@ -53,11 +53,10 @@ X <- t(L) %*% Z           # Transformacion lineal
 cov(t(X))
 
 k <- 1:10
-probs <- pbinom(k, 10, .3)
-probs
+pbinom(k, 10, .3)
 
 rbinomial <- function(nsamples, size, theta){
-  probs <- pbinom(k, size, theta)
+  probs <- pbinom(1:10, size, theta)
   x <- c()
   for (jj in 1:nsamples){
     u <- runif(1)
@@ -115,6 +114,34 @@ ggplot(aes(x)) +
   geom_line(data = tibble(x_ = 1:60, y_ = dnbinom(x_, n, theta)),
             aes(x_, y_), lwd = 1.5, lty = 2, 
             colour = "salmon") +
+  sin_lineas
+
+nsamples <- 10^4
+n <- 20; a <- 5; b <- 2
+theta <- rbeta(nsamples, a, b)
+x <- rbinom(nsamples, n, theta)
+
+tibble(samples = x) |>
+ggplot(aes(x)) +
+  geom_histogram(aes(y = ..density..),
+                 binwidth = 1, color = "white") +
+  sin_lineas
+
+nsamples <- 10^5
+y <- sample(1:3, size = nsamples, prob = c(.1, .7, .2), replace = TRUE)
+x <- rnorm(nsamples,
+           mean = ifelse(y==1, 1, ifelse(y==2, 2, 5)),
+           sd = ifelse(y==1, 0.1, ifelse(y==2, 0.5, 1)))
+
+tibble(samples = x) |>
+ggplot(aes(x)) +
+  geom_histogram(aes(y = ..density..), color = "white") +
+  geom_line(data = tibble(x_ = seq(0, 8, length = 500),
+                          y_ = .1 * dnorm(x_, 1, 0.1) +
+                               .7 * dnorm(x_, 2, .5) +
+                               .2 * dnorm(x_, 5, 1)),
+            aes(x_, y_), lwd = 1.5, lty = 2, 
+            colour = "salmon") +    
   sin_lineas
 
 ## Esto es para poner a prueba un pseudo generador 
