@@ -213,3 +213,47 @@ counts.obs <- Fn*nsamples
 chisq.test(counts.obs, p = rep(1, nbreaks)/nbreaks, simulate.p.value = TRUE)
 
 ks.test(samples$x, "punif")
+
+nsamples <- 10^4; k <- 12
+U <- runif(k * nsamples)
+U <- matrix(U, nrow = k)
+X <- apply(U, 2, function(x){ (sum(x) - k/2)/sqrt(k/12) })
+
+g1 <- tibble(samples = X) |>
+  ggplot(aes(samples)) +
+  geom_histogram() + sin_lineas +
+  ggtitle("Utilizando uniformes")
+
+g2 <- tibble(samples = rnorm(nsamples)) |>
+  ggplot(aes(samples)) +
+  geom_histogram() + sin_lineas +
+  ggtitle("Utilizando rnorm")
+
+g1 + g2
+
+rnormal.bm <- function(n){
+  r <- sqrt(-2 * log(runif(n)))
+  theta <- runif(n, 0, 2 * pi)
+  z <- matrix(0, nrow = 2, ncol = n)
+  z[1,] <- r * cos(2 * pi * theta)
+  z[2,] <- r * sin(2 * pi * theta)
+  return(z)
+}
+
+set.seed(108)
+z <- rnormal.bm(nsamples)
+g.joint <- tibble(z1 = z[1,], z2 = z[2,]) |>
+  ggplot(aes(z1, z2)) +
+  geom_point() + ylab(expression(z[2])) +
+  xlab(expression(z[1])) +
+  sin_lineas
+g.x <- tibble(z1 = z[1,], z2 = z[2,]) |>
+  ggplot(aes(z1)) +
+  geom_histogram() + xlab(expression(z[1])) + 
+  sin_lineas
+g.y <- tibble(z1 = z[1,], z2 = z[2,]) |>
+  ggplot(aes(z2)) +
+  geom_histogram() + xlab(expression(z[2])) + 
+  sin_lineas
+
+(g.x / g.y | g.joint)
