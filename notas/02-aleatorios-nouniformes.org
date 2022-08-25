@@ -83,11 +83,13 @@
     - [[#tarea][Tarea]]
   - [[#beta-binomial][Beta Binomial]]
   - [[#mezclas-gaussianas][Mezclas Gaussianas]]
+  - [[#comentarios][Comentarios]]
 - [[#prueba-chi2][Prueba $\chi^2$]]
   - [[#procedimiento-de-la-prueba-chi2][Procedimiento de la prueba $\chi^2$]]
     - [[#pregunta][Pregunta:]]
   - [[#aplicación-de-la-prueba][Aplicación de la prueba]]
   - [[#aplicación-de-pruebas][Aplicación de pruebas]]
+- [[#conclusiones-y-comentarios][Conclusiones y comentarios]]
 :END:
 
 * Generación de variables no uniformes                           
@@ -119,7 +121,7 @@ variable aleatoria $X$ y una función de acumulación $\mathbb{P}$. Si utilizamo
 :reveal_background: #00468b
 :END:
 Considera $X \sim \mathsf{Exp}(1)$, de tal forma que $\mathbb{P}(x) = 1 -
-e^{-x}$. Si sólo sabemos generar números uniformes, ¿cómo generarías números de
+^{-x}$. Si sólo sabemos generar números uniformes, ¿cómo generarías números de
 $X$?
 
 #+REVEAL: split
@@ -169,7 +171,6 @@ Sea $X$ una variable aleatoria con función de acumulación $\mathbb{P}$. La fun
 \begin{align}
 \mathbb{P}^{-1}(u) = \inf \{ x | F(x) \geq u\}\,. 
 \end{align}
-
 
 *** ~Teorema~ [de la función inversa generalizada]:
 Sea $\mathbb{P}$ una función de distribución. Sea $\mathbb{P}^{-1}(\cdot)$  la función inversa generalizada de $\mathbb{P}$ y $U \sim \mathsf{U}(0,1)$ . Entonces, la variable aleatoria
@@ -529,6 +530,18 @@ Otro modelo /famoso/ es el de una mezcla de Gaussianas. Donde tenemos $k$ posibl
 #+RESULTS:
 [[file:../images/rgaussmix-histogram.jpeg]]
 
+** Comentarios
+
+- El procedimiento para generar aleatorios de una mezcla nos permite obtener
+  ~distribuciones marginales a partir de la conjunta~.
+- La combinación de componentes nos permite ser selectivos en los métodos de
+  generación que podamos utilizar (respetando la estructura de ~dependencia
+  condicional~). 
+- Por ejemplo, en el modelo
+  \begin{align}
+  \mathbb{P}(x) = \sum_{j \in \mathcal{Y}}^{} \mathbb{P}(X | Y = j) \mathbb{P}(Y = j)\,.
+  \end{align}  
+
 
 * Prueba $\chi^2$
 
@@ -724,5 +737,15 @@ cierto tipo de desviaciones. La bateria de pruebas mas utilizada es la colecció
 de pruebas ~DieHARD~ que desarrolló [[https://en.wikipedia.org/wiki/Diehard_tests][George Marsaglia]] y que se ha ido
 complementando con los años.
 
+* Conclusiones y comentarios
+
+- El método de la transformada inversa es útil. Sin embargo, no siempre se puede
+  calcular de forma cerrada (distribución normal).
+- El modelo de mezclas es muy común en aplicaciones financieras, estudios de
+  mercado y problemas de clasificación (segmentación).
+
+
 bibliographystyle:abbrvnat
 bibliography:references.bib
+
+
