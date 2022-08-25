@@ -32,7 +32,7 @@
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | Números no uniformes.\\
 *Objetivo*: En esta sección del curso veremos métodos para generar números aleatorios de distribuciones un poco mas generales que una distribución uniforme. En particular veremos algunos ejemplos de distribuciones continuas, discretas y mezclas. Además veremos una prueba de uniformidad adicional a la prueba Kolmogorov-Smirnov.\\
-*Lectura recomendada*: Capítulo 2 de citep:Robert2010a. 
+*Lectura recomendada*: Capítulo 2 de citep:Robert2010a. El capítulo 3 de citep:Ross2013a presenta los métodos para generar números aleatorios gaussianos. 
 #+END_NOTES
 
 #+begin_src R :exports none :results none
