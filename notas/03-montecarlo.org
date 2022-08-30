@@ -132,6 +132,9 @@ parámetros. Es decir, cuando el dominio de integración es $\mathcal{X} \subset
 
   ## Cambia el número de decimales para mostrar
   options(digits = 4)
+  options(rlang_backtrace_on_error = "none")
+  options(pillar.subtle = FALSE)
+
 
   sin_lineas <- theme(panel.grid.major = element_blank(),
                       panel.grid.minor = element_blank())
