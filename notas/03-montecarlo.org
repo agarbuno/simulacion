@@ -3,28 +3,18 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Integración Monte Carlo~
 #+STARTUP: showall
-:LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
-#+LANGUAGE: sp
-#+LATEX_CLASS: handout
-#+LATEX_HEADER: \usepackage[spanish]{babel}
-#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
-#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
-#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
-#+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
-#+LaTeX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{fancyvrb}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
-#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
-#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
-#+LaTeX_HEADER: {}
-#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
-#+LaTeX_HEADER: {}
-#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
-#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/03-montecarlo.pdf
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
 :END:
 #+PROPERTY: header-args:R :session monte-carlo :exports both :results output org :tangle ../rscripts/03-montecarlo.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc noexport latex
@@ -78,6 +68,7 @@ En el curso estamos explorando mas allá de lo que ofrece el capítulo 3 de cite
   - [[#primera-estrategia][Primera estrategia]]
   - [[#segunda-estrategia][Segunda estrategia]]
   - [[#comparación][Comparación]]
+- [[#referencias][Referencias]]
 :END:
 
 
@@ -155,7 +146,7 @@ parámetros. Es decir, cuando el dominio de integración es $\mathcal{X} \subset
 #+end_src
 
 #+REVEAL: split
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/quadrature.jpeg :exports results :results output graphics file
   norm.cuadrature |>
     ggplot(aes(x=x + grid.size/2, y=y)) + 
@@ -176,7 +167,7 @@ parámetros. Es decir, cuando el dominio de integración es $\mathcal{X} \subset
 [[file:../images/quadrature.jpeg]]
 
 #+REVEAL: split
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/quadrature-hi.jpeg :exports results :results output graphics file
   grid.n          <- 101                 # Número de celdas 
   grid.size       <- 6/(grid.n+1)       # Tamaño de celdas en el intervalo [-3, 3]
@@ -366,7 +357,7 @@ Si escogemos $N$ suficientemente grande entonces nuestro promedio converge a la
 integral. En [[fig-mc-rolling]] se muestra para cada $n$ en el eje horizontal cómo
 cambia nuestra estimación $\hat \pi_n^{\mathsf{MC}}(f)$ .
 
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/dardos-consistencia.jpeg :exports results :results output graphics file
   set.seed(1087)
   genera_dardos(n = 2**16) %>% 
@@ -422,7 +413,7 @@ NULL
 
 #+REVEAL: split
 Lo cual nos permite realizar distintos escenarios posibles. 
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/dardos-trayectorias.jpeg :exports results :results output graphics file
   resultados |>
     as_data_frame() |>
@@ -446,7 +437,7 @@ nuestro estimador de la integral. E incluso podríamos (si el número de
 simulaciones lo permite) aproximar dicho comportamiento utilizando
 distribuciones asintóticas, ($\mathsf{TLC}$).
 
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/dardos-normalidad.jpeg :exports results :results output graphics file
       resultados |>
         as_data_frame() |>
@@ -478,7 +469,7 @@ Podemos explicar la reducción de los intervalos de confianza por medio de la
 varianza de la estimación de la integral en las distintas réplicas que
 tenemos. Mas adelante explicaremos de dónde viene la línea punteada. Vemos cómo,
 aunque captura bien la reducción en varianza, puede sub- o sobre-estimarla.
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/dardos-cota-cramerrao.jpeg :exports results :results output graphics file
   resultados |>
     as_data_frame() |>
@@ -736,18 +727,18 @@ Lo que hemos discutido hasta ahora nos permite ver que el método Monte Carlo --
 *** ~Teorema~ [Ley (fuerte) de los grandes números]:
 Sea $X_{1}, \ldots, X_{n}$ una muestra de variables $\mathsf{iid}$ y sea $X$una variable con la misma distribución. Si utilizamos una $f: \mathbb{R} \rightarrow \mathbb{R}$ acotada, entonces $h(X_{1}), \ldots, h(X_{n})$ son variables independientes y acotadas con media finita. De tal forma que se satisface que
 \begin{align}
-\mathsf{Prob} \left( \lim_{n \rightarrow \infty} \hat \pi^{\mathsf{MC}}_N (h)= \pi(h) \right) = 1\,.
+\mathsf{Prob} \left( \lim_{N \rightarrow \infty} \hat \pi^{\mathsf{MC}}_N (h)= \pi(h) \right) = 1\,.
 \end{align}
 
 *** ~Teorema~ [Ley (débil) de los grandes números]:
 De los resultados anteriores ya sabíamos que
 \begin{align}
-\lim_{n \rightarrow \infty}  \mathsf{Prob} \left( \left| \hat \pi^{\mathsf{MC}}_N (h) - \pi(h) \right| < \epsilon\right) = 1\,.
+\lim_{N \rightarrow \infty}  \mathsf{Prob} \left( \left| \hat \pi^{\mathsf{MC}}_N (h) - \pi(h) \right| < \epsilon\right) = 1\,.
 \end{align}
 
 * Consideraciones
 
-Consideremos que queremos resolver la integral
+Supongamos que queremos resolver la integral
 \begin{align}
 \int_{2}^{3} e^{-\frac{x^2}{2}} \text{d}x\,.
 \end{align}
@@ -756,6 +747,7 @@ Consideremos que queremos resolver la integral
 
 Al tener un intervalo acotado podemos pensar en una $\mathsf{U}(2, 3)$.
 
+#+REVEAL: split
 #+begin_src R :exports code :results none
   set.see(108); nsamples <- 10**4; nexp <- 100
   h <- function(x){ exp(-x**2/2) }
@@ -772,7 +764,7 @@ Al tener un intervalo acotado podemos pensar en una $\mathsf{U}(2, 3)$.
 
 
 #+REVEAL: split
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/uniforme-normal-trayectorias.jpeg  :exports results :results output graphics file
   as.tibble(estimador_mc) |>
     mutate(n = 1:nsamples) |>
@@ -790,7 +782,7 @@ Al tener un intervalo acotado podemos pensar en una $\mathsf{U}(2, 3)$.
 
 
 #+REVEAL: split
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/uniforme-normal-unica.jpeg  :exports results :results output graphics file
   as.tibble(estimador_mc) |>
     mutate(n = 1:nsamples) |>
@@ -810,7 +802,7 @@ Al tener un intervalo acotado podemos pensar en una $\mathsf{U}(2, 3)$.
 
 
 #+REVEAL: split
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/uniforme-normal-estimador.jpeg :exports results :results output graphics file
   gunif <- tibble(n = 1:nsamples, media = media_mc, error = error_mc) |>
     ggplot(aes(n, media)) +
@@ -834,7 +826,7 @@ Al tener un intervalo acotado podemos pensar en una $\mathsf{U}(2, 3)$.
 Por la forma que tiene la integral podemos considerar también una integral bajo
 una distribución normal.
 
-
+#+REVEAL: split
 #+begin_src R :exports code :results none
   set.seed(108); nsamples <- 10**4; nexp <- 100
   f <- function(x){ ifelse(x >= 2 & x <= 3, sqrt(2 * pi), 0) }
@@ -851,7 +843,7 @@ una distribución normal.
 
 
 #+REVEAL: split
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/normal-uniforme-trayectorias.jpeg  :exports results :results output graphics file
   as.tibble(estimador_mc) |>
     mutate(n = 1:nsamples) |>
@@ -869,7 +861,7 @@ una distribución normal.
 
 
 #+REVEAL: split
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/normal-uniforme-unica.jpeg  :exports results :results output graphics file
   as.tibble(estimador_mc) |>
     mutate(n = 1:nsamples) |>
@@ -889,7 +881,7 @@ una distribución normal.
 
 
 #+REVEAL: split
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/normal-uniforme-estimador.jpeg :exports results :results output graphics file
   gnormal <- tibble(n = 1:nsamples, media = media_mc, error = error_mc) |>
     ggplot(aes(n, media)) +
@@ -928,6 +920,8 @@ una distribución normal.
 
 #+RESULTS:
 [[file:../images/normal-unif-compara-2.jpeg]]
+
+* Referencias
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
