@@ -26,7 +26,7 @@
 #+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
 #+EXPORT_FILE_NAME: ../docs/03-montecarlo.pdf
 :END:
-#+PROPERTY: header-args:R :session intro :exports both :results output org :tangle ../rscripts/03-montecarlo.R :mkdirp yes :dir ../
+#+PROPERTY: header-args:R :session monte-carlo :exports both :results output org :tangle ../rscripts/03-montecarlo.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc noexport latex
 
 #+BEGIN_NOTES
@@ -59,7 +59,7 @@ puede encontrar en la sección 3.1 de citet:Reich2015. Y una buena referencia
     - [[#nota][Nota:]]
     - [[#nota][Nota:]]
   - [[#estimación-de-una-proporción][Estimación de una proporción]]
-    - [[#tarea][Tarea:]]
+    - [[#ejercicio][Ejercicio:]]
     - [[#pregunta][Pregunta:]]
 - [[#desigualdades-de-concentración][Desigualdades de concentración]]
   - [[#desigualdad-de-chebyshev][Desigualdad de Chebyshev]]
@@ -68,6 +68,15 @@ puede encontrar en la sección 3.1 de citet:Reich2015. Y una buena referencia
     - [[#solución][Solución:]]
     - [[#discusión][Discusión:]]
   - [[#desigualdad-de-hoeffding][Desigualdad de Hoeffding]]
+    - [[#teorema-desigualdad-de-hoeffding][Teorema [Desigualdad de Hoeffding]:]]
+    - [[#ejercicio][Ejercicio:]]
+- [[#justificación-del-método-monte-carlo][Justificación del método Monte Carlo]]
+  - [[#teorema-ley-fuerte-de-los-grandes-números][Teorema [Ley (fuerte) de los grandes números]:]]
+  - [[#teorema-ley-débil-de-los-grandes-números][Teorema [Ley (débil) de los grandes números]:]]
+- [[#consideraciones][Consideraciones]]
+  - [[#primera-estrategia][Primera estrategia]]
+  - [[#segunda-estrategia][Segunda estrategia]]
+  - [[#comparación][Comparación]]
 :END:
 
 
@@ -320,7 +329,7 @@ Por ejemplo, se consideran polinomios que aproximen con cierto grado de precisi�
 \begin{gather*}
 \pi(f) = \mathbb{E}_\pi[f] = \int f(x) \pi(x) \text{d}x\,,\\
 \pi_N^{\textsf{MC}}(f) = \frac1N \sum_{n = 1}^N f( x^{(n)}), \qquad \text{ donde }  x^{(n)} \overset{\mathsf{iid}}{\sim} \pi, \qquad \text{ con } n = 1, \ldots, N \,, \\
- \pi(f) \approx \pi_N^{\textsf{MC}}(f)\,.
+\pi_N^{\textsf{MC}}(f) \approx  \pi(f)\,.
 \end{gather*} 
 
 ** Ejemplo: Dardos
@@ -384,7 +393,7 @@ multidimensionales~ para poder guardar muestras bajo distintas replicas.
 
 #+begin_src R :exports both :results org
   set.seed(108)
-  nsamples <- 10**4; nexp <- 50
+  nsamples <- 10**4; nexp <- 100
   U <- runif(nexp * 2 * nsamples)
   U <- array(U, dim = c(nexp, 2, nsamples))
   apply(U[1:5,,], 1, str)
@@ -601,7 +610,7 @@ Si denotamos por $\theta$ la tasa de éxito. Entonces nuestro experimento (lanza
 \hat \theta_n := \bar X_n \approx \theta
 \end{align}
 
-*** ~Tarea~:
+*** ~Ejercicio~:
 :PROPERTIES:
 :reveal_background: #00468b
 :END:
@@ -639,7 +648,7 @@ tabla en ref:tab-darts muestra la aproximación conforme aumenta $N$.
 Lo que queremos es encontrar una $N$ tal que con una ~alta probabilidad~ nuestro
 ~estimador sea cercano al parámetro~ que está ajustando. Esto lo escribimos como
 \begin{align}
-\mathsf{Prob} \left( |\hat \theta_N - \theta| < \epsilon \right) \geq 1 - \alpha\,.
+\mathsf{Prob} \left( |\hat \theta_N - \theta| < \epsilon \right) \geq 1 - \delta\,.
 \end{align}
 
 *** ~Teorema~ [Desigualdad de Chebyshev]:
@@ -662,19 +671,19 @@ Calcula la desigualdad y obtén el número de simulaciones necesarios para
 encontrar un estimador con nivel de precisión $\epsilon$ con una probabilidad
 $\alpha$.
 
-*** ~Solución~:
+*** ~Solución~:                                                       :latex:
 Usando la desigualdad de Chebyshev vemos que
 \begin{align}
-1 - \alpha \leq 1 - \frac{\mathbb{V}(\hat \theta_N)}{\epsilon^2}\,,
+1 - \delta \leq 1 - \frac{\mathbb{V}(\hat \theta_N)}{\epsilon^2}\,,
 \end{align}
 
 Del cual podemos despejar
 \begin{align}
-N \geq \frac{\theta (1 -\theta)}{\alpha \epsilon^2}\,.
+N \geq \frac{\theta (1 -\theta)}{\delta \epsilon^2}\,.
 \end{align}
 
 *** ~Discusión~:
-El resultado anterior nos permite escribir que con alta probabilidad (mayor a $1 -\alpha$) tendremos que 
+El resultado anterior nos permite escribir que con alta probabilidad (al menos $1 -\delta$) tendremos que 
 \begin{align}
 \hat \theta_N = \theta \pm \epsilon\,.
 \end{align}
@@ -685,17 +694,239 @@ La desigualdad de Chebyshev nos permite encontrar cotas para prácticamente cual
 calidad de la estimación.
 
 #+REVEAL: split
-Una alternativa es utilizar la desigualdad de Hoeffding que nos permite acotar
+Una alternativa es utilizar la desigualdad de Hoeffding que nos permite establecer cotas desviaciones de
 variables aleatorias acotadas.
 
 #+BEGIN_NOTES
 Aunque la discusión es a nivel variable aleatoria, lo que estamos discutiendo es
-relevante en integración monte carlo. Pues, si $f : X \rightarrow [a, b]$
+relevante en integración Monte Carlo. Pues, si $f : X \rightarrow [a, b]$
 podemos pensar en $f(X)$ como una variable aleatoria acotada en $[a, b]$ y
 nuestra discusión procede.
 #+END_NOTES
 
+*** ~Teorema~ [Desigualdad de Hoeffding]:
+Sea $X_{1}, \ldots, X_{n}$ una muestra ${\mathsf{iid}}$ de variables aleatorias con valores en $[a, b]$. Entonces para cualquier $t \geq 0$ y usando $S_n = X_{1} + \cdots+ X_{n}$ tenemos que
+\begin{align}
+\mathsf{Prob}\left( |S_n - \mathbb{E}[S_n] | \geq t \right) \leq 2 \exp \left( - \frac{2 t^2}{n (b - a)^2} \right)\,.
+\end{align}
 
+*** ~Ejercicio~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+
+Establece el tamaño de muestra necesario, $N$, para garantizar con probabilidad
+al menos $1-\delta$ que nuestro estimador será $\epsilon$ preciso.
+
+*** ~Solución~:                                                    :noexport:
+La solución es
+\begin{align}
+N \geq \frac{\log(2/\delta)}{2 \epsilon^2}\,.
+\end{align}
+
+#+BEGIN_NOTES
+Esto nos dice que para obtener una confianza determinada el costo es sublineal y mientras que en términos de precisión este es cuadrático. 
+#+END_NOTES
+
+* Justificación del método Monte Carlo
+
+Lo que hemos discutido hasta ahora nos permite ver que el método Monte Carlo ---aproxima integrales con promedios--- tiene buenas propiedades. El tiro de gracia es el siguiente resultado.
+
+*** ~Teorema~ [Ley (fuerte) de los grandes números]:
+Sea $X_{1}, \ldots, X_{n}$ una muestra de variables $\mathsf{iid}$ y sea $X$una variable con la misma distribución. Si utilizamos una $f: \mathbb{R} \rightarrow \mathbb{R}$ acotada, entonces $h(X_{1}), \ldots, h(X_{n})$ son variables independientes y acotadas con media finita. De tal forma que se satisface que
+\begin{align}
+\mathsf{Prob} \left( \lim_{n \rightarrow \infty} \hat \pi^{\mathsf{MC}}_N (h)= \pi(h) \right) = 1\,.
+\end{align}
+
+*** ~Teorema~ [Ley (débil) de los grandes números]:
+De los resultados anteriores ya sabíamos que
+\begin{align}
+\lim_{n \rightarrow \infty}  \mathsf{Prob} \left( \left| \hat \pi^{\mathsf{MC}}_N (h) - \pi(h) \right| < \epsilon\right) = 1\,.
+\end{align}
+
+* Consideraciones
+
+Consideremos que queremos resolver la integral
+\begin{align}
+\int_{2}^{3} e^{-\frac{x^2}{2}} \text{d}x\,.
+\end{align}
+
+** Primera estrategia                                            
+
+Al tener un intervalo acotado podemos pensar en una $\mathsf{U}(2, 3)$.
+
+#+begin_src R :exports code :results none
+  set.see(108); nsamples <- 10**4; nexp <- 100
+  h <- function(x){ exp(-x**2/2) }
+  u <- runif(nexp * nsamples, min = 2, max = 3)
+  x <- array(u, c(nexp, nsamples))
+  h_x <- h(x)
+#+end_src
+
+#+begin_src R :exports code :results none
+  estimador_mc <- apply(h_x, 1, cummean)    # ojo, transpone el resultado
+  media_mc <- apply(estimador_mc, 1, mean)
+  error_mc <- apply(estimador_mc, 1, sd)
+  #+end_src
+
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/uniforme-normal-trayectorias.jpeg  :exports results :results output graphics file
+  as.tibble(estimador_mc) |>
+    mutate(n = 1:nsamples) |>
+    pivot_longer(cols = 1:20) |>
+    ggplot(aes(n, value, color = name)) +
+    geom_line() +
+    geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) + 
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/uniforme-normal-trayectorias.jpeg]]
+
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/uniforme-normal-unica.jpeg  :exports results :results output graphics file
+  as.tibble(estimador_mc) |>
+    mutate(n = 1:nsamples) |>
+    ggplot(aes(n, V1)) +
+    geom_ribbon(aes(ymin = V1 - 2 * error_mc,
+                    ymax = V1 + 2 * error_mc),
+                alpha = .2, fill = 'salmon') + 
+    geom_line() +
+    geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) +
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/uniforme-normal-unica.jpeg]]
+
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/uniforme-normal-estimador.jpeg :exports results :results output graphics file
+  gunif <- tibble(n = 1:nsamples, media = media_mc, error = error_mc) |>
+    ggplot(aes(n, media)) +
+    geom_ribbon(aes(ymin = media - 2 * error,
+                    ymax = media + 2 * error), alpha = .2, fill = 'salmon') +
+    geom_line() +
+    geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) + 
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+
+  gunif
+
+#+end_src
+
+#+RESULTS:
+[[file:../images/uniforme-normal-estimador.jpeg]]
+
+** Segunda estrategia
+
+Por la forma que tiene la integral podemos considerar también una integral bajo
+una distribución normal.
+
+
+#+begin_src R :exports code :results none
+  set.seed(108); nsamples <- 10**4; nexp <- 100
+  f <- function(x){ ifelse(x >= 2 & x <= 3, sqrt(2 * pi), 0) }
+  u <- rnorm(nexp * nsamples)
+  x <- array(u, c(nexp, nsamples))
+  f_x <- f(x)
+#+end_src
+
+#+begin_src R :exports code :results none
+  estimador_mc <- apply(f_x, 1, cummean)    # ojo, transpone el resultado
+  media_mc <- apply(estimador_mc, 1, mean)
+  error_mc <- apply(estimador_mc, 1, sd)
+  #+end_src
+
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/normal-uniforme-trayectorias.jpeg  :exports results :results output graphics file
+  as.tibble(estimador_mc) |>
+    mutate(n = 1:nsamples) |>
+    pivot_longer(cols = 1:20) |>
+    ggplot(aes(n, value, color = name)) +
+    geom_line() +
+    geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) + 
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/uniforme-normal-trayectorias.jpeg]]
+
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/normal-uniforme-unica.jpeg  :exports results :results output graphics file
+  as.tibble(estimador_mc) |>
+    mutate(n = 1:nsamples) |>
+    ggplot(aes(n, V1)) +
+    geom_ribbon(aes(ymin = V1 - 2 * error_mc,
+                    ymax = V1 + 2 * error_mc),
+                alpha = .2, fill = 'salmon') + 
+    geom_line() +
+    geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) +
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/uniforme-normal-unica.jpeg]]
+
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/normal-uniforme-estimador.jpeg :exports results :results output graphics file
+  gnormal <- tibble(n = 1:nsamples, media = media_mc, error = error_mc) |>
+    ggplot(aes(n, media)) +
+    geom_ribbon(aes(ymin = media - 2 * error,
+                    ymax = media + 2 * error), alpha = .2, fill = 'salmon') +
+    geom_line() +
+    geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) + 
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+
+  gnormal
+
+#+end_src
+
+#+RESULTS:
+[[file:../images/uniforme-normal-estimador.jpeg]]
+
+** Comparación
+
+¿Cuál método preferimos?
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/normal-unif-compara.jpeg :exports results :results output graphics file
+  gunif + gnormal
+#+end_src
+
+#+RESULTS:
+[[file:../images/normal-unif-compara.jpeg]]
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/normal-unif-compara-2.jpeg :exports results :results output graphics file
+  (gunif + ylim(-.55, .55)) + (gnormal + ylim(-.55, .55))
+#+end_src
+
+#+RESULTS:
+[[file:../images/normal-unif-compara-2.jpeg]]
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
@@ -882,7 +1113,7 @@ donde $f(\theta_1, \ldots, \theta_4) = \mathbb{I}_{[\theta_4 \geq \theta_j, j \n
 - ¿Cuál es la probabilidad a priori de que cada sabor sea el preferido?
 - Con los datos de arriba, calcula la probabilidad de que la gente prefiera el sabor de mango sobre limón.
 
-* Extensiones: Muestreo por importancia                            :noexport:
+** Extensiones: Muestreo por importancia                          :noexport:
 
 Incluso cuando tenemos una integral *complicada* podemos ~relajar~ el problema de integración. De tal forma que podemos ~sustituir~
 $$\int f(x) \pi(x) \text{d} x = \int f(x) \frac{\pi(x)}{\rho(x)}\,\rho(x) \text{d} x = \int f(x) \, w(x) \, \rho(x) \, \text{d}x\,,$$
