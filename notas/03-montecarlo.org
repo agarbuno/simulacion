@@ -3,28 +3,18 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Integración Monte Carlo~
 #+STARTUP: showall
-:LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
-#+LANGUAGE: sp
-#+LATEX_CLASS: handout
-#+LATEX_HEADER: \usepackage[spanish]{babel}
-#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
-#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
-#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
-#+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
-#+LaTeX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{fancyvrb}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
-#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
-#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
-#+LaTeX_HEADER: {}
-#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
-#+LaTeX_HEADER: {}
-#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
-#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/03-montecarlo.pdf
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
 :END:
 #+PROPERTY: header-args:R :session intro :exports both :results output org :tangle ../rscripts/03-montecarlo.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc noexport latex
@@ -62,6 +52,11 @@ puede encontrar en la sección 3.1 de citet:Reich2015. Y una buena referencia
     - [[#tarea][Tarea:]]
     - [[#pregunta][Pregunta:]]
 - [[#desigualdades-de-concentración][Desigualdades de concentración]]
+  - [[#desigualdad-de-chebyshev][Desigualdad de Chebyshev]]
+    - [[#teorema-desigualdad-de-chebyshev][Teorema [Desigualdad de Chebyshev]:]]
+    - [[#ejercicio][Ejercicio:]]
+    - [[#solución][Solución:]]
+  - [[#desigualdad-de-hoeffding][Desigualdad de Hoeffding]]
 :END:
 
 
@@ -72,7 +67,10 @@ En muchas aplicaciones nos interesa poder resolver integrales de manera numéric
 \int_{\Theta}^{} h(\theta) \, \text{d}\theta\,,
 \end{align}
 que bien puede ser reexpresada como una integral bajo una medida de
-probabilidad. Por ejemplo,
+probabilidad.
+
+#+REVEAL: split
+Por ejemplo,
 \begin{align}
 \int_{\Theta}^{} f(\theta) \, \pi(\theta ) \,  \text{d}\theta\,,
 \end{align}
@@ -87,7 +85,7 @@ de una variable $\theta \sim \pi(\cdot)$ y calcular mediante un método numéric
 
 * Integración numérica
 
-Recordemos la definición de integrales Riemann:
+Recordemos la definición de integrales Reimann:
 
 $$\int f(x) \text{d} x \approx \sum_{n=1}^N f(u_n) \Delta u_n =: \hat \pi_N^{\mathsf{R}} (f)\,.$$
 
@@ -112,7 +110,7 @@ parámetros. Es decir, cuando el dominio de integración es $\mathcal{X} \subset
   theme_set(theme_linedraw(base_size = 25))
 
   ## Cambia el número de decimales para mostrar
-  options(digits = 2)
+  options(digits = 4)
 
   sin_lineas <- theme(panel.grid.major = element_blank(),
                       panel.grid.minor = element_blank())
@@ -135,7 +133,7 @@ parámetros. Es decir, cuando el dominio de integración es $\mathcal{X} \subset
 
 #+end_src
 
-
+#+REVEAL: split
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/quadrature.jpeg :exports results :results output graphics file
   norm.cuadrature |>
@@ -183,7 +181,7 @@ parámetros. Es decir, cuando el dominio de integración es $\mathcal{X} \subset
 
 ** Análisis de error 
 
-El concepto de integrabilidad de Darboux nos puede ayudar a acotar el error
+El concepto de ~integrabilidad de Darboux~ nos puede ayudar a acotar el error
 cometido por nuestra estrategia de integración. Por ejemplo, para una partición $\rho_N$ (malla)
 del intervalo tenemos que
 \begin{align}
@@ -358,7 +356,7 @@ cambia nuestra estimación $\hat \pi_n^{\mathsf{MC}}(f)$ .
       geom_hline(yintercept = pi, linetype = 'dashed') + 
       scale_x_continuous(trans='log10', 
                          labels = trans_format("log10", math_format(10^.x))) + 
-    ylab('Aproximación') + xlab("Muestras") + sin_lineas
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas
 
 #+end_src
 #+caption: Estimación $\pi_N^{\textsf{MC}}(f)$ con $N \rightarrow \infty$.
@@ -414,7 +412,7 @@ Lo cual nos permite realizar distintos escenarios posibles.
     geom_hline(yintercept = pi, linetype = 'dashed') + 
     scale_x_continuous(trans='log10', 
                        labels = trans_format("log10", math_format(10^.x))) + 
-    ylab('Aproximación') + xlab("Muestras") + sin_lineas + sin_leyenda +
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda +
     ylim(0, 7)
 #+end_src
 #+caption: Réplica de las trayectorias de diversas realizaciones de la aproximación de la integral.
@@ -425,7 +423,7 @@ Lo cual nos permite realizar distintos escenarios posibles.
 Bajo ciertas consideraciones teóricas podemos esperar un buen comportamiento de
 nuestro estimador de la integral. E incluso podríamos (si el número de
 simulaciones lo permite) aproximar dicho comportamiento utilizando
-distribuciones asintóticas, ($\mathsf{CLT}$).
+distribuciones asintóticas, ($\mathsf{TLC}$).
 
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/dardos-normalidad.jpeg :exports results :results output graphics file
@@ -444,7 +442,7 @@ distribuciones asintóticas, ($\mathsf{CLT}$).
     geom_line() +
     scale_x_continuous(trans='log10', 
                        labels = trans_format("log10", math_format(10^.x))) + 
-    ylab('Aproximación') + xlab("Muestras") + sin_lineas + sin_leyenda +
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda +
   ylim(0, 7)
 #+end_src
 #+caption: Comportamiento promedio e intervalos de confianza. 
@@ -504,6 +502,7 @@ El estimador Monte Carlo del que hablamos, $\hat \pi_{N}^{\mathsf{MC}}(f)$, es u
 \end{align}
 con $x^{(i)} \overset{\mathsf{iid}}{\sim} \pi$ . 
 
+#+REVEAL: split
 De lo cual es natural pensar: ¿y si hubiéramos observado otro conjunto de
 simulaciones? Nuestro proceso de estimación es el mismo pero la muestra puede
 cambiar.
@@ -524,7 +523,7 @@ promedio~ (varianza)
 Al ser un ejercicio de ~estimación~ la desviación estándar del estimador recibe el
 nombre de ~error estándar~. Lo cual denotamos por
 \begin{align}
-\mathsf{ee}[\hat \pi_N^{\mathsf{MC}}(f)] = \left( \mathbb{V}[\hat \pi_N^{\mathsf{MC}}(f)]  \right)^{1/2}\,.
+\mathsf{ee}[\hat \pi_N^{\mathsf{MC}}(f)] = \left( \mathbb{V}[\hat \pi_N^{\mathsf{MC}}(f)]  \right)^{1/2}= \left(  \frac{\mathbb{V}_\pi( f )}{N} \right)^{1/2}\,.
 \end{align}
 
 *** ~Nota~:
@@ -554,16 +553,82 @@ El lanzamiento de dardos que vimos es un ejemplo de una situación muy usual en
 estimación de integrales. Queremos estimar la tasa de éxito a partir de ver el
 éxito o fracaso de experimentos Bernoulli.
 
+#+REVEAL: split
 Si denotamos por $\theta$ la tasa de éxito. Entonces nuestro experimento (lanzar dados dentro del círculo) determina que $S_n \sim \mathsf{Binomial}(N, \theta)$ y que $\bar X_n$ es un *estimador* de $\theta$. Por lo tanto,
 \begin{align}
 \hat \theta_n := \bar X_n \approx \theta
 \end{align}
 
 *** ~Tarea~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+
 ¿Cuál es la fórmula del error estándar para este estimador?
 
 *** ~Pregunta~:
 ¿Cuántas muestras necesitamos para tener una aproximación /buena/?
+
+* Desigualdades de concentración 
+
+En muchas situaciones nos interesa establecer cuántas simulaciones necesitamos
+para poder aproximar nuestras integrales hasta cierto orden. Por ejemplo, la
+tabla en ref:tab-darts muestra la aproximación mediante una muestra conforme aumenta
+$N$.
+
+#+begin_src R :exports results :results org
+  tibble(N = 1:nsamples, estimado = resultados[,1]/4) |>
+    mutate( dif.abs = abs(estimado - pi)/4) |>
+    filter(N %% 10 == 0 & log10(N) %in% c(1, 2, 3, 4)) |>
+    as.data.frame()
+#+end_src
+#+name: tab-darts
+#+caption: Aproximación de la proporción de dardos dentro de la diana.
+#+RESULTS:
+#+begin_src org
+      N estimado dif.abs
+1    10   1.0000  0.5354
+2   100   0.8000  0.5854
+3  1000   0.7920  0.5874
+4 10000   0.7876  0.5885
+#+end_src
+
+** Desigualdad de Chebyshev
+
+Lo que queremos es encontrar una $N$ tal que con una ~alta probabilidad~ nuestro
+~estimador sea cercano al parámetro~ que está ajustando. Esto lo escribimos como
+\begin{align}
+\mathsf{Prob} \left( |\hat \theta_N - \theta| < \epsilon \right) \geq \alpha
+\end{align}
+
+*** ~Teorema~ [Desigualdad de Chebyshev]:
+Sea $X$ una variable aleatoria con media y varianza finita denotadas por $\mu$ y
+$\sigma^2$ respectivamente. Entonces para cualquier constante positiva $k \in
+\mathbb{R}$, tenemos que
+\begin{align}
+\mathsf{Prob}\left( |X - \mu| \geq k \, \sigma\right) \leq \frac{1}{k^2}\,.
+\end{align}
+
+#+REVEAL: split
+Lo cual podemos utilizar para encontrar una cota inferior para $N$.
+
+*** ~Ejercicio~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+
+Calcula la desigualdad y obten el número de simulaciones necesarios para
+encontrar un estimador con nivel de precisión $\epsilon$ con una probabilidad
+$\alpha$.
+
+*** ~Solución~:                                                     :latex:
+
+
+** Desigualdad de Hoeffding
+
+
+
+
 bibliographystyle:abbrvnat
 bibliography:references.bib
 
