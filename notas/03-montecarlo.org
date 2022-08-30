@@ -37,6 +37,7 @@
 *Lectura recomendada*: Una lectura mas técnica sobre reglas de cuadratura se
 puede encontrar en la sección 3.1 de citet:Reich2015. Y una buena referencia
 (técnica) sobre el método Monte Carlo lo encuentran en citet:Sanz-Alonso2019.
+En el curso estamos explorando mas allá de lo que ofrece el capítulo 3 de citet:Robert2010a. 
 #+END_NOTES
 
 
