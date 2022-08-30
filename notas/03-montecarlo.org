@@ -58,6 +58,10 @@ puede encontrar en la sección 3.1 de citet:Reich2015. Y una buena referencia
     - [[#nota][Nota:]]
     - [[#nota][Nota:]]
     - [[#nota][Nota:]]
+  - [[#estimación-de-una-proporción][Estimación de una proporción]]
+    - [[#tarea][Tarea:]]
+    - [[#pregunta][Pregunta:]]
+- [[#desigualdades-de-concentración][Desigualdades de concentración]]
 :END:
 
 
@@ -449,6 +453,10 @@ distribuciones asintóticas, ($\mathsf{CLT}$).
 
 ** Propiedades
 
+A continuación enunciaremos algunas propiedades clave del método Monte
+Carlo. Poco a poco las iremos explicando y en particular discutiremos mas a
+fondo algunas de ellas. 
+
 *** ~Teorema~ [Error Monte Carlo]
 Sea $f : \mathbb{R}^p \rightarrow \mathbb{R}$ cualquier función bien
 comportada$^\dagger$.  Entonces, el estimador Monte Carlo es *insesgado*. Es
@@ -464,10 +472,23 @@ donde medimos el *error cuadrático medio* en el peor escenario
 \sup_{f \in \mathcal{F}} \, \,  \mathbb{E}\left[ \left(\hat \pi_N^{\textsf{MC}}(f) - \pi(f) \right)^2 \right] \leq \frac1N.
 \end{align*}
 
+#+BEGIN_NOTES
+Esta desigualdad nos muestra una de las propiedades que usualmente se celebran
+de los métodos Monte Carlo. La integral y nuestra aproximación de ella por medio
+de simulaciones tiene un error acotado proporcionalmente por el número de
+simulaciones.
+#+END_NOTES
+
 #+REVEAL: split
 En particular, la varianza del estimador (*error estándar*) satisface la igualdad
 
 $$ \textsf{ee}^2\left(\hat \pi_N^{\textsf{MC}}(f)\right) = \frac{\mathbb{V}_\pi( f )}{N}.$$
+
+#+BEGIN_NOTES
+Esta igualdad, aunque consistente con nuestra desigualdad anterior, nos dice
+algo mas. El error de nuestra aproximación *depende* de la varianza de $f$ bajo la
+distribución $\pi$.
+#+END_NOTES
 
 *** ~Teorema~ [TLC para estimadores Monte Carlo]
 Sea $f$ una función *bien comportada* $^{\dagger\dagger}$, entonces bajo una $N$
@@ -477,35 +498,42 @@ suficientemente grande tenemos
 \end{align}
 
 *** ~Nota~:
-El estimador Monte Carlo del que hablamos, $\hat \pi_{N}^{\mathsf{MC}}(f)$, es una estimación con una muestra finita de simulaciones. En ese sentido podemos pensar que tenemos un /mapeo/
+El estimador Monte Carlo del que hablamos, $\hat \pi_{N}^{\mathsf{MC}}(f)$, es una estimación con una ~muestra finita de simulaciones~. En ese sentido podemos pensar que tenemos un /mapeo/ de muestras a estimador
 \begin{align}
 (x^{(1)}, \ldots, x^{(N)}) \mapsto  \hat \pi_N^{\mathsf{MC}}(f)\,,
 \end{align}
 con $x^{(i)} \overset{\mathsf{iid}}{\sim} \pi$ . 
 
-De lo cual es natural pensar: ¿y si hubiéramos observado otro conjunto de simulaciones?
+De lo cual es natural pensar: ¿y si hubiéramos observado otro conjunto de
+simulaciones? Nuestro proceso de estimación es el mismo pero la muestra puede
+cambiar.
 
 #+REVEAL: split
-En este sentido nos preguntamos por el ~comportamiento promedio~ bajo distintas muestras observadas
+En este sentido nos preguntamos por el ~comportamiento promedio~ bajo distintas
+muestras observadas
 \begin{align}
 \mathbb{E}[\hat \pi_N^{\mathsf{MC}}(f)] = \mathbb{E}_{x_{1}, \ldots, x_{N}}[\hat \pi_N^{\mathsf{MC}}(f)]\,.
 \end{align}
-De la misma manera nos podemos preguntar sobre la dispersión alrededor de dicho promedio (varianza)
+De la misma manera nos podemos preguntar sobre la ~dispersión alrededor de dicho
+promedio~ (varianza)
 \begin{align}
 \mathbb{V}[\hat \pi_N^{\mathsf{MC}}(f)] = \mathbb{V}_{x_{1}, \ldots, x_{N}}[\hat \pi_N^{\mathsf{MC}}(f)]\,.
 \end{align}
 
 #+REVEAL: split
 Al ser un ejercicio de ~estimación~ la desviación estándar del estimador recibe el
-nombre de error estándar. Lo cual denotamos por
+nombre de ~error estándar~. Lo cual denotamos por
 \begin{align}
 \mathsf{ee}[\hat \pi_N^{\mathsf{MC}}(f)] = \left( \mathbb{V}[\hat \pi_N^{\mathsf{MC}}(f)]  \right)^{1/2}\,.
 \end{align}
 
 *** ~Nota~:
-Para algunos estimadores la fórmula del error estándar se puede obtener de manera analítica (curso de ~Inferencia Matemática~). Para otro tipo, tenemos que utilizar propiedades asintóticas (p.e. cota de Cramer-Rao). 
+Para algunos estimadores la fórmula del error estándar se puede obtener de
+manera analítica (curso de ~Inferencia Matemática~). Para otro tipo, tenemos que
+utilizar propiedades asintóticas (p.e. cota de Cramer-Rao).
 
-Hay casos en los que no existe una fórmula asintótica o resultado analítico,
+#+REVEAL: split
+Hay casos en los que no existe una fórmula asintótica o resultado analítico, pero
 podemos usar simulación [ ~8)~ ] para cuantificar dicha dispersión (lo veremos en
 otra sección del curso).
 
@@ -519,6 +547,23 @@ simulación para cuantificar dicha dispersión.
 #+caption: Comportamiento promedio e intervalos de confianza con aproximación asintótica.
 [[file:../images/dardos-normalidad.jpeg]]
 
+
+** Estimación de una proporción
+
+El lanzamiento de dardos que vimos es un ejemplo de una situación muy usual en
+estimación de integrales. Queremos estimar la tasa de éxito a partir de ver el
+éxito o fracaso de experimentos Bernoulli.
+
+Si denotamos por $\theta$ la tasa de éxito. Entonces nuestro experimento (lanzar dados dentro del círculo) determina que $S_n \sim \mathsf{Binomial}(N, \theta)$ y que $\bar X_n$ es un *estimador* de $\theta$. Por lo tanto,
+\begin{align}
+\hat \theta_n := \bar X_n \approx \theta
+\end{align}
+
+*** ~Tarea~:
+¿Cuál es la fórmula del error estándar para este estimador?
+
+*** ~Pregunta~:
+¿Cuántas muestras necesitamos para tener una aproximación /buena/?
 bibliographystyle:abbrvnat
 bibliography:references.bib
 
