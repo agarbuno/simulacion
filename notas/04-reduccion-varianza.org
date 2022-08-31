@@ -65,11 +65,29 @@
 :END:
 :CONTENTS:
 - [[#introducción][Introducción]]
+- [[#variables-antitéticas][Variables antitéticas]]
+- [[#variables-de-control][Variables de Control]]
+- [[#condicionamiento][Condicionamiento]]
+- [[#muestreo-por-importancia][Muestreo por importancia]]
+- [[#muestreo-estratificado][Muestreo estratificado]]
 :END:
 
 * Introducción
 
+Ya vimos algunos casos donde podemos reducir la varianza de nuestros estimadores
+Monte Carlo. Esto nos ayuda a mejorar la velocidad y eficiencia estadística de
+nuestros estimadores y en consecuencia optimizar los recursos computacionales.
 
+
+* Variables antitéticas 
+
+* Variables de Control
+
+* Condicionamiento
+
+* Muestreo por importancia
+
+* Muestreo estratificado
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
