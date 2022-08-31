@@ -3,28 +3,18 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Integración Monte Carlo~
 #+STARTUP: showall
-:LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
-#+LANGUAGE: sp
-#+LATEX_CLASS: handout
-#+LATEX_HEADER: \usepackage[spanish]{babel}
-#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
-#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
-#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
-#+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
-#+LaTeX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{fancyvrb}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
-#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
-#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
-#+LaTeX_HEADER: {}
-#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
-#+LaTeX_HEADER: {}
-#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
-#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/03-montecarlo.pdf
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
 :END:
 #+PROPERTY: header-args:R :session monte-carlo :exports both :results output org :tangle ../rscripts/03-montecarlo.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc noexport latex
@@ -81,7 +71,8 @@ En el curso estamos explorando mas allá de lo que ofrece el capítulo 3 de cite
   - [[#intervalos-de-confianza][Intervalos de confianza]]
     - [[#importante][Importante:]]
     - [[#experimentación][Experimentación:]]
-  - [[#problemas-con-estimadores][Problemas con estimadores]]
+  - [[#lentitud-con-estimadores][Lentitud con estimadores]]
+- [[#referencias][Referencias]]
 :END:
 
 
@@ -953,7 +944,7 @@ estimación no diste mas de $\epsilon$ unidades del verdadero valor.
 *** ~Importante~:
 Jamás mencionamos que el verdadero valor del parámetro se encuentre dentro del
 intervalo con cierta probabilidad. Es decir, *jamás* mencionamos una propiedad
-probabilística del verdadero valor, $\pi(f)$ que en nuestra argumentación
+probabilística del verdadero valor, $\pi(f)$, que en nuestra argumentación
 suponemos desconocido.
 
 *** ~Experimentación~:
@@ -966,6 +957,7 @@ registramos cuantas veces el intervalo cubre el verdadero valor del parámetro p
   error_mc <- apply(estimador.normal, 1, sd)
 #+end_src
 
+#+REVEAL: split
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/intervalos-normal.jpeg :exports results :results output graphics file
   truth <- sqrt(2 * pi) * (pnorm(3) - pnorm(2))
@@ -995,6 +987,7 @@ registramos cuantas veces el intervalo cubre el verdadero valor del parámetro p
   error_mc <- apply(estimador.uniforme, 1, sd)
 #+end_src
 
+#+REVEAL: split
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/intervalos-uniforme.jpeg :exports results :results output graphics file
   truth <- sqrt(2 * pi) * (pnorm(3) - pnorm(2))
@@ -1019,7 +1012,7 @@ registramos cuantas veces el intervalo cubre el verdadero valor del parámetro p
 #+RESULTS:
 [[file:../images/intervalos-uniforme.jpeg]]
 
-** Problemas con estimadores
+** Lentitud con estimadores
 
 Veremos un caso donde existen problemas en la estimación Monte Carlo. En
 particular, para estimar el error estándar. Esto se traduce en una reducción mas
@@ -1127,6 +1120,7 @@ En algunas aplicaciones nos interesa calcular el valor esperado de $\theta | x$ 
 #+RESULTS:
 [[file:../images/cauchy-intervalos.jpeg]]
 
+* Referencias
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
