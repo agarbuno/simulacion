@@ -3,28 +3,18 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Integración Monte Carlo~
 #+STARTUP: showall
-:LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
-#+LANGUAGE: sp
-#+LATEX_CLASS: handout
-#+LATEX_HEADER: \usepackage[spanish]{babel}
-#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
-#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
-#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
-#+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
-#+LaTeX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{fancyvrb}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
-#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
-#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
-#+LaTeX_HEADER: {}
-#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
-#+LaTeX_HEADER: {}
-#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
-#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/03-montecarlo.pdf
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
 :END:
 #+PROPERTY: header-args:R :session monte-carlo :exports both :results output org :tangle ../rscripts/03-montecarlo.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc noexport latex
@@ -78,6 +68,11 @@ En el curso estamos explorando mas allá de lo que ofrece el capítulo 3 de cite
   - [[#primera-estrategia][Primera estrategia]]
   - [[#segunda-estrategia][Segunda estrategia]]
   - [[#comparación][Comparación]]
+  - [[#intervalos-de-confianza][Intervalos de confianza]]
+    - [[#importante][Importante:]]
+    - [[#experimentación][Experimentación:]]
+  - [[#lentitud-con-estimadores][Lentitud con estimadores]]
+- [[#referencias][Referencias]]
 :END:
 
 
@@ -778,6 +773,7 @@ Al tener un intervalo acotado podemos pensar en una $\mathsf{U}(2, 3)$.
 #+REVEAL: split
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/uniforme-normal-trayectorias.jpeg  :exports results :results output graphics file
+  estimador.uniforme <- estimador_mc
   as.tibble(estimador_mc) |>
     mutate(n = 1:nsamples) |>
     pivot_longer(cols = 1:20) |>
@@ -857,15 +853,16 @@ una distribución normal.
 #+REVEAL: split
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/normal-uniforme-trayectorias.jpeg  :exports results :results output graphics file
+  estimador.normal <- estimador_mc
   as.tibble(estimador_mc) |>
-    mutate(n = 1:nsamples) |>
-    pivot_longer(cols = 1:20) |>
-    ggplot(aes(n, value, color = name)) +
-    geom_line() +
-    geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) + 
-    scale_x_continuous(trans='log10', 
-                       labels = trans_format("log10", math_format(10^.x))) + 
-    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+      mutate(n = 1:nsamples) |>
+      pivot_longer(cols = 1:20) |>
+      ggplot(aes(n, value, color = name)) +
+      geom_line() +
+      geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) + 
+      scale_x_continuous(trans='log10', 
+                         labels = trans_format("log10", math_format(10^.x))) + 
+      ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
 #+end_src
 
 #+RESULTS:
@@ -932,6 +929,201 @@ una distribución normal.
 
 #+RESULTS:
 [[file:../images/normal-unif-compara-2.jpeg]]
+
+** Intervalos de confianza
+
+Los intervalos que hemos construido y se muestran en las figuras anteriores son de la forma
+\begin{align}
+\hat \pi_{N}^{\mathsf{MC}} (f) \pm 2  \, \mathsf{ee}(\hat \pi_{N}^{\mathsf{MC}} (f))\,.
+\end{align}
+
+Cuando platicamos de la desigualdad de Chebyshev, construimos cotas para que con
+una alta probabilidad ($1- \delta$) nuestro estimador tenga una precisión dada ($\epsilon$).
+
+Nota que este tipo de argumentos habla sobre ~nuestro método~ de estimación ---el
+método Monte Carlo para integrales---. Es decir la probabilidad de que nuestra
+estimación no diste mas de $\epsilon$ unidades del verdadero valor.
+
+*** ~Importante~:
+Jamás mencionamos que el verdadero valor del parámetro se encuentre dentro del
+intervalo con cierta probabilidad. Es decir, *jamás* mencionamos una propiedad
+probabilística del verdadero valor, $\pi(f)$, que en nuestra argumentación
+suponemos desconocido.
+
+*** ~Experimentación~:
+¿Qué pasa si hacemos un ejercicio de réplicas de experimentos? Es decir, si
+repetimos $M$ veces una estimación de $\hat \pi_N^{\mathsf{MC}}(f)$ y
+registramos cuantas veces el intervalo cubre el verdadero valor del parámetro para distintas $N$?
+
+#+begin_src R :exports none :results none
+  media_mc <- apply(estimador.normal, 1, mean)
+  error_mc <- apply(estimador.normal, 1, sd)
+#+end_src
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/intervalos-normal.jpeg :exports results :results output graphics file
+  truth <- sqrt(2 * pi) * (pnorm(3) - pnorm(2))
+  as.tibble(estimador.normal) |>
+      mutate(n = 1:nsamples, error = error_mc) |>
+      pivot_longer(cols = 1:100) |>
+      filter(log10(n) %in% c(2, 3, 4)) |>
+      mutate(contains =
+               factor(ifelse(truth <= value + 2 * error & truth >= value - 2 * error, 1, 0))) |>
+      ggplot(aes(value, name)) +
+      geom_point(aes(color = contains)) +
+      geom_linerange(aes(xmin = value - 2 * error,
+                         xmax = value + 2 * error,
+                         color = contains), alpha = .4, lwd = 1.2) +
+      geom_vline(xintercept = truth, lty = 2) +
+      facet_wrap(~n, scales = "free_x") + sin_lineas + sin_leyenda +
+    theme(axis.ticks.y = element_blank(), axis.text.y = element_blank()) +
+    scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+    xlab("") + ylab("")
+#+end_src
+#+caption: Intervalos de confianza para la integral con respecto a una Normal. 
+#+RESULTS:
+[[file:../images/intervalos-normal.jpeg]]
+
+#+begin_src R :exports none :results none
+  media_mc <- apply(estimador.uniforme, 1, mean)
+  error_mc <- apply(estimador.uniforme, 1, sd)
+#+end_src
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/intervalos-uniforme.jpeg :exports results :results output graphics file
+  truth <- sqrt(2 * pi) * (pnorm(3) - pnorm(2))
+  as.tibble(estimador.uniforme) |>
+      mutate(n = 1:nsamples, error = error_mc) |>
+      pivot_longer(cols = 1:100) |>
+      filter(log10(n) %in% c(2, 3, 4)) |>
+      mutate(contains =
+               factor(ifelse(truth <= value + 2 * error & truth >= value - 2 * error, 1, 0))) |>
+      ggplot(aes(value, name)) +
+      geom_point(aes(color = contains)) +
+      geom_linerange(aes(xmin = value - 2 * error,
+                         xmax = value + 2 * error,
+                         color = contains), alpha = .4, lwd = 1.2) +
+      geom_vline(xintercept = truth, lty = 2) +
+      facet_wrap(~n, scales = "free_x") + sin_lineas + sin_leyenda +
+    theme(axis.ticks.y = element_blank(), axis.text.y = element_blank()) +
+    scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+    xlab("") + ylab("")
+#+end_src
+#+caption: Intervalos de confianza para la integral con respecto a una Uniforme. 
+#+RESULTS:
+[[file:../images/intervalos-uniforme.jpeg]]
+
+** Lentitud con estimadores
+
+Veremos un caso donde existen problemas en la estimación Monte Carlo. En
+particular, para estimar el error estándar. Esto se traduce en una reducción mas
+lenta en la incertidumbre de nuestra estimación. Y en algunos casos nuestros
+intervalos de confianza podrían no ser de confianza.
+
+#+REVEAL: split
+Supongamos que tenemos un modelo de mezcla ~Normal-Cauchy~. Es decir,
+\begin{gather}
+\pi(x | \theta) = \frac{1}{\sqrt{2\pi}} \exp \left[ -\frac{1}{2} (x - \theta)^2 \right]\,,\\
+\pi(\theta) = \frac{1}{\pi(1 + \theta^2)}\,.
+\end{gather}
+
+Nos interesa encontrar la marginal $\pi(x)$ para valores de $x = 0, 2, 4$.
+
+#+REVEAL: split
+Nota que $\pi(x)$ es un valor esperado bajo una distribución Cauchy. ¿Cuál es el integrando para $\pi(f)$?
+
+#+REVEAL: split
+En algunas aplicaciones nos interesa calcular el valor esperado de $\theta | x$ cuando asumimos una observación de $x$. La regla de probabilidad condicional nos permite calcular esto en términos de dos integrales.
+
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  set.seed(108727); nsamples <- 10**4; nexp <- 100
+  f <- function(theta){ pi * exp(-0.5 * (1 - theta)**2) }
+  h <- function(theta){ theta * f(theta) }
+  theta <- rcauchy(nexp * nsamples)
+  theta <- array(theta, c(nexp, nsamples))
+  f_theta <- f(theta)
+  h_theta <- h(theta)
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  num_estimador_mc   <- apply(h_theta, 1, cummean) # ojo, transpone el resultado
+  denom_estimador_mc <- apply(f_theta, 1, cummean) # ojo, transpone el resultado
+  estimador_mc <- num_estimador_mc / denom_estimador_mc
+  media_mc <- apply(estimador_mc, 1, mean)
+  error_mc <- apply(estimador_mc, 1, sd)
+#+end_src
+
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/cauchy-trayectorias.jpeg  :exports results :results output graphics file
+    estimador.cauchy <- estimador_mc
+    as.tibble(estimador_mc) |>
+        mutate(n = 1:nsamples) |>
+        pivot_longer(cols = 1:100) |>
+        ggplot(aes(n, value, group = name)) +
+        geom_line(alpha = .2, color = "salmon") +
+        geom_line(data = tibble(value = media_mc, n = 1:nsamples, name = "baseline"),
+                  aes(n, value), color = "black", lwd = 1.2) +
+        ## geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) + 
+        scale_x_continuous(trans='log10', 
+                           labels = trans_format("log10", math_format(10^.x))) +
+        coord_cartesian(ylim = c(-.5, 1.5)) + 
+        ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/cauchy-trayectorias.jpeg]]
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/cauchy-reduccion-error.jpeg :exports results :results output graphics file
+
+  tibble(n = 1:nsamples, error = error_mc) |>
+  ggplot(aes(n, error)) +
+  geom_line() +
+  geom_line(aes(n, 5/n), color = 'salmon', lty = 2) + 
+  scale_x_continuous(trans='log10', 
+                     labels = trans_format("log10", math_format(10^.x))) +
+  scale_y_continuous(trans='log10') + sin_lineas +
+  xlab("Numero de simulaciones") + ylab("Error estándar")
+
+#+end_src
+
+#+RESULTS:
+[[file:../images/cauchy-reduccion-error.jpeg]]
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/cauchy-intervalos.jpeg :exports results :results output graphics file
+  truth <- media_mc[nsamples]
+  as.tibble(estimador.cauchy) |>
+      mutate(n = 1:nsamples, error = error_mc) |>
+      pivot_longer(cols = 1:100) |>
+      filter(log10(n) %in% c(2, 3, 4)) |>
+      mutate(contains =
+               factor(ifelse(truth <= value + 2 * error & truth >= value - 2 * error, 1, 0))) |>
+      ggplot(aes(value, name)) +
+      geom_point(aes(color = contains)) +
+      geom_linerange(aes(xmin = value - 2 * error,
+                         xmax = value + 2 * error,
+                         color = contains), alpha = .4, lwd = 1.2) +
+      geom_vline(xintercept = truth, lty = 2) +
+      facet_wrap(~n, scale = "free_x") + sin_lineas + sin_leyenda +
+    theme(axis.ticks.y = element_blank(), axis.text.y = element_blank()) +
+    scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+    xlab("") + ylab("")
+#+end_src
+
+#+RESULTS:
+[[file:../images/cauchy-intervalos.jpeg]]
+
+* Referencias
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
