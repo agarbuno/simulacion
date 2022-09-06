@@ -27,7 +27,7 @@
 #+EXPORT_FILE_NAME: ../docs/04-reduccion-varianza.pdf
 :END:
 #+PROPERTY: header-args:R :session varianza :exports both :results output org :tangle ../rscript/04-reduccion-varianza.R :mkdirp yes :dir ../
-#+EXCLUDE_TAGS: toc
+#+EXCLUDE_TAGS: toc noexport
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | Reducción de varianza.\\
@@ -76,11 +76,10 @@
   - [[#consideraciones][Consideraciones:]]
   - [[#ejemplo][Ejemplo]]
     - [[#pregunta][Pregunta:]]
-- [[#condicionamiento][Condicionamiento]]
+- [[#monte-carlo-condicional][Monte Carlo condicional]]
   - [[#ejemplo-mezcla-beta-binomial][Ejemplo: Mezcla Beta-Binomial]]
   - [[#ejemplo-mezcla-poisson-beta][Ejemplo: Mezcla Poisson-Beta]]
-- [[#muestreo-por-importancia][Muestreo por importancia]]
-- [[#muestreo-estratificado][Muestreo estratificado]]
+  - [[#ejemplo-estimación-de-densidades][Ejemplo: Estimación de densidades]]
 :END:
 
 * Introducción
@@ -114,13 +113,24 @@ Bajo ciertas condiciones, un intervalo de confianza ($1-\delta$) puede construir
 donde podemos calcular el error estándar del estimador.
 
 #+REVEAL: split
-Hemos jugado con la noción de mediar la calidad de nuestro estimador Monte Carlo al observar la longitud del intervalo. Es por esto que utilizamos la ~longitud media~ (~HW~) del intervalo de confianza
+Hemos jugado con la noción de medir la calidad de nuestro estimador Monte
+Carlo al observar la longitud del intervalo. Es por esto que utilizamos la
+~longitud media~ (~HW~) del intervalo de confianza
 \begin{align}
 \mathsf{HW}= z_{1-\delta/2} \, \mathsf{ee}(\hat \theta_N)\,.
 \end{align}
  
 #+REVEAL: split
-Veremos técnicas de reducción de varianza para reducir la longitud media. 
+Veremos técnicas de reducción de varianza que nos ayudarán a reducir la longitud media.
+
+#+BEGIN_NOTES
+El uso de técnicas de reducción de varianza nos obligan a conocer un poco más
+sobre el modelo que está detrás de nuestro estimador. Esto es, para mejorar
+nuestra estimación $\hat \pi_N^{\mathsf{MC}}(f)$ tenemos que conocer más
+propiedades tanto de $f$ y/o $\pi$. Pues esto nos ayudará a reducir aún mas
+nuestra varianza.
+#+END_NOTES
+
 
 * Variables antitéticas
 
@@ -206,6 +216,7 @@ estimador error.std         N
 2.133e-02 3.518e-03 5.000e+02
 #+end_src
 
+
 * Variables de Control
 
 Supongamos que queremos estimar $\mathbb{E}(X)$ y tenemos acceso a una variable aleatoria $Y$ que está ~correlacionada~ y se conoce $\nu = \mathbb{E}(Y)$. A $Y$ se le conoce como ~variable control~ de $X$.
@@ -224,7 +235,7 @@ Sea $X_c = X - a ( Y - \nu)$. Entonces
    que induce la mínima varianza.
 4. En este último caso
    \begin{align}
-   \mathbb{V}(X_c) = (1 - \rho^2_{X,Y}) \mathbb{V}(Y)\,.
+   \mathbb{V}(X_c) = (1 - \rho^2_{X,Y}) \mathbb{V}(X)\,.
    \end{align}
 
 
@@ -316,26 +327,36 @@ estimador error.std
 #+end_src
 
 
-* Condicionamiento
+* Monte Carlo condicional
 
-Se pueden utilizar algunos resultados teóricos intermedios para algunos casos.
+Se pueden utilizar algunos resultados teóricos intermedios para algunos casos. A esta técnica también se le conoce como método ~Rao-Blackwell~. 
 
 #+REVEAL: split
-Supongamos que nos interesa $\mathbb{E}(X)$ y del alguna manera tenemos conocimiento de una variable aleatoria que está relacionada con la original por medio de $\mathbb{E}(X |Z = z)$. Utilizando la propiedad torre podemos calcular
+Supongamos que nos interesa $\mathbb{E}(f(X))$ y del alguna manera tenemos conocimiento de una variable aleatoria que está relacionada con la original por medio de $\mathbb{E}(f(X) |Z = z)$. Utilizando la propiedad torre podemos calcular
 \begin{align}
-\mathbb{E}(X) = \mathbb{E}\left( \mathbb{E}(X | Z = z) \right) \,.
+\mathbb{E}(f(X)) = \mathbb{E}\left( \mathbb{E}(f(X) | Z = z) \right) \,.
 \end{align}
 
 Donde además tenemos que
 \begin{align}
-\mathbb{V}(X) = \mathbb{V}(E(X|Z)) + \mathbb{E}(\mathbb{V}(X|Z))\,.
+\mathbb{V}(f(X)) = \mathbb{V}(E(f(X)|Z)) + \mathbb{E}(\mathbb{V}(f(X)|Z))\,.
 \end{align}
 
 #+REVEAL: split
 Lo que buscamos es que:
 1. $Z$ pueda ser generado de manera eficiente.
-2. Se pueda calcular $\mathbb{E}(X|Z)$.
-3. El valor de $\mathbb{E}(\mathbb{V}(X|Z))$ sea grande. 
+2. Se pueda calcular $\mathbb{E}(f(X)|Z)$.
+3. El valor de $\mathbb{E}(\mathbb{V}(f(X)|Z))$ sea grande. 
+
+#+REVEAL: split
+Por lo tanto, el método es:
+1. Generar una muestra $Z_{1}, \ldots, Z_{N} \overset{\mathsf{iid}}{\sim} \pi(Z)$ .
+2. Calcular $\mathbb{E}(f(X)| Z = z_k)$ de manera analítica.
+3. Calcular el estimador de $\pi(f) = \mathbb{E}(f(X))$ por medio de
+   \begin{align}
+   \hat \pi_N^{\mathsf{CMC}} (f) = \frac1N \sum_{n = 1}^{N} \mathbb{E}(f(X)| Z = Z_k)\,.
+   \end{align}
+   
 
 
 ** Ejemplo: Mezcla Beta-Binomial
@@ -411,9 +432,79 @@ El porcentaje de reducción de varianza es
 #+end_src
 
 
-* Muestreo por importancia
+** Ejemplo: Estimación de densidades
 
-* Muestreo estratificado
+Podemos utilizar el método Monte Carlo condicionado para estimar densidades. Por ejemplo, si consideramos que $X_{1}, \ldots, X_{k} \overset{\mathsf{iid}}{\sim} \pi$ y nos interesa $S_k = X_{1} + \cdots + X_{k}$. Nos podemos preguntar por al densidad de la suma. Sabemos que la densidad es un objeto infinitesimal $\mathbb{P}(S_k \in \text{d}x)$. Y en algunas situaciones no tenemos acceso a éste.
+
+Por ejemplo, consideremos $X_i \sim \mathsf{Pareto}(1, \alpha = 3/2)$. Para este caso, no se puede escribir la densidad de $S_k$ para $k > 1$. Lo que si sabemos es que
+\begin{align}
+S_k \, | \, S_{k-1} \overset{\mathsf{d}}{=} X_k \, |\, S_{k-1} \sim \mathsf{Pareto}(S_{k-1}, \alpha)\,.
+\end{align}
+Por lo que podemos estimar la densidad de $X_k \,|\, S_{k-1}$ para valores, por ejemplo, en $[0, 15)$.
+
+
+#+begin_src R :exports code :results none
+  nsamples <- 5 * 10^3; ngrid <- 1000
+  rpareto <- function(n, alpha) {1 / runif(n)^(1/alpha) - 1}
+  dpareto <- function(x, alpha) { ifelse( x >= 0, (alpha / ((x+1)**(alpha + 1))), 0) }
+  k <- 4
+  u <- rpareto( (k-1) * nsamples, alpha = 3/2)
+  u <- array(u, c(k-1, nsamples))
+  S <- apply(u, 2, sum)
+  x <- seq(0.1, 15, length.out = ngrid)
+#+end_src
+
+#+begin_src R :exports code :results none 
+  estimador <- array(x, c(ngrid,1)) |>
+    apply(1, FUN = function(x_){ dpareto(x_ - S, alpha = 3/2) }) |>
+    apply(2, mean)
+
+  error.std <- array(x, c(ngrid,1)) |>
+    apply(1, FUN = function(x_){ dpareto(x_ - S, alpha = 3/2) }) |>
+    apply(2, sd)
+#+end_src
+
+#+begin_src R :exports none :results none
+  k <- 8
+  u <- rpareto( (k-1) * nsamples, alpha = 3/2)
+  u <- array(u, c(k-1, nsamples))
+  S <- apply(u, 2, sum)
+
+  estimador.8 <- array(x, c(ngrid,1)) |>
+    apply(1, FUN = function(x_){ dpareto(x_ - S, alpha = 3/2) }) |>
+    apply(2, mean)
+
+  error.std.8 <- array(x, c(ngrid,1)) |>
+    apply(1, FUN = function(x_){ dpareto(x_ - S, alpha = 3/2) }) |>
+    apply(2, sd)
+#+end_src
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/pareto-density-estimate.jpeg :exports results :results output graphics file
+  g1 <- tibble(x, estimador, error.std) |>
+  ggplot(aes(x, estimador)) +
+    geom_ribbon(aes(ymin = estimador - 2 * error.std/sqrt(nsamples),
+                    ymax = estimador + 2 * error.std/sqrt(nsamples)),
+                fill = 'salmon', alpha = .3) + 
+    geom_line() + sin_lineas + ggtitle(expression(k==4))
+
+  g2 <- tibble(x, estimador = estimador.8, error.std = error.std.8) |>
+  ggplot(aes(x, estimador)) +
+    geom_ribbon(aes(ymin = estimador - 2 * error.std/sqrt(nsamples),
+                    ymax = estimador + 2 * error.std/sqrt(nsamples)),
+                fill = 'salmon', alpha = .3) + 
+    geom_line() + sin_lineas + ggtitle(expression(k==8))
+
+  g1 + g2
+#+end_src
+#+caption: Densidad de $x \,|\, S_{k-1}$. 
+#+RESULTS:
+[[file:../images/pareto-density-estimate.jpeg]]
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
+
+* Muestreo por importancia :noexport:
+
+** Muestreo estratificado
+
