@@ -627,7 +627,7 @@ tabla en ref:tab-darts muestra la aproximación conforme aumenta $N$.
 
 #+begin_src R :exports results :results org
   tibble(N = 1:nsamples, estimado = resultados[,1]/4) |>
-    mutate( dif.abs = abs(estimado - pi)/4) |>
+    mutate( dif.abs = abs(estimado - pi/4)) |>
     filter(N %% 10 == 0 & log10(N) %in% c(1, 2, 3, 4)) |>
     as.data.frame()
 #+end_src

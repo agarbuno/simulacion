@@ -65,9 +65,20 @@
 :END:
 :CONTENTS:
 - [[#introducción][Introducción]]
+  - [[#error-monte-carlo][Error Monte Carlo]]
 - [[#variables-antitéticas][Variables antitéticas]]
+  - [[#fundamento][Fundamento]]
+    - [[#preguntas][Preguntas:]]
+    - [[#conclusiones][Conclusiones:]]
+    - [[#consideraciones][Consideraciones:]]
+  - [[#ejemplo-integral-en-intervalo][Ejemplo: Integral en intervalo]]
 - [[#variables-de-control][Variables de Control]]
+  - [[#consideraciones][Consideraciones:]]
+  - [[#ejemplo][Ejemplo]]
+    - [[#pregunta][Pregunta:]]
 - [[#condicionamiento][Condicionamiento]]
+  - [[#ejemplo-mezcla-beta-binomial][Ejemplo: Mezcla Beta-Binomial]]
+  - [[#ejemplo-mezcla-poisson-beta][Ejemplo: Mezcla Poisson-Beta]]
 - [[#muestreo-por-importancia][Muestreo por importancia]]
 - [[#muestreo-estratificado][Muestreo estratificado]]
 :END:
@@ -78,12 +89,327 @@ Ya vimos algunos casos donde podemos reducir la varianza de nuestros estimadores
 Monte Carlo. Esto nos ayuda a mejorar la velocidad y eficiencia estadística de
 nuestros estimadores y en consecuencia optimizar los recursos computacionales.
 
+Para lograrlo, por ejemplo, consideramos la posibilidad de cambiar la densidad
+contra la que estamos realizando el proceso de integración. A esta distribución
+le llamaremos ~medida de referencia~.
 
-* Variables antitéticas 
+En esta sección estudiaremos técnicas que nos permitirán reducir la varianza de
+nuestros estimadores.
+
+** Error Monte Carlo
+
+Lo que estamos tratando de resolver es el problema de
+\begin{align}
+\theta = \mathbb{E}_\pi(h(X))\,,
+\end{align}
+por medio de
+1. Generar  muestras $X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \pi$.
+2. Estimar por medio de $\hat \theta_N = (1/N) \sum_{i = 1}^{N} h(X_i)$.
+
+#+REVEAL: split
+Bajo ciertas condiciones, un intervalo de confianza ($1-\delta$) puede construirse por medio
+\begin{align}
+[\hat \theta_N - z_{1-\delta/2} \, \mathsf{ee}(\hat \theta_N), \hat \theta_N + z_{1-\delta/2} \, \mathsf{ee}(\hat \theta_N)]\,,
+\end{align}
+donde podemos calcular el error estándar del estimador.
+
+#+REVEAL: split
+Hemos jugado con la noción de mediar la calidad de nuestro estimador Monte Carlo al observar la longitud del intervalo. Es por esto que utilizamos la ~longitud media~ (~HW~) del intervalo de confianza
+\begin{align}
+\mathsf{HW}= z_{1-\delta/2} \, \mathsf{ee}(\hat \theta_N)\,.
+\end{align}
+ 
+#+REVEAL: split
+Veremos técnicas de reducción de varianza para reducir la longitud media. 
+
+* Variables antitéticas
+
+- Lo que buscaremos es inducir una correlación negativa entre secuencias de números pseudo-aleatorios.
+- La idea es que al generar números en pares una observación grande en la primera secuencia se compense con una observación pequeña en la segunda.
+- El ejemplo típico es sincronizar  $u_n \sim \mathsf{U}(0,1)$ con $u_n' = 1 - u_n$.
+\newpage
+** Fundamento
+
+Supongamos que tenemos $(X^{(1)}_{1}, \ldots, X^{(1)}_{N})$ y $(X^{(2)}_{1}, \ldots, X^{(2)}_{N})$ en donde
+para generar $X^{(1)}_j$ se utilizó $u_j$ y para generar $X^{(2)}_j$ se utilizó $1 - u_j$.
+
+*** ~Preguntas~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+1. ¿Cuál es el valor esperado de $X^{(1)}_j$ y $X^{(2)}_j$?
+2. ¿Son independientes?
+3. ¿Qué pasa con los pares $(X^{(1)}_j, X^{(2)}_j)$ y $(X^{(1)}_k, X^{(2)}_k)$?
+
+
+
+*** ~Conclusiones~:
+Por lo anterior, si definimos
+\begin{align}
+X_j = \frac{X^{(1)}_j + X^{(2)}_j}{2}\,, \qquad \bar X_N = \frac1N \sum_{n = 1}^{N} X_n\,,
+\end{align}
+tenemos un estimador que tiene la siguientes propiedades:
+1. Es insesgado.
+2. Tiene menor varianza que una muestra de $2N$ simulaciones.
+
+
+*** ~Consideraciones~:
+No siempre se puede lograr el objetivo. Es decir, depende del modelo.
+
+** Ejemplo: Integral en intervalo
+
+Queremos estimar $\int_{a}^{b} f(x) \text{d}x$. El estimador Monte Carlo sería
+\begin{align}
+\hat \pi_N^{\mathsf{MC}}(f) = \frac{b-a}{N} \sum_{n = 1}^{N} f(x_n)\,,
+\end{align}
+donde $x_n \sim \mathsf{U}(a, b)$.
+
+#+REVEAL: split
+Si escogemos la mitad (aleatoriamente) y por cada muestra usamos $x'_n = a + (b - x_n)$.
+Entonces tendríamos 
+\begin{align}
+\hat \pi_N^{\mathsf{AMC}}(f) = \frac{b-a}{N/2} \sum_{n = 1}^{N/2} \frac{f(x_n) + f(x'_n)}{2}\,,
+\end{align}
+
+#+begin_src R :exports code :results none
+  set.seed(108)
+  nsamples <- 10^3;
+  a <- 2; b <- 3;
+  u <- runif(nsamples, min = a, max = b)
+  x <- dnorm(u)
+#+end_src
+
+#+begin_src R :exports results :results org 
+  c(estimador = mean(x), error.std = sd(x)/sqrt(nsamples), N = length(x))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+estimador error.std         N 
+2.153e-02 1.396e-02 1.000e+03
+#+end_src
+
+#+begin_src R :exports code :results none 
+  u_ <- a + (b - u)
+  x_ <- dnorm(u_)
+  x  <- (x + x_)/2
+  ax <- x[1:(nsamples/2)]
+#+end_src
+
+#+begin_src R :exports results :results org 
+  c(estimador = mean(ax), error.std = sd(ax)/sqrt(nsamples), N = length(ax))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+estimador error.std         N 
+2.133e-02 3.518e-03 5.000e+02
+#+end_src
 
 * Variables de Control
 
+Supongamos que queremos estimar $\mathbb{E}(X)$ y tenemos acceso a una variable aleatoria $Y$ que está ~correlacionada~ y se conoce $\nu = \mathbb{E}(Y)$. A $Y$ se le conoce como ~variable control~ de $X$.
+
+#+REVEAL: split
+Sea $X_c = X - a ( Y - \nu)$. Entonces
+1. $\mathbb{E}(X_c) = \mathbb{E}(X)$.
+2. $\mathbb{V}(X_c) = \mathbb{V}(X - a ( Y - \nu)) = \mathbb{V}(X) + a^2 \mathbb{V}(Y) - 2 a \mathsf{Cov}(X,Y)$. Esto implica que
+   \begin{align}
+   \mathbb{V}(X_c) \leq \mathbb{V}(X)\, \quad \text{ si }  \quad 2 a \mathsf{Cov } (X,Y) > a^2 \mathbb{V}(Y)\,.
+   \end{align}
+3. El caso particular
+   \begin{align}
+   a^* = \frac{\mathsf{Cov}(X,Y)}{\mathbb{V}(Y)}\,,
+   \end{align}
+   que induce la mínima varianza.
+4. En este último caso
+   \begin{align}
+   \mathbb{V}(X_c) = (1 - \rho^2_{X,Y}) \mathbb{V}(Y)\,.
+   \end{align}
+
+
+** Consideraciones:
+En la práctica no siempre se conoce el valor de $\mathbb{V}(Y)$ y muy difícilmente la $\mathsf{Cov}(X,Y)$, lo que implica que es difícil conocer el valor de $a$. 
+
+#+REVEAL: split
+En la práctica se puede utilizar un estudio piloto para estimar $a$ citep:Lavenberg1982. Esto es,
+\begin{align}
+\hat a_M = \frac{\widehat{\mathsf{Cov}}_M(X,Y)}{\widehat{\mathbb{V}}_M(Y)}\,.
+\end{align}
+Nota que el estimador resultante para la media de $X_c$ ya no es un estimador insesgado.
+
+** Ejemplo
+
+Supongamos que $X \sim \mathsf{N}(0,1)$ y que $f(X)= \frac{X^6}{1 + X^2}$.
+
+- Entonces, utilizando la igualdad
+  \begin{align}
+  \frac{x^6}{1 + x^2} = x^4 - x^2 + 1 - \frac{1}{1 + x^2}\,,
+  \end{align}
+  y podemos aproximar con $Y = g(X)= x^4 - x^2 + 1$.
+- Para esta elección tenemos $\mathbb{E}(Y) = 3$.
+- Asi que el problema se reduce a
+  \begin{align}
+  \mathbb{E} \left[  \frac{X^6}{1 + X^2}\right] = 3 - \mathbb{E} \left[ \frac{1}{1 + X^2}\right]\,.
+  \end{align}
+
+
+#+REVEAL: split
+#+begin_src R :exports code :results none 
+  set.seed(108)
+  x <- rnorm(nsamples)
+#+end_src
+
+#+begin_src R :exports both :results org 
+  f_x <- x**6/(1 + x**2)
+  c(estimador = mean(f_x), error.std = sd(f_x)/sqrt(nsamples))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+estimador error.std 
+   2.3473    0.2798
+#+end_src
+
+#+begin_src R :exports both :results org 
+  g_x <- 3 - 1 / (1 + x**2)
+  c(estimador = mean(g_x), error.std = sd(g_x)/sqrt(nsamples) )
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+estimador error.std 
+ 2.343346  0.008549
+#+end_src
+
+*** ~Pregunta~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+¿Por qué estos estimadores dan los mismas números que con el código anterior? 
+
+#+begin_src R :exports both :results org
+  set.seed(108)
+  x <- rnorm(100 * nsamples)
+  x <- array(x, c(100, nsamples))
+  f_x <- x**6/(1 + x**2)
+  estimadores <- apply(f_x, 1, mean)
+  c(estimador = mean(estimadores), error.std = sd(estimadores))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+estimador error.std 
+   2.3473    0.2752
+#+end_src
+
+#+begin_src R :exports both :results org 
+  g_x <- 3 - 1/(1+x**2)
+  estimadores <- apply(g_x, 1, mean)
+  c(estimador = mean(estimadores), error.std = sd(estimadores))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+estimador error.std 
+   2.3453    0.0081
+#+end_src
+
+
 * Condicionamiento
+
+Se pueden utilizar algunos resultados teóricos intermedios para algunos casos.
+
+#+REVEAL: split
+Supongamos que nos interesa $\mathbb{E}(X)$ y del alguna manera tenemos conocimiento de una variable aleatoria que está relacionada con la original por medio de $\mathbb{E}(X |Z = z)$. Utilizando la propiedad torre podemos calcular
+\begin{align}
+\mathbb{E}(X) = \mathbb{E}\left( \mathbb{E}(X | Z = z) \right) \,.
+\end{align}
+
+Donde además tenemos que
+\begin{align}
+\mathbb{V}(X) = \mathbb{V}(E(X|Z)) + \mathbb{E}(\mathbb{V}(X|Z))\,.
+\end{align}
+
+#+REVEAL: split
+Lo que buscamos es que:
+1. $Z$ pueda ser generado de manera eficiente.
+2. Se pueda calcular $\mathbb{E}(X|Z)$.
+3. El valor de $\mathbb{E}(\mathbb{V}(X|Z))$ sea grande. 
+
+
+** Ejemplo: Mezcla Beta-Binomial
+
+Supongamos un modelo Beta-Binomial. Igual que antes asumamos $n = 20$ y $\alpha = 2, \beta = 5$.
+
+#+begin_src R :exports both :results org 
+  set.seed(108)
+  theta <- rbeta(nsamples, 2, 5)
+  y <- rbinom(nsamples, size = 20, theta)
+  c(estimador = mean(y), error.std = sd(y)/sqrt(nsamples))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+estimador error.std 
+    5.585     0.119
+#+end_src
+
+#+begin_src R :exports both :results org 
+  m_y <- 20 * theta
+  c(estimador = mean(m_y), error.std = sd(m_y)/sqrt(nsamples))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+estimador error.std 
+    5.587     0.102
+#+end_src
+
+El porcentaje de reducción de varianza es
+#+begin_src R :exports results :results org 
+  (sd(y) - sd(m_y))/sd(y)
+#+end_src
+
+
+** Ejemplo: Mezcla Poisson-Beta
+
+Supongamos un modelo de mezcla
+#+begin_src R :exports both :results org 
+  set.seed(108)
+  w <- rpois(nsamples, 10)
+  y <- rbeta(nsamples, w, w**2 + 1)
+  c(estimador = mean(y), error.std = sd(y)/sqrt(nsamples))
+
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+estimador error.std 
+ 0.096535  0.001404
+#+end_src
+
+#+begin_src R :exports both :results org 
+  m_y <- w / (w**2 + w + 1)
+  c(estimador = mean(m_y), error.std = sd(m_y)/sqrt(nsamples))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+estimador error.std 
+ 0.098341  0.001019
+#+end_src
+
+El porcentaje de reducción de varianza es
+#+begin_src R :exports results :results org 
+  (sd(y) - sd(m_y))/sd(y)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 0.2737
+#+end_src
+
 
 * Muestreo por importancia
 
