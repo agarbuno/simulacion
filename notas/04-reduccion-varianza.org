@@ -3,28 +3,18 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Técnicas de reducción de varianza~
 #+STARTUP: showall
-:LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
-#+LANGUAGE: sp
-#+LATEX_CLASS: handout
-#+LATEX_HEADER: \usepackage[spanish]{babel}
-#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
-#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
-#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
-#+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
-#+LaTeX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{fancyvrb}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
-#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
-#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
-#+LaTeX_HEADER: {}
-#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
-#+LaTeX_HEADER: {}
-#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
-#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/04-reduccion-varianza.pdf
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
 :END:
 #+PROPERTY: header-args:R :session varianza :exports both :results output org :tangle ../rscript/04-reduccion-varianza.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc noexport
@@ -80,6 +70,7 @@
   - [[#ejemplo-mezcla-beta-binomial][Ejemplo: Mezcla Beta-Binomial]]
   - [[#ejemplo-mezcla-poisson-beta][Ejemplo: Mezcla Poisson-Beta]]
   - [[#ejemplo-estimación-de-densidades][Ejemplo: Estimación de densidades]]
+- [[#referencias][Referencias]]
 :END:
 
 * Introducción
@@ -88,6 +79,7 @@ Ya vimos algunos casos donde podemos reducir la varianza de nuestros estimadores
 Monte Carlo. Esto nos ayuda a mejorar la velocidad y eficiencia estadística de
 nuestros estimadores y en consecuencia optimizar los recursos computacionales.
 
+#+REVEAL: split
 Para lograrlo, por ejemplo, consideramos la posibilidad de cambiar la densidad
 contra la que estamos realizando el proceso de integración. A esta distribución
 le llamaremos ~medida de referencia~.
@@ -137,11 +129,11 @@ nuestra varianza.
 - Lo que buscaremos es inducir una correlación negativa entre secuencias de números pseudo-aleatorios.
 - La idea es que al generar números en pares una observación grande en la primera secuencia se compense con una observación pequeña en la segunda.
 - El ejemplo típico es sincronizar  $u_n \sim \mathsf{U}(0,1)$ con $u_n' = 1 - u_n$.
-\newpage
+# \newpage
 ** Fundamento
 
-Supongamos que tenemos $(X^{(1)}_{1}, \ldots, X^{(1)}_{N})$ y $(X^{(2)}_{1}, \ldots, X^{(2)}_{N})$ en donde
-para generar $X^{(1)}_j$ se utilizó $u_j$ y para generar $X^{(2)}_j$ se utilizó $1 - u_j$.
+Supongamos que tenemos $(X^{(1)}_{1}, \ldots, X^{(1)}_{N})$ y $(X^{(2)}_{1}, \ldots, X^{(2)}_{N})$ en donde,
+para generar $X^{(1)}_j$, se utilizó $u_j$ y para generar $X^{(2)}_j$ se utilizó $1 - u_j$.
 
 *** ~Preguntas~:
 :PROPERTIES:
@@ -181,6 +173,7 @@ Entonces tendríamos
 \hat \pi_N^{\mathsf{AMC}}(f) = \frac{b-a}{N/2} \sum_{n = 1}^{N/2} \frac{f(x_n) + f(x'_n)}{2}\,,
 \end{align}
 
+#+REVEAL: split
 #+begin_src R :exports code :results none
   set.seed(108)
   nsamples <- 10^3;
@@ -376,6 +369,7 @@ estimador error.std
     5.585     0.119
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports both :results org 
   m_y <- 20 * theta
   c(estimador = mean(m_y), error.std = sd(m_y)/sqrt(nsamples))
@@ -387,6 +381,7 @@ estimador error.std
     5.587     0.102
 #+end_src
 
+#+REVEAL: split
 El porcentaje de reducción de varianza es
 #+begin_src R :exports results :results org 
   (sd(y) - sd(m_y))/sd(y)
@@ -401,7 +396,6 @@ Supongamos un modelo de mezcla
   w <- rpois(nsamples, 10)
   y <- rbeta(nsamples, w, w**2 + 1)
   c(estimador = mean(y), error.std = sd(y)/sqrt(nsamples))
-
 #+end_src
 
 #+RESULTS:
@@ -410,6 +404,7 @@ estimador error.std
  0.096535  0.001404
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports both :results org 
   m_y <- w / (w**2 + w + 1)
   c(estimador = mean(m_y), error.std = sd(m_y)/sqrt(nsamples))
@@ -421,6 +416,7 @@ estimador error.std
  0.098341  0.001019
 #+end_src
 
+#+REVEAL: split
 El porcentaje de reducción de varianza es
 #+begin_src R :exports results :results org 
   (sd(y) - sd(m_y))/sd(y)
@@ -436,6 +432,7 @@ El porcentaje de reducción de varianza es
 
 Podemos utilizar el método Monte Carlo condicionado para estimar densidades. Por ejemplo, si consideramos que $X_{1}, \ldots, X_{k} \overset{\mathsf{iid}}{\sim} \pi$ y nos interesa $S_k = X_{1} + \cdots + X_{k}$. Nos podemos preguntar por al densidad de la suma. Sabemos que la densidad es un objeto infinitesimal $\mathbb{P}(S_k \in \text{d}x)$. Y en algunas situaciones no tenemos acceso a éste.
 
+#+REVEAL: split
 Por ejemplo, consideremos $X_i \sim \mathsf{Pareto}(1, \alpha = 3/2)$. Para este caso, no se puede escribir la densidad de $S_k$ para $k > 1$. Lo que si sabemos es que
 \begin{align}
 S_k \, | \, S_{k-1} \overset{\mathsf{d}}{=} X_k \, |\, S_{k-1} \sim \mathsf{Pareto}(S_{k-1}, \alpha)\,.
@@ -443,9 +440,10 @@ S_k \, | \, S_{k-1} \overset{\mathsf{d}}{=} X_k \, |\, S_{k-1} \sim \mathsf{Pare
 Por lo que podemos estimar la densidad de $X_k \,|\, S_{k-1}$ para valores, por ejemplo, en $[0, 15)$.
 
 
+#+REVEAL: split
 #+begin_src R :exports code :results none
   nsamples <- 5 * 10^3; ngrid <- 1000
-  rpareto <- function(n, alpha) {1 / runif(n)^(1/alpha) - 1}
+  rpareto <- function(n, alpha) { 1 / runif(n)^(1/alpha) - 1 }
   dpareto <- function(x, alpha) { ifelse( x >= 0, (alpha / ((x+1)**(alpha + 1))), 0) }
   k <- 4
   u <- rpareto( (k-1) * nsamples, alpha = 3/2)
@@ -454,6 +452,7 @@ Por lo que podemos estimar la densidad de $X_k \,|\, S_{k-1}$ para valores, por 
   x <- seq(0.1, 15, length.out = ngrid)
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none 
   estimador <- array(x, c(ngrid,1)) |>
     apply(1, FUN = function(x_){ dpareto(x_ - S, alpha = 3/2) }) |>
@@ -479,6 +478,7 @@ Por lo que podemos estimar la densidad de $X_k \,|\, S_{k-1}$ para valores, por 
     apply(2, sd)
 #+end_src
 
+#+REVEAL: split
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/pareto-density-estimate.jpeg :exports results :results output graphics file
   g1 <- tibble(x, estimador, error.std) |>
@@ -500,6 +500,8 @@ Por lo que podemos estimar la densidad de $X_k \,|\, S_{k-1}$ para valores, por 
 #+caption: Densidad de $x \,|\, S_{k-1}$. 
 #+RESULTS:
 [[file:../images/pareto-density-estimate.jpeg]]
+
+* Referencias
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
