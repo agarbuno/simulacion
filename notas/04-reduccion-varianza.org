@@ -79,7 +79,13 @@
 - [[#monte-carlo-condicional][Monte Carlo condicional]]
   - [[#ejemplo-mezcla-beta-binomial][Ejemplo: Mezcla Beta-Binomial]]
   - [[#ejemplo-mezcla-poisson-beta][Ejemplo: Mezcla Poisson-Beta]]
-  - [[#ejemplo-estimación-de-densidades][Ejemplo: Estimación de densidades]]
+  - [[#ejemplo-estimación-de-densidades-tomado-de-citepasmussen2007][Ejemplo: Estimación de densidades (tomado de citep:Asmussen2007)]]
+  - [[#ejemplo-constructora-tomado-de-las-notas-de-jorge-de-la-vega][Ejemplo: Constructora (Tomado de las notas de Jorge de la Vega)]]
+- [[#muestreo-estratificado][Muestreo estratificado]]
+  - [[#diseño-de-experimentos][Diseño de experimentos]]
+  - [[#ejemplo][Ejemplo:]]
+  - [[#post-estratificación][Post estratificación]]
+- [[#muestreo-por-importancia][Muestreo por importancia]]
 :END:
 
 * Introducción
@@ -143,15 +149,16 @@ nuestra varianza.
 ** Fundamento
 
 Supongamos que tenemos $(X^{(1)}_{1}, \ldots, X^{(1)}_{N})$ y $(X^{(2)}_{1}, \ldots, X^{(2)}_{N})$ en donde,
-para generar $X^{(1)}_j$, se utilizó $u_j$ y para generar $X^{(2)}_j$ se utilizó $1 - u_j$.
+para generar $X^{(1)}_j$, se utilizó $u_j$ y para generar $X^{(2)}_j$ se utilizó $1 - u_j$. Suponemos que tenemos $X_j^{(i)} \overset{\mathsf{iid}}{\sim} \mathbb{P}$. 
 
 *** ~Preguntas~:
 :PROPERTIES:
 :reveal_background: #00468b
 :END:
 1. ¿Cuál es el valor esperado de $X^{(1)}_j$ y $X^{(2)}_j$?
-2. ¿Son independientes?
-3. ¿Qué pasa con los pares $(X^{(1)}_j, X^{(2)}_j)$ y $(X^{(1)}_k, X^{(2)}_k)$?
+2. ¿Cuál es el signo de $\mathsf{Cov}(X^{(1)}_j, X^{(2)}_j)$?
+3. ¿Son independientes?
+4. ¿Qué pasa con los pares $(X^{(1)}_j, X^{(2)}_j)$ y $(X^{(1)}_k, X^{(2)}_k)$?
 
 
 
@@ -438,7 +445,7 @@ El porcentaje de reducción de varianza es
 #+end_src
 
 
-** Ejemplo: Estimación de densidades
+** Ejemplo: Estimación de densidades (tomado de citep:Asmussen2007)
 
 Podemos utilizar el método Monte Carlo condicionado para estimar densidades. Por ejemplo, si consideramos que $X_{1}, \ldots, X_{k} \overset{\mathsf{iid}}{\sim} \pi$ y nos interesa $S_k = X_{1} + \cdots + X_{k}$. Nos podemos preguntar por al densidad de la suma. Sabemos que la densidad es un objeto infinitesimal $\mathbb{P}(S_k \in \text{d}x)$. Y en algunas situaciones no tenemos acceso a éste.
 
@@ -511,10 +518,141 @@ Por lo que podemos estimar la densidad de $X_k \,|\, S_{k-1}$ para valores, por 
 #+RESULTS:
 [[file:../images/pareto-density-estimate.jpeg]]
 
+
+** Ejemplo: Constructora (Tomado de las notas de Jorge de la Vega)
+
+Un proyecto de construcción tiene una duración $X \sim \mathsf{N}(\mu, \sigma^2)$ donde, a su vez, $\mu \sim \mathsf{N}(10, 16)$ y $\sigma \sim \mathsf{Exp}(1/4)$. La compañía que construye debe pagar $1,000$ (USD) por cada día (y prorratea por fracciones del día) que la duración del proyecto excede el contrato de $K$ días. ¿Cuál es el costo esperado por retraso?
+
+#+REVEAL: split
+Podemos simular
+#+begin_src R :exports code :results none 
+  K <- 20; nsamples <- 10^4
+  sigma <- rexp(nsamples, 1/4)
+  mu    <- rnorm(nsamples, mean = 10, sd = 4)
+  x     <- rnorm(nsamples, mean = mu, sd = sigma)
+  costo <- 1000 * ifelse( x <= K, 0, x - K)
+#+end_src
+
+#+begin_src R :exports results :results org 
+  c(media = mean(costo), error.std = sd(costo)/sqrt(nsamples))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+    media error.std 
+   316.49     21.26
+#+end_src
+
+#+REVEAL: split
+Con condicionales, sabemos que podemos considerar $\theta = (\mu, \sigma)$ y evaluar $X | \theta$. Lo que nos lleva a escribir que nuestro estimador será sobre
+\begin{align*}
+\mathbb{E}_{X|\theta} \left[ 1000 \max \{X - K, 0\} \right] &= 1000 \int_{K}^{\infty} \frac{X - K}{\sqrt{2\pi \sigma^2}} \exp \left[  -\frac12 \left( \frac{x - \mu }{\sigma} \right)^2\right] \text{d}x\\
+&= 1000 \int_{K'}^{\infty} (\sigma \nu + \mu - K) \frac{1}{\sqrt{2\pi}} \exp \left[ -\frac12 \nu^2\right] \text{d}\nu \\
+&= 1000 \left[\left( - \frac{\sigma e^{-\frac{\nu^2}{2}}}{\sqrt{2\pi}} \right) \bigg|^{\infty}_{K'} + (\mu - K) \Phi \left( -K' \right) \right]\\
+&= 1000 \left[\sigma \phi(K') + (\mu - K) \Phi \left( -K' \right)\right] \,.\\
+\end{align*}
+
+
+#+begin_src R :exports results :results org 
+  costo.cond <- 1000 * (sigma * dnorm((K - mu)/sigma) - (K - mu) * pnorm( (mu - K)/sigma ))
+  c(media = mean(costo.cond), error.std = sd(costo.cond)/sqrt(nsamples))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+    media error.std 
+  301.920     8.301
+#+end_src
+
+Lo que lleva a una reducción de varianza
+#+begin_src R :exports results :results org 
+  (sd(costo) - sd(costo.cond))/sd(costo)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 0.5645
+#+end_src
+
+
+
+* Muestreo estratificado 
+
+Queremos estimar $\mathbb{E}_\pi[h(X)]$ y supongamos que existe una variable
+aleatoria discreta $Y$ con soporte $y_1, \ldots, y_k$ tal que
+1. Las probabilidades $\omega_i = \mathsf{Prob}\{Y = y_i\}$ son conocidas;
+2. Para cada $i$ podemos simular de la condicional $\pi_i(X) = \pi(X | Y = y_i)$.
+
+
+Si queremos usar simulación para estimar $\pi(h)$ entonces utilizaríamos una
+muestra aleatoria $h(X_{1}), \ldots, h(X_{N})$ y utilizaríamos su promedio para estimarlo.
+La varianza de este estimador sería igual a
+\begin{align}
+\mathbb{V}(\hat \pi^{\mathsf{MC}}_N(h)) = \frac{\mathbb{V}_\pi(h)}{N}\,.
+\end{align}
+
+Ahora, si realizamos $N_i = N \times \omega_i$ simulaciones para cada nivel $i$,
+y promediamos para cada nivel tendríamos
+\begin{align}
+\hat \pi^{\mathsf{MC}}_{N,i}(h) = \frac{1}{N_i} \sum_{n = 1}^{N_i} h(X_n^{(i)})\,, \qquad X_n^{(i)} \overset{\mathsf{iid}}{\sim} \pi_i(X)\,,
+\end{align}
+de tal forma que podemos construir el estimador
+\begin{align}
+\hat \pi^{\mathsf{sMC}}_N(h) = \sum_{i = 1}^{k} \omega_i \, \hat \pi^{\mathsf{MC}}_{N, i}(h)\,.
+\end{align}
+
+La varianza de cada término es igual a
+\begin{align}
+\mathbb{V}(\hat \pi^{\mathsf{MC}}_{N,i}(h)) = \frac{\mathbb{V}(h(X) | Y = y_i)}{N_i}\,.
+\end{align}
+Por lo tanto la varianza de nuestro estimador es
+\begin{align}
+\mathbb{V}(\hat \pi^{\mathsf{sMC}}_{N}(h)) &= \sum_{i = 1}^{k} \omega_i^2 \, \mathbb{V}(\hat \pi^{\mathsf{MC}}_{N,i}(h)) \\
+&= \frac1N \sum_{i = 1}^{k} \omega_i \, \mathbb{V}(h(X) | Y = y_i)\\
+&= \frac1N \mathbb{E}[\mathbb{V}(h(X)|Y)]\,.
+\end{align}
+
+
+Utilizando lo que sabemos de Monte Carlo condicional sabemos que tendremos una
+ganancia de
+\begin{align}
+\mathbb{V}(\hat \pi^{\mathsf{MC}}_{N}(h)) - \mathbb{V}(\hat \pi^{\mathsf{sMC}}_{N}(h)) = \frac1N \mathbb{V}\left(\mathbb{E}(h(X) |Y)\right)\,.
+\end{align}
+
+La ganancia será mayor mientras más afecte el valor de $Y$ el valor esperado de $h(X)$.
+
+
+** Diseño de experimentos
+
+Notemos que el estimador estratificado tiene una varianza igual a 
+\begin{align}
+\mathbb{V}(\hat \pi^{\mathsf{sMC}}_{N}(h)) =   \sum_{i = 1}^{k} \frac{\omega_i^2}{N_i} \, \mathbb{V}(h(X) | Y = y_i)\,.
+\end{align}
+Lo cual asume que conocemos los términos individuales.
+
+Sin embargo, usualmente no conoceremos $\mathbb{V}(h(X) | Y = y_i)$ lo que nos
+lleva a que podríamos usar un pequeño piloto de simulación para poder
+estimarlos. Denotaremos por $s_i^2$ dichos estimadores.
+
+Si sabemos que tenemos un presupuesto de $N$ simulaciones y queremos distribuir nuestras simulaciones entre la partición. Entonces podemos resolver el problema de
+\begin{gather*}
+\min \sum_{i = 1}^{k} \omega_i^2 s_i^2 / N_i \\
+\text{sujeto a } \sum_{i = 1}^{k} N_i = N \,.
+\end{gather*}
+
+El cual tiene una solución 
+\begin{align}
+\frac{N_i^*}{N} = \frac{\omega_i s_i}{\sum_{j = 1}^{k} \omega_j s_j}\,.
+\end{align}
+
+
+** Ejemplo:
+
+
+
+** Post estratificación
+
+* Muestreo por importancia                                      
+
 bibliographystyle:abbrvnat
 bibliography:references.bib
-
-* Muestreo por importancia :noexport:
-
-** Muestreo estratificado
-
