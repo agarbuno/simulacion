@@ -84,6 +84,7 @@
 - [[#muestreo-estratificado][Muestreo estratificado]]
   - [[#diseño-de-experimentos][Diseño de experimentos]]
   - [[#ejemplo][Ejemplo:]]
+    - [[#aplicación][Aplicación:]]
   - [[#post-estratificación][Post estratificación]]
 - [[#muestreo-por-importancia][Muestreo por importancia]]
 :END:
@@ -645,12 +646,117 @@ El cual tiene una solución
 \frac{N_i^*}{N} = \frac{\omega_i s_i}{\sum_{j = 1}^{k} \omega_j s_j}\,.
 \end{align}
 
-
 ** Ejemplo:
 
+Supongamos que queremos resolver la integral
+\begin{align}
+\pi(h) = \int_{0}^{1} h(x) \text{d}x\,.
+\end{align}
+Si definimos
+\begin{align}
+Y = j \quad \text{ si } \frac{j - 1}{N} \leq U < \frac{j}{N}\,, \quad j = 1, \ldots, N\,,
+\end{align}
+entonces podemos calcular
+\begin{align}
+\pi(h) &= \frac1N \sum_{j = 1}^{N} \mathbb{E}[h(U) | Y = j]\\
+&= \frac1N \sum_{j = 1}^{N} \mathbb{E}[h(U^{(j)})]\,,
+\end{align}
+donde $U^{(j)} \sim \mathsf{U}((j-1)/N, j/N)$. 
+
+Por lo que en lugar de generar $U_{1}, \ldots, U_{N} \sim \mathsf{U}(0,1)$ para
+calcular $\sum_j h(U_j)/N$ , podemos construir un mejor estimador por medio de
+\begin{align}
+\hat \pi^{sMC}_N(h) = \frac1N \sum_{j = 1}^{N} h \left( \frac{{U_j + j - 1}}{N} \right)\,.
+\end{align}
+
+*** ~Aplicación~:
+Estimemos $\pi$ por medio de
+\begin{align}
+\frac\pi4 = \mathbb{E}[\sqrt{1 - U^2}]\,.
+\end{align}
+
+#+begin_src R :exports code :results none 
+  nsamples <- 5000
+  h <- function(u) { 4 * sqrt(1 - u**2) }
+  u <- runif(100 * nsamples)
+  u <- array(u, c(100, nsamples))
+  h_u <- h(u)
+  estimador_MC <- apply(h_u, 1, cummean) |> t()
+#+end_src
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/pi-vainillia.jpeg :exports results :results output graphics file
+  as_tibble(t(estimador_MC[1:50,])) |>
+    mutate(n = 1:nsamples) |>
+    pivot_longer(cols = 1:50) |>
+    ggplot(aes(n, value, group = name)) +
+    geom_line(aes(color = name), alpha = .8) +
+    geom_hline(yintercept = pi, lty = 2) + 
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/pi-vainillia.jpeg]]
+
+#+begin_src R :exports code :results none 
+  runif_estrat <- function(u){
+    x <- c()
+    for (jj in 1:nsamples){
+      x[jj] <- (u[jj] + jj - 1)/nsamples 
+    }
+    return(x)
+  }
+  u_strat <- apply(u, 1, runif_estrat) |> t()
+#+end_src
+
+#+begin_src R :exports none :results none
+  h_strat <- h(u_strat)
+  estimador_sMC <- apply(h_strat, 1, mean)
+#+end_src
+
+#+begin_src R :exports code :results none 
+  calcula_antitetic <- function(u){
+    x <- c()
+    for (jj in 1:nsamples){
+      x[jj] <- h((u[jj] + jj - 1)/nsamples) + h((jj - u[jj])/nsamples)
+    }
+    return(0.5 * x)
+  }
+  h_anti <- apply(u, 1, calcula_antitetic) |> t()
+#+end_src
+
+#+begin_src R :exports none :results none
+  estimador_asMC <- apply(h_anti, 1, mean)
+#+end_src
+
+#+begin_src R :exports results :results org 
+  options(digits = 7)
+  tibble(metodo = c('vainilla', 'estratificado', 'anti-estratificado'),
+         estimador = c( apply(h_u, 1, mean) |> mean(),
+                        apply(h_strat, 1, mean) |> mean(),
+                        apply(h_anti, 1, mean) |> mean()),
+         error.mc = c( apply(h_u, 1, mean) |> sd(),
+                      apply(h_strat, 1, mean) |> sd(),
+                      apply(h_anti, 1, mean) |> sd())
+         ) |> as.data.frame()
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+              metodo estimador     error.mc
+1           vainilla  3.141487 1.400903e-02
+2      estratificado  3.141592 7.065134e-06
+3 anti-estratificado  3.141593 6.824089e-07
+#+end_src
 
 
 ** Post estratificación
+
+
+
+
 
 * Muestreo por importancia                                      
 
