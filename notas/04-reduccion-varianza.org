@@ -32,7 +32,7 @@
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | Reducción de varianza.\\
 *Objetivo*: En esta sección veremos técnicas para reducir la incertidumbre de nuestros estimadores Monte Carlo. Esto lo logramos con dos estrategias: 1) conociendo mas propiedades de nuestro modelo o 2) haciendo un cambio de medida de referencia.\\
-*Lectura recomendada*: El contenido de esta sección se puede seguir del Capítulo 5 de citet:Rubinstein. Algunos ejemplos son tomados del Capítulo 5 de citet:Asmussen2007. 
+*Lectura recomendada*: El contenido de esta sección se puede seguir del Capítulo 5 de citet:Rubinstein. Algunos ejemplos son tomados del Capítulo 5 de citet:Asmussen2007. Las propiedades teóricas, si te interesa, del método por importancia las puedes encontrar en el Capítulo 5 de citet:Rubinstein o echarle un vistazo a la prueba del Teorema 5.6 en las notas de citet:Sanz-Alonso2019. 
 #+END_NOTES
 
 #+begin_src R :exports none :results none
@@ -118,7 +118,7 @@ Bajo ciertas condiciones, un intervalo de confianza ($1-\delta$) puede construir
 \begin{align}
 [\hat \theta_N - z_{1-\delta/2} \, \mathsf{ee}(\hat \theta_N), \hat \theta_N + z_{1-\delta/2} \, \mathsf{ee}(\hat \theta_N)]\,,
 \end{align}
-donde podemos calcular el error estándar del estimador.
+donde podemos calcular el error estándar del estimador (~Error Monte Carlo~).
 
 #+REVEAL: split
 Hemos jugado con la noción de medir la calidad de nuestro estimador Monte
@@ -340,7 +340,7 @@ estimador error.std
 
 * Monte Carlo condicional
 
-Se pueden utilizar algunos resultados teóricos intermedios para algunos casos. A esta técnica también se le conoce como método ~Rao-Blackwell~. 
+Se pueden utilizar algunos resultados teóricos intermedios para algunos casos. A esta técnica también se le conoce como método ~Rao-Blackwell~ (por un resultado análogo en inferencia estadística). 
 
 #+REVEAL: split
 Supongamos que nos interesa $\mathbb{E}(f(X))$ y del alguna manera tenemos conocimiento de una variable aleatoria que está relacionada con la original por medio de $\mathbb{E}(f(X) |Z = z)$. Utilizando la propiedad torre podemos calcular
@@ -643,7 +643,7 @@ Si sabemos que tenemos un presupuesto de $N$ simulaciones y queremos distribuir 
 
 El cual tiene una solución 
 \begin{align}
-\frac{N_i^*}{N} = \frac{\omega_i s_i}{\sum_{j = 1}^{k} \omega_j s_j}\,.
+\frac{N_i^\star}{N} = \frac{\omega_i s_i}{\sum_{j = 1}^{k} \omega_j s_j}\,.
 \end{align}
 
 ** Ejemplo:
@@ -754,11 +754,88 @@ Estimemos $\pi$ por medio de
 
 ** Post estratificación
 
-
-
-
+Supongamos que hemos simulado $N$ réplicas independientes de una variable
+aleatoria $X\sim \mathbb{P}$. Supongamos que podemos identificar los grupos, es
+decir, podemos decir cuando una simulación está asociada a una $Y$ con categoría
+$y_i$ de tal forma que con $N_i$ contamos cuántas simulaciones pertenecen a la
+categoría $i$. Entonces, podríamos escribir
+\begin{align*}
+\bar X_N &= \frac1N \sum_{n = 1}^{N} X_n\\
+&= \frac1N \sum_{i = 1 }^{k} N_i \bar X_{N_i}^{(i)}\\
+&= \sum_{i = 1}^{k} \frac{N_i}{N} \bar X_{N_i}^{(i)}\,.
+\end{align*}
 
 * Muestreo por importancia                                      
 
+Supongamos que queremos estimar
+\begin{align}
+\pi(h) = \int_{}^{} h(x) \pi(x) \text{d}x\,.
+\end{align}
+Sin embargo, consideremos que evaluar $h$ es ineficiente debido a:
+1. Es difícil simular un $\text{valor}^\dagger$ aleatorio de la densidad $\pi$.
+2. La varianza de $h$  es muy grande.
+3. Una combinación de 2. y 3.
+
+#+REVEAL: split
+Podemos utilizar una distribución $\rho$ tal que para $\rho(x) = 0$  tenemos $\pi(x) = 0$. Entonces, podemos reescribir
+\begin{align}
+\pi(h) &= \int \frac{h(x) \pi(x)}{\rho(x)} \rho(x) \text{d}x \\
+&= \mathbb{E}_\rho \left[ \frac{h(x) \cdot \pi(x) }{\rho(x)} \right] \\
+&= \rho( h \omega )\,,
+\end{align}
+donde
+\begin{align}
+\omega(x) = \frac{\pi(x)}{\rho(x)}\,.
+\end{align}
+
+#+REVEAL: split
+En aplicaciones usualmente operamos bajo el supuesto que conocemos los pesos ~hasta una constante de normalización~. Esto es, podemos ~evaluar~
+\begin{align}
+\omega(x) = \frac{\pi(x)}{\rho(x)} = \frac{1}{Z} v(x)\,.
+\end{align}
+donde $Z = \int v(x) \rho(x) \text{d}x = \rho(v)$.
+Lo cual nos deja
+\begin{align}
+\pi(h) = \frac{\rho(h v)}{\rho(v)}\,.
+\end{align}
+
+#+REVEAL: split
+~Muestreo por importancia~ se basa en aproximar ambas integrales por el método Monte Carlo. Es decir, utilizamos
+\begin{align}
+\pi(h) &\approx \sum_{n = 1}^{N} \omega_n h(x_n)\, \qquad x_n \overset{\mathsf{iid}}{\sim} \rho\\
+&= \hat \pi_N^{\mathsf{IS}}(h)\,,
+\end{align}
+donde
+\begin{align}
+\omega_n = \frac{v(x_n)}{\sum_{m = 1}^{N} v(x_m)}\,.
+\end{align}
+
+
+#+REVEAL: split
+La construcción de nuestro estimador de esta manera tiene algunas propiedades interesantes. El estimador $\hat \pi^{\mathsf{IS}}_N(h)$  *no* es un estimador insesgado (aunque asintóticamente si). 
+
+
+
+#+BEGIN_NOTES
+El estimador que hemos construido asume que conocemos los pesos /hasta/ una constante de normalización. En aplicaciones esto es usual, pues la densidad $\pi$ que define nuestros problemas de integración suele ser muy complicada. Es por esto que la discusión en esta sección lo ha tratado de esta manera. 
+#+END_NOTES
+
+
+
+
+#+REVEAL: split
+Para que muestreo por importancia tenga éxito necesitamos que $h(x) \pi(x)/\rho(x)$ tenga una varianza pequeña.
+
+#+REVEAL: split
+En general, la elección de la función de muestreo, $\rho$, está asociada a la varianza del estimador $\pi^{\mathsf{IS}}_N(h)$ y por lo tanto la elección es crucial para que tenga éxito.
+
+#+REVEAL: split
+El problema de escoger la mejor $\rho^\star$ es que tendríamos que escoger dependiendo del problema (la elección de $h$ y $\pi$) y esto no presenta estrategias muy aplicables en la práctica. 
+
 bibliographystyle:abbrvnat
 bibliography:references.bib
+
+
+* Plan                                                             :noexport:
+
+Propiedades 5.7.2. 
