@@ -3,28 +3,18 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Técnicas de reducción de varianza~
 #+STARTUP: showall
-:LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
-#+LANGUAGE: sp
-#+LATEX_CLASS: handout
-#+LATEX_HEADER: \usepackage[spanish]{babel}
-#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
-#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
-#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
-#+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
-#+LaTeX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{fancyvrb}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
-#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
-#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
-#+LaTeX_HEADER: {}
-#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
-#+LaTeX_HEADER: {}
-#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
-#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/04-reduccion-varianza.pdf
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
 :END:
 #+PROPERTY: header-args:R :session varianza :exports both :results output org :tangle ../rscript/04-reduccion-varianza.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc noexport
@@ -87,6 +77,7 @@
     - [[#aplicación][Aplicación:]]
   - [[#post-estratificación][Post estratificación]]
 - [[#muestreo-por-importancia][Muestreo por importancia]]
+- [[#referencias][Referencias]]
 :END:
 
 * Introducción
@@ -554,6 +545,8 @@ Con condicionales, sabemos que podemos considerar $\theta = (\mu, \sigma)$ y eva
 \end{align*}
 
 
+#+REVEAL: split
+La estimación utilizando Monte Carlo condicional nos da una estimación (con su métrica de error Monte Carlo). 
 #+begin_src R :exports results :results org 
   costo.cond <- 1000 * (sigma * dnorm((K - mu)/sigma) - (K - mu) * pnorm( (mu - K)/sigma ))
   c(media = mean(costo.cond), error.std = sd(costo.cond)/sqrt(nsamples))
@@ -585,6 +578,7 @@ aleatoria discreta $Y$ con soporte $y_1, \ldots, y_k$ tal que
 2. Para cada $i$ podemos simular de la condicional $\pi_i(X) = \pi(X | Y = y_i)$.
 
 
+#+REVEAL: split
 Si queremos usar simulación para estimar $\pi(h)$ entonces utilizaríamos una
 muestra aleatoria $h(X_{1}), \ldots, h(X_{N})$ y utilizaríamos su promedio para estimarlo.
 La varianza de este estimador sería igual a
@@ -592,6 +586,7 @@ La varianza de este estimador sería igual a
 \mathbb{V}(\hat \pi^{\mathsf{MC}}_N(h)) = \frac{\mathbb{V}_\pi(h)}{N}\,.
 \end{align}
 
+#+REVEAL: split
 Ahora, si realizamos $N_i = N \times \omega_i$ simulaciones para cada nivel $i$,
 y promediamos para cada nivel tendríamos
 \begin{align}
@@ -602,6 +597,7 @@ de tal forma que podemos construir el estimador
 \hat \pi^{\mathsf{sMC}}_N(h) = \sum_{i = 1}^{k} \omega_i \, \hat \pi^{\mathsf{MC}}_{N, i}(h)\,.
 \end{align}
 
+#+REVEAL: split
 La varianza de cada término es igual a
 \begin{align}
 \mathbb{V}(\hat \pi^{\mathsf{MC}}_{N,i}(h)) = \frac{\mathbb{V}(h(X) | Y = y_i)}{N_i}\,.
@@ -614,6 +610,7 @@ Por lo tanto la varianza de nuestro estimador es
 \end{align}
 
 
+#+REVEAL: split
 Utilizando lo que sabemos de Monte Carlo condicional sabemos que tendremos una
 ganancia de
 \begin{align}
@@ -631,10 +628,12 @@ Notemos que el estimador estratificado tiene una varianza igual a
 \end{align}
 Lo cual asume que conocemos los términos individuales.
 
+#+REVEAL: split
 Sin embargo, usualmente no conoceremos $\mathbb{V}(h(X) | Y = y_i)$ lo que nos
 lleva a que podríamos usar un pequeño piloto de simulación para poder
 estimarlos. Denotaremos por $s_i^2$ dichos estimadores.
 
+#+REVEAL: split
 Si sabemos que tenemos un presupuesto de $N$ simulaciones y queremos distribuir nuestras simulaciones entre la partición. Entonces podemos resolver el problema de
 \begin{gather*}
 \min \sum_{i = 1}^{k} \omega_i^2 s_i^2 / N_i \\
@@ -652,6 +651,7 @@ Supongamos que queremos resolver la integral
 \begin{align}
 \pi(h) = \int_{0}^{1} h(x) \text{d}x\,.
 \end{align}
+#+REVEAL: split
 Si definimos
 \begin{align}
 Y = j \quad \text{ si } \frac{j - 1}{N} \leq U < \frac{j}{N}\,, \quad j = 1, \ldots, N\,,
@@ -663,6 +663,7 @@ entonces podemos calcular
 \end{align}
 donde $U^{(j)} \sim \mathsf{U}((j-1)/N, j/N)$. 
 
+#+REVEAL: split
 Por lo que en lugar de generar $U_{1}, \ldots, U_{N} \sim \mathsf{U}(0,1)$ para
 calcular $\sum_j h(U_j)/N$ , podemos construir un mejor estimador por medio de
 \begin{align}
@@ -684,7 +685,8 @@ Estimemos $\pi$ por medio de
   estimador_MC <- apply(h_u, 1, cummean) |> t()
 #+end_src
 
-#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+REVEAL: split
+ #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/pi-vainillia.jpeg :exports results :results output graphics file
   as_tibble(t(estimador_MC[1:50,])) |>
     mutate(n = 1:nsamples) |>
@@ -831,6 +833,8 @@ En general, la elección de la función de muestreo, $\rho$, está asociada a la
 
 #+REVEAL: split
 El problema de escoger la mejor $\rho^\star$ es que tendríamos que escoger dependiendo del problema (la elección de $h$ y $\pi$) y esto no presenta estrategias muy aplicables en la práctica. 
+
+* Referencias
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
