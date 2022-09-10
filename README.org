@@ -287,12 +287,15 @@ hacerlas si no cuentan con experiencia en: ~Git~, ~Github~, y ~R~ base.
 
 * COMMENT Agenda                                                           :noexport:
 
-| Semana |      Fecha | Tema                         |
-|--------+------------+------------------------------|
-|      1 | 2022-08-09 | Administrativia              |
-|      1 | 2022-08-11 | Introducción                 |
-|      2 | 2022-08-16 | Generadores pseudo-uniformes |
-|      3 | 2022-08-25 | Generadores no uniformes     |
+| Sección | Sesiones | Tema                         |
+|---------+----------+------------------------------|
+|       1 |        1 | Administrativia              |
+|       1 |        2 | Introducción                 |
+|       2 |        2 | Generadores pseudo-uniformes |
+|       3 |        2 | Generadores no uniformes     |
+|       4 |        3 | Integración Monte Carlo      |
+|       5 |        2 | Reducción de varianza        |
+
 
 
 
