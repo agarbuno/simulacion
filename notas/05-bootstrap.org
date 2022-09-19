@@ -74,6 +74,12 @@
 - [[#la-idea-del-bootstrap][La idea del bootstrap]]
   - [[#definición][Definición:]]
   - [[#ejemplo][Ejemplo:]]
+- [[#el-principio-de-plug-in][El principio de plug-in]]
+  - [[#observación][Observación:]]
+    - [[#ejercicio][Ejercicio:]]
+  - [[#observación][Observación]]
+  - [[#observación][Observación]]
+  - [[#ejemplo][Ejemplo]]
 :END:
 
 
@@ -344,7 +350,6 @@ una de estas remuestras:
  [1] 177.3 169.3 180.1 183.9 184.7 180.4 188.9 178.8 180.9 177.9
 #+end_src
 
-
 Y nuestra estimación de la distribución de muestreo para la media es entonces:
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
@@ -448,6 +453,278 @@ Dada una muestra de tamaño $n$ de una población,
 3. Construímos la distribución bootstrap, y examinamos sus características 
 (dónde está centrada, dispersión y forma).
 
+* El principio de /plug-in/
+
+La idea básica detrás del /bootstrap/ es el principio de /plug-in/ para estimar
+parámetros poblacionales: si queremos estimar una cantidad poblacional,
+calculamos esa cantidad poblacional con la muestra obtenida. Es un principio
+común en estadística.
+
+Por ejemplo, si queremos estimar la media o desviación estándar poblacional,
+usamos la media muestral o la desviación estándar muestral. Si queremos estimar
+un cuantil de la población usamos el cuantil correspondiente de la muestra, y
+así sucesivamente.
+
+En todos estos casos, lo que estamos haciendo es:
+
+- Tenemos una fórmula para la cantidad poblacional de interés en términos de la
+distribución poblacional.  
+- Tenemos una muestra, que usamos para estimar la cantidad poblacional. La
+distribución que da una muestra se llama distribución *empírica*.
+- Contruimos nuestro estimador "enchufando" la distribución empírica de la
+muestra en la fórmula del estimador.
+
+En el bootstrap aplicamos este principio simple a la *distribución de 
+muestreo*:
+
+- *Si tenemos la población*, podemos *calcular* la distribución de muestreo de
+nuestro estimador tomando muchas muestras de la *población*.
+- Estimamos la *poblacion* con la *muestra* y enchufamos en la frase anterior:
+- Podemos *estimar* la distribucion de muestreo de nuestro estimador
+tomando muchas muestras de la *muestra* (bootstrap).
+
+Nótese que el proceso de muestreo en el último paso **debe ser el mismo** que
+se usó para tomar la muestra original. Estas dos imágenes simuladas con base en 
+un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/mundo-poblacional.jpeg :exports results :results output graphics file
+  library(LaplacesDemon)
+  library(patchwork)
+  ## En este ejemplo la población es una mezcla de normales
+  pob_plot <- ggplot(data_frame(x = -15:20), aes(x)) +
+    stat_function(fun = dnormm, args = list(p = c(0.3, 0.7), mu = c(-2, 8),
+                                            sigma = c(3.5, 3)), alpha = 0.8) +
+    geom_vline(aes(color = "mu", xintercept = 5), alpha = 0.5) +
+    scale_colour_manual(values = c('mu' = 'red'), name = '', 
+                        labels = expression(mu)) +
+    scale_y_continuous(breaks = NULL) +
+    labs(x = "", subtitle = expression("Población "~F), color = "") +
+    theme_classic()
+
+  samples <- data_frame(sample = 1:3) %>% 
+    mutate(
+      sims = rerun(3, rnormm(30, p = c(0.3, 0.7), mu = c(-2, 8), 
+                             sigma = c(3.5, 3))), 
+      x_bar = map_dbl(sims, mean))
+  muestras_plot <- samples %>% 
+    unnest(cols = c(sims)) %>% 
+    ggplot(aes(x = sims)) +
+    geom_histogram(binwidth = 2, alpha = 0.5, fill = "darkgray") +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    geom_segment(aes(x = x_bar, xend = x_bar, y = 0, yend = 0.8), 
+                 color = "blue") +
+    xlim(-15, 20) +
+    facet_wrap(~ sample) +
+    scale_y_continuous(breaks = NULL) +
+    geom_text(aes(x = x_bar, y = 0.95, label = "bar(x)"), parse = TRUE, 
+              color = "blue", alpha = 0.2, hjust = 1) +
+    labs(x = "", subtitle = "Muestras") +
+    theme_classic() +
+    theme(strip.background = element_blank(), strip.text.x = element_blank())
+
+  samples_dist <- tibble(sample = 1:10000) %>% 
+    mutate(sims = rerun(10000, rnormm(100, p = c(0.3, 0.7), mu = c(-2, 8), 
+                                      sigma = c(3.5, 3))), 
+           mu_hat = map_dbl(sims, mean))
+  dist_muestral_plot <- ggplot(samples_dist, aes(x = mu_hat)) +
+    geom_density(adjust = 2) +
+    scale_y_continuous(breaks = NULL) +
+    labs(x = "", y = "",
+         subtitle = expression("Distribución muestral de "~hat(mu)==bar(X))) +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    theme_classic()
+
+  (pob_plot | plot_spacer()) / (muestras_plot | dist_muestral_plot) 
+#+end_src
+
+#+RESULTS:
+[[file:../images/chihara-ejemplo.jpeg]]
+
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/mundo-bootstrap.jpeg :exports results :results output graphics file
+  dist_empirica <- tibble(id = 1:30, obs = samples$sims[[1]])
+
+  dist_empirica_plot <- ggplot(dist_empirica, aes(x = obs)) +
+    geom_histogram(binwidth = 2, alpha = 0.5, fill = "darkgray") +
+    geom_vline(aes(color = "mu", xintercept = 5), alpha = 0.5) +
+    geom_vline(aes(xintercept = samples$x_bar[1], color = "x_bar"), 
+               alpha = 0.8, linetype = "dashed") +
+    xlim(-15, 20) +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    labs(x = "", subtitle = expression("Distribución empírica"~hat(F))) +
+    scale_colour_manual(values = c('mu' = 'red', 'x_bar' = 'blue'), name = '', 
+                        labels = c(expression(mu), expression(bar(x)))) +
+    scale_y_continuous(breaks = NULL) +
+    theme_classic()
+
+  samples_boot <- tibble(sample_boot = 1:3) %>% 
+    mutate(
+      sims_boot = rerun(3, sample(dist_empirica$obs, replace = TRUE)), 
+      x_bar_boot = map_dbl(sims_boot, mean)
+    )
+
+  muestras_boot_plot <- samples_boot %>% 
+    unnest(cols = c(sims_boot)) %>% 
+    ggplot(aes(x = sims_boot)) +
+    geom_histogram(binwidth = 2, alpha = 0.5, fill = "darkgray") +
+    geom_vline(aes(xintercept = samples$x_bar[1]), color = "blue",
+               linetype = "dashed", alpha = 0.8) +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    geom_segment(aes(x = x_bar_boot, xend = x_bar_boot, y = 0, yend = 0.8), 
+                 color = "black") +
+    xlim(-15, 20) +
+    facet_wrap(~ sample_boot) +
+    geom_text(aes(x = x_bar_boot, y = 0.95, label = "bar(x)^'*'"), 
+              parse = TRUE, color = "black", alpha = 0.3, hjust = 1) +
+    labs(x = "", subtitle = "Muestras bootstrap") +
+    scale_y_continuous(breaks = NULL) +
+    theme_classic() +
+    theme(strip.background = element_blank(), strip.text.x = element_blank())
+
+  boot_dist <- data_frame(sample = 1:10000) %>% 
+    mutate(
+      sims_boot = rerun(10000, sample(dist_empirica$obs, replace = TRUE)), 
+      mu_hat_star = map_dbl(sims_boot, mean))
+  boot_muestral_plot <- ggplot(boot_dist, aes(x = mu_hat_star)) +
+    geom_histogram(alpha = 0.5, fill = "darkgray", bins = 30) +
+    labs(x = "", 
+         subtitle = expression("Distribución bootstrap de "~hat(mu)^'*'==bar(X))) +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    geom_vline(aes(xintercept = samples$x_bar[1]), color = "blue", 
+               linetype = "dashed", alpha = 0.8) +
+    scale_y_continuous(breaks = NULL) +
+    theme_classic()
+
+  (dist_empirica_plot | plot_spacer()) / (muestras_boot_plot | boot_muestral_plot) 
+#+end_src
+
+#+RESULTS:
+[[file:../images/mundo-bootstrap.jpeg]]
+
+** Observación: 
+Veremos ejemplos más complejos, pero nótese que si la muestra original son
+observaciones independientes obtenidas de la distribución poblacional, entonces
+logramos esto en las remuestras tomando observaciones con reemplazo de la
+muestra. Igualmente, las remuestras deben ser del mismo tamaño que la muestra
+original.
+
+*** ~Ejercicio~:
+- ¿Porqué no funcionaría tomar muestras sin reemplazo? Piensa si hay independencia
+entre las observaciones de la remuestra, y cómo serían las remuestras sin reemplazo.
+- ¿Por qué no se puede hacer bootstrap si no conocemos cómo se obtuvo la muestra original?
+
+
+** Observación
+Estos argumentos se pueden escribir con fórmulas usando por ejemplo la función
+de distribución acumulada $F$ de la población y su estimador, que es la función
+empírica $\hat{F}$, como en citep:Efron1993.  Si $\theta = t(F)$ es una cantidad
+poblacional que queremos estimar, su estimador /plug-in/ es $\hat{\theta} =
+t(\hat{F})$.
+
+** Observación
+La distribución empírica $\hat{F}$ es un estimador "razonable" de la
+distribución poblacional $F,$ pues por el teorema de Glivenko-Cantelli
+(citep:Wasserman2004, o
+[aquí](https://en.wikipedia.org/wiki/Glivenko-Cantelli_theorem)), $\hat{F}$
+converge a $F$ cuando el tamaño de muestra $n\to\infty$, lo cual es
+intuitivamente claro.
+
+** Ejemplo 
+En el siguiente ejemplo (tomadores de té), podemos estimar la proporción de
+tomadores de té que prefiere el té negro usando nuestra muestra:
+
+#+begin_src R :exports both :results none
+  te <- read_csv("data/tea.csv") |>
+    rowid_to_column() |>
+    select(rowid, Tea, sugar)
+#+end_src
+
+#+begin_src R :exports both :results org 
+  te |>
+    mutate(negro = ifelse(Tea == "black", 1, 0)) |>
+    summarise(prop_negro = mean(negro), n = length(negro), .groups = "drop")
+#+end_src
+
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 2
+  prop_negro     n
+       <dbl> <int>
+1      0.247   300
+#+end_src
+
+¿Cómo evaluamos la precisión de este estimador? Supondremos que el estudio se
+hizo tomando una muestra aleatoria simple de tamaño 300 de la población de tomadores de té que
+nos interesa. Podemos entonces usar el boostrap:
+
+#+begin_src R :exports code :results none 
+  ## paso 1: define el estimador
+  calc_estimador <- function(datos){
+    prop_negro <- datos |>
+      mutate(negro = ifelse(Tea == "black", 1, 0)) |>
+      summarise(prop_negro = mean(negro), n = length(negro), .groups = "drop") |>
+      pull(prop_negro)
+    prop_negro
+  }  
+#+end_src
+
+#+begin_src R :exports code :results none 
+  ## paso 2: define el proceso de remuestreo
+  muestra_boot <- function(datos){
+    ## tomar muestra con reemplazo del mismo tamaño
+    sample_n(datos, size = nrow(datos), replace = TRUE)
+  }  
+#+end_src
+
+#+begin_src R :exports code :results none 
+  # paso 3: remuestrea y calcula el estimador
+  prop_negro_tbl <- map_dbl(1:2000,  ~ calc_estimador(muestra_boot(datos = te))) %>%
+    tibble(prop_negro = .)  
+#+end_src
+
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/bootstrap-tea-mean.jpeg :exports results :results output graphics file
+  ## paso 4: examina la distribución bootstrap
+  prop_negro_tbl %>% 
+    ggplot(aes(x = prop_negro)) +
+    geom_histogram(bins = 15) + sin_lineas
+#+end_src
+
+#+RESULTS:
+[[file:../images/bootstrap-tea-mean.jpeg]]
+
+Y podemos evaluar varios aspectos, por ejemplo dónde está centrada y 
+qué tan dispersa es la distribución bootstrap:
+
+#+begin_src R :exports both :results org 
+  prop_negro_tbl |>
+    summarise(media = mean(prop_negro),
+              sesgo = mean(prop_negro) - 0.2499,
+              ee = sd(prop_negro),
+              cuantil_75 = quantile(prop_negro, 0.75), 
+              cuantil_25 = quantile(prop_negro, 0.25),
+              .groups = "drop") |>
+    mutate(across(where(is.numeric), round, 3)) |>
+    pivot_longer(cols = everything())
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 5 × 2
+  name        value
+  <chr>       <dbl>
+1 media       0.247
+2 sesgo      -0.003
+3 ee          0.025
+4 cuantil_75  0.263
+5 cuantil_25  0.23
+#+end_src
+
+bibliographystyle:abbrvnat
+bibliography:references.bib
 
 
 * Temas por ver                                                    :noexport:
