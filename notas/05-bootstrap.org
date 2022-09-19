@@ -26,7 +26,7 @@
 #+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
 #+EXPORT_FILE_NAME: ../docs/05-bootstrap.pdf
 :END:
-#+PROPERTY: header-args:R :session varianza :exports both :results output org :tangle ../rscript/05-bootstrap.R :mkdirp yes :dir ../
+#+PROPERTY: header-args:R :session bootstrap :exports both :results output org :tangle ../rscript/05-bootstrap.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc noexport
 
 #+BEGIN_NOTES
@@ -66,11 +66,389 @@
 :END:
 :CONTENTS:
 - [[#introducción][Introducción]]
+  - [[#contexto-histórico][Contexto histórico]]
+  - [[#idea-general][Idea general]]
+  - [[#ejemplo][Ejemplo]]
+    - [[#ejercicio][Ejercicio:]]
+  - [[#observaciones][Observaciones:]]
+- [[#la-idea-del-bootstrap][La idea del bootstrap]]
+  - [[#definición][Definición:]]
+  - [[#ejemplo][Ejemplo:]]
 :END:
 
 
 
 * Introducción 
+
+El remuestreo se refiere a un conjunto de técnicas estadísticas,
+computacionalmente intensivas, que ~estiman~ la /distribución de una población/
+basadas en ~muestreo aleatorio con reemplazo~.
+
+Se considera que una muestra aleatoria X1 , X2 , . . . , Xn como si fuera una
+población finita y se generan muestras aleatorias de la misma muestra para
+estimar características poblacionales y hacer inferencia de la población
+muestreada.
+
+Las técnicas de remuestreo permiten calcular medidas de ajuste (en términos de
+sesgo, varianza, intervalos de confianza, errores de predicción o de algunas
+otras medidas) a los estimados basados en muestras.
+
+Estas técnicas son usualmente no paramétricas, y varias son tan antiguas como la
+estadística misma. Por ejemplo, las técnicas de permutación son de Fisher (1935)
+y Pitmann (1937); la validación cruzadas fue propuesta por Kurtz en 1948, y el
+Jackknife fue propuesto por Maurice Quenouille en 1949 aunque fue John Tukey en
+1958 quién le dio el nombre a la técnica.
+
+** Contexto histórico
+
+Bradley Efron introdujo el Bootstrap en 1979, y sus estudiantes Rob Tibshirani y
+Trevor Hastie han aportado mucho a la ciencia estadística. Ofrecen un curso en
+Statistical Learning en la plataforma MOOC de la Universidad de Stanford.
+
+El término ‘bootstrapping’ se refiere al concepto de “pulling oneself up by
+one’s bootstraps”, frase que aparentemente se usó por primera vez en The
+Singular Travels, Campaigns and Adventures of Varon Munchausen.
+
+** Idea general
+
+El objetivo del remuestreo es estimar alguna característica poblacional, representada por θ (tal
+como media, mediana, desviación estándar, coeficientes de regresión, matriz de covarianza,
+etc.) basado en los datos.
+
+También interesan las propiedades de la distribución de estimador, sin hacer supuestos
+restrictivos sobre la forma de la distribución de los datos originales.
+
+Para una muestra aleatoria X1 , . . . , Xn , la distribución de remuestreo es la distribución
+empírica F̂n , que asigna probabilidad 1/n a cada una de las observaciones de la muestra.
+
+\newpage
+
+** Ejemplo
+
+Consideremos una muestra de 6 parejas. La variable de interés es la diferencia
+del ingreso de los miembros de cada pareja (en miles de pesos al mes).
+
+|-----+-------------+-------------+-------------------------------|
+| $i$ | $P_i^{(1)}$ | $P_i^{(2)}$ | $d_i = P_i^{(1)} - P_i^{(2)}$ |
+|-----+-------------+-------------+-------------------------------|
+|   1 |          24 |          18 |                             6 |
+|   2 |          14 |          17 |                            -3 |
+|   3 |          40 |          35 |                             5 |
+|   4 |          44 |          41 |                             3 |
+|   5 |          35 |          37 |                            -2 |
+|   6 |          45 |          45 |                             0 |
+|-----+-------------+-------------+-------------------------------|
+
+#+REVEAL: split
+Definamos $\theta$ como el promedio de las diferencias de ingreso poblacional. Podemos estimar $\theta$ con
+\begin{align}
+\hat \theta_n= \frac{6 - 3 + 5 + 3 - 2+ 0}{6} = 1.5\,.
+\end{align}
+¿Cómo calculamos la variabilidad de nuestro estimador? Es decir, ¿cómo
+calculamos la variabilidad de $\hat \theta_n$?
+
+*** ~Ejercicio~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+Escribe la fórmula del error estándar bajo los siguientes supuestos:
+1. La diferencia tiene una distribución $d_i \sim \mathsf{N}(\theta, \sigma^2)$.
+2. La varianza $\sigma^2$ es conocida.
+
+** ~Observaciones~:
+- Suponer que la diferencia de ingresos es $d_i$ como una variable normal puede
+  no estar /tan/ errado. Pues con un número suficiente de muestras podríamos
+  suponer que el resultado del $\mathsf{TLC}$ se cumple. Entonces, ¿qué hacemos
+  si no conocemos la distribución de las observaciones?
+
+- Si no conocemos $\sigma^2$  lo podemos estimar con la muestra. Por ejemplo, podemos
+  utilizar intervalos de confianza derivados de una distribución $t$.
+
+- Si nos interesa otro parámetro de la población podemos construir estimadores
+  diferentes. Por ejemplo, nos podría interesar la ~mediana~ de una población
+  $q_{0.5} = \mathbb{P}^{-1}(1/2)$. Para este caso, podemos estimar dicho parámetro
+  por medio de
+  \begin{align}
+  \hat q_{0.5} = \begin{cases}
+    X_{(\frac{n+1}{2})} & \text{ si } n \text{ es impar }\\
+    \frac{X_{(n/2)} + X_{(n/2 + 1)}}{2} & \text{ si } n \text{ es par }
+  \end{cases} \,.
+  \end{align}
+
+
+#+REVEAL: split
+  En [[fig-medianas]] la estimación de la mediana en distintos grupos acompañados de su estimación de incertidumbre. 
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/bootstrap-medianas-grupos.jpeg :exports results :results output graphics file :tangle no :eval never
+    set.seed(8)
+    ## Generamos nuestros datos ficticios - poblacion 
+    pob_tab <- tibble(id = 1:2000,
+                      x = rgamma(2000, 4, 1), 
+                      grupo = sample(c("a","b", "c"),
+                                     2000, prob = c(4,2,1),
+                                     replace = T))
+    ## Generamos una muestras - observaciones 
+    muestra_tab <- pob_tab |> 
+      sample_n(125)
+    g_1 <- ggplot(muestra_tab, aes(x = grupo, y = x)) + 
+      geom_boxplot(outlier.alpha = 0) +
+      geom_jitter(alpha = 0.3) +  sin_lineas + 
+      labs(subtitle = "Muestra \n") + ylim(c(0,14))
+    ## Hacemos bootstrap 
+    fun_boot <- function(datos){
+        datos |> group_by(grupo) |>
+          sample_n(n(), replace = TRUE)
+    }
+    reps_boot <- map_df(1:2000, function(i){
+      muestra_tab %>% 
+        fun_boot %>%
+        group_by(grupo) %>%
+        summarise(mediana = median(x), .groups = "drop")}, 
+      .id = 'rep') 
+    resumen_boot <- reps_boot |> group_by(grupo) |> 
+        summarise(ymin = quantile(mediana, 0.025), 
+                  ymax = quantile(mediana, 0.975), .groups = "drop") |> 
+        left_join(muestra_tab |> 
+                    group_by(grupo) |> 
+                    summarise(mediana = median(x)), .groups = "drop")
+    g_2 <- ggplot(resumen_boot, aes(x = grupo, y = mediana, ymin = ymin, 
+                                    ymax = ymax)) +
+        geom_linerange() + sin_lineas +
+        geom_point(colour = "red", size = 2) +  ylim(c(0,14)) +
+        labs(subtitle = "Intervalos de 95% \n para la mediana")
+    g_1 + g_2
+#+end_src
+#+name: fig-medianas
+#+caption:Estimación de mediana (panel izquierdo) con intervalos de incertidumbre (panel derecho). 
+#+RESULTS:
+[[file:../images/bootstrap-medianas-grupos.jpeg]]
+
+* La idea del /bootstrap/
+
+Como explicamos, el problema que tenemos ahora es que normalmente sólo tenemos
+una muestra, así que no es posible calcular las distribuciones de muestreo como
+hicimos arriba y evaluar qué tan preciso es nuestro estimador. Sin embargo,
+podemos hacer lo siguiente:
+
+Supongamos que tenemos una muestra $X_1,X_2,\dots, X_n$ independientes de alguna
+población desconocida y un estimador $T=t(X_1,\dots, X_n)$
+
+*Mundo poblacional*
+
+1. Si tuviéramos la distribución poblacional, simulamos muestras iid para
+aproximar la distribución de muestreo de nuestro estimador, y así entender su
+variabilidad.
+2. Pero **no** tenemos la distribución poblacional.
+3. **Sin embargo, podemos estimar la distribución poblacional con nuestros valores muestrales**.
+
+*Mundo bootstrap*
+
+4. Si usamos la estimación del inciso 3, entonces usando el inciso 1 podríamos
+tomar muestras de nuestros datos muestrales, como si fueran de la población, y
+usando el mismo tamaño de muestra. El muestreo lo hacemos con reemplazo de 
+manera que produzcamos muestras independientes de la misma "población estimada",
+que es la muestra.
+5. Evaluamos nuestra estadística en cada una de estas remuestras.
+6. A la distribución resultante le llamamos **distribución bootstrap** o
+**distribución de remuestreo** del estimador.
+7. Usamos la distribución bootstrap de la muestra para estimar la variabilidad
+en nuestra estimación con **la muestra original**.
+
+Veamos que sucede para un ejemplo concreto, donde  nos interesa estimar
+la media de los precios de venta de una población de casas. Tenemos nuestra muestra:
+
+#+begin_src R :exports both :results none
+  set.seed(2112)
+  poblacion_casas <- read_csv("data/casas.csv")
+  muestra <- sample_n(poblacion_casas, 200, replace = TRUE)
+#+end_src
+
+#+begin_src R :exports both :results org 
+  mean(muestra$precio_miles)  
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 180
+#+end_src
+
+Esta muestra nos da nuestro estimador de la distribución poblacional. Por ejemplo, podemos fijarnos en un gráfico de cuantiles:
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/casas-qqplot.jpeg :exports results :results output graphics file
+  bind_rows(muestra %>% mutate(tipo = "muestra"),
+      poblacion_casas %>% mutate(tipo = "población")) |>  
+  ggplot(aes(sample = precio_miles, colour = tipo, group = tipo)) + 
+    geom_qq(distribution = stats::qunif, alpha = 0.4, size = 1) +
+    facet_wrap(~ tipo) + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/casas-qqplot.jpeg]]
+
+O en histogramas:
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/casas-histogramas.jpeg :exports results :results output graphics file
+  bind_rows(muestra %>% mutate(tipo = "muestra"),
+      poblacion_casas %>% mutate(tipo = "población")) %>% 
+  ggplot(aes(x = precio_miles, group = tipo)) + 
+      geom_histogram(aes(y=..density..), binwidth = 50) + 
+    facet_wrap(~ tipo) + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/casas-histogramas.jpeg]]
+
+Y vemos que la aproximación es razonable en las partes centrales de la 
+distribución. 
+
+Ahora supongamos que nos interesa cuantificar la precisión de nuestra
+estimación de la media poblacional de precios de casas, y usaremos la media
+muestral para hacer esto. Para nuestra muestra, nuestra estimación puntual es:
+
+#+begin_src R :exports both :results org 
+  media <- mean(muestra$precio_miles)
+  media
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 180
+#+end_src
+
+
+Y recordamos que para aproximar la distribución de muestreo podíamos muestrear
+repetidamente la población y calcular el valor del estimador en cada una de
+estas muestras. Aquí no tenemos la población, *pero tenemos una estimación de la
+población*: la muestra obtenida.
+
+Así que para evaluar la variabilidad de nuestro estimador, entramos en el mundo
+boostrap, y consideramos que la población es nuestra muestra.
+
+Podemos entonces extraer un número grande de muestras con reemplazo de tamaño
+200 *de la muestra*: el muestreo debe ser análogo al que se tomó para nuestra
+muestra original. Evaluamos nuestra estadística (en este caso la media) en cada
+una de estas remuestras:
+
+#+begin_src R :exports both :results org 
+  media_muestras <- map_dbl(1:1000, ~ muestra %>%  
+          sample_n(200, replace = T) %>%
+          summarise(media_precio = mean(precio_miles), .groups = "drop") %>%
+          pull(media_precio))
+  media_muestras[1:10]
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+ [1] 177.3 169.3 180.1 183.9 184.7 180.4 188.9 178.8 180.9 177.9
+#+end_src
+
+
+Y nuestra estimación de la distribución de muestreo para la media es entonces:
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/casas-bootstrap.jpeg :exports results :results output graphics file
+  bootstrap <- tibble(media = media_muestras)
+  g_cuantiles <- ggplot(bootstrap, aes(sample = media)) +
+    geom_qq(distribution = stats::qunif) +
+    sin_lineas
+  g_histograma <- ggplot(bootstrap, aes(x = media)) +
+    geom_histogram(binwidth = 2) + sin_lineas
+  g_cuantiles + g_histograma
+#+end_src
+
+#+RESULTS:
+[[file:../images/casas-bootstrap.jpeg]]
+
+A esta le llamamos la distribución de remuestreo de la media, que definimos más
+abajo. Ahora podemos calcular un intervalo de confianza del 90\% simplemente
+calculando los cuantiles de esta distribución (no son los cuantiles de la
+muestra original!):
+
+#+begin_src R :exports both :results org 
+  limites_ic <- quantile(media_muestras, c(0.05,  0.95)) %>% round
+  limites_ic
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+ 5% 95% 
+171 190
+#+end_src
+
+Otra cosa que podríamos hacer para describir la dispersión de nuestro estimador
+es calcular el error estándar de remuestreo, que estima el error estándar de la
+distribución de muestreo:
+
+#+begin_src R :exports both :results org
+  ee_boot <- sd(media_muestras)
+  round(ee_boot, 2)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 5.55
+#+end_src
+
+*** ~Definición~:
+Sea $X_1,X_2,\ldots,X_n$ una muestra independiente y idénticamente
+distribuida, y $T=t(X_1, X_2, \ldots, X_n)$ una estadística. Supongamos que sus valores
+que obervamos son $x_1, x_2,\ldots, x_n$.
+
+La **distribución de remuestreo** de $T$ es la
+distribución de $T^*=t(X_1^*, X_2^*, \dots X_n^*)$, donde cada $X_i^*$ se obtiene
+tomando al azar uno de los valores de $x_1,x_2,\ldots, x_n$.
+
+Otra manera de decir esto es que la remuestra $X_1^*, X_2^*, \ldots, X_n^*$ es una muestra
+con reemplazo de los valores observados $x_1, x_2, \ldots, x_n$
+
+
+*** ~Ejemplo~:
+Si observamos la muestra
+
+#+begin_src R :exports both :results org 
+  muestra <- sample(1:20, 5)
+  muestra
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1]  2  9 10  1 18
+#+end_src
+
+Una remuestra se obtiene:
+
+#+begin_src R :exports both :results org 
+  sample(muestra, size = 5, replace = TRUE)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1]  9 10  2 10 10
+#+end_src
+
+Nótese que algunos valores de la muestra original pueden aparecer varias veces, y otros no aparecen del todo.
+
+** Nota
+*La idea del bootstrap*. La muestra original es una aproximación de la población
+de donde fue extraída. Así que remuestrear la muestra aproxima lo que pasaría si
+tomáramos muestras de la población. La *distribución de remuestreo* de una
+estadística, que se construye tomando muchas remuestras, aproxima la
+distribución de muestreo de la estadística.
+
+
+Y el proceso que hacemos es:
+
+*** ~Remuestreo para una población~:
+Dada una muestra de tamaño $n$ de una población, 
+
+1. Obtenemos una remuestra de tamaño $n$ con reemplazo de la muestra original
+2. Repetimos este remuestreo muchas veces (por ejemplo, 10,000).
+3. Construímos la distribución bootstrap, y examinamos sus características 
+(dónde está centrada, dispersión y forma).
+
+
 
 * Temas por ver                                                    :noexport:
 
