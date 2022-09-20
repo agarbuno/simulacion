@@ -1353,7 +1353,7 @@ más apropiado cuando observamos asimetría. Sin embargo, primero tendremos que
 hablar de dos conceptos clave con respecto a intervalos de confianza:
 calibración e interpretación.
 
-* Calibración de intervalos de confianza :draft:
+* Calibración de intervalos de confianza 
 
 ¿Cómo sabemos que nuestros intervalos de confianza del $95\%$ nominal 
 tienen cobertura real de $95\%$? Es decir, tenemos que checar:
@@ -1366,7 +1366,7 @@ estudios de simulación previos. Para nuestro ejemplo de casas tenemos la
 población, así que podemos checar qué cobertura real tienen los intervalos
 normales:
 
-#+begin_src R :exports none :results none :eval never
+#+begin_src R :exports none :results none :eval never :tangle no
   simular_intervalos <- function(rep, size = 150){
     muestra_casas <- sample_n(poblacion_casas, size = size)
     N <- nrow(poblacion_casas)
@@ -1405,8 +1405,8 @@ normales:
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/casas-estimacion-intervalos.jpeg :exports results :results output graphics file
   total <- sum(poblacion_casas$precio_miles)
-  sims_tbl <- sims_intervalos %>% 
-    bind_rows %>%
+  sims_tbl <- sims_intervalos |>
+    bind_rows |>
     mutate(cubre = inf < total & total < sup) 
   ggplot(sims_tbl, aes(x = rep)) +
     geom_hline(yintercept = total, colour = "red") +
@@ -1448,7 +1448,7 @@ poblaciones teóricas. En general sabemos que los procedimientos funcionan bien 
 - estimación de proporciones donde no tratamos con casos raros o casos seguros
   (probabilidades cercanas a 0 o 1).
 
-* Interpretación intervalos de confianza :draft:
+* Interpretación intervalos de confianza 
 
 Como hemos visto, ``intervalo de confianza'' (de $90\%$ de confianza, por ejemplo)
 es un término *frecuentista*, que significa:
@@ -1486,7 +1486,7 @@ que nuestros intervalos cumplan o aproximen bien garantías frecuentistas
 (discutimos esto más adelante). Los intervalos que producimos en esta sección
 pueden interpretarse de las dos maneras.
 
-* Intervalos /bootstrap/ de percentiles :draft:
+* Intervalos /bootstrap/ de percentiles 
 
 Retomemos nuestro ejemplo del valor total del precio de las casas. A través de
 remuestras bootstrap hemos verificado gráficamente que la distribución de
@@ -1494,10 +1494,11 @@ remuestreo es *ligeramente* asimétrica (ver la figura de abajo).
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/casas-histograma.jpeg :exports results :results output graphics file
-  g_hist2 <- totales_boot %>% 
+  g_hist2 <- totales_boot|>
     ggplot(aes(x = total_boot)) +
     geom_histogram(aes(y = ..density..)) + 
-    stat_function(fun = dnorm, args = list(mean = total_est, sd = ee_boot), color = 'red', lty = 2) +
+    stat_function(fun = dnorm, args = list(mean = total_est, sd = ee_boot),
+                  color = 'red', lty = 2) +
     sin_lineas
 
   g_hist2 + g_qq
@@ -1515,7 +1516,8 @@ normales por medio del error éstandar. Este intervalo está dado por
 
 #+RESULTS:
 #+begin_src org
-[1] 203.4 232.3
+   inf centro    sup 
+ 203.4  217.8  232.3
 #+end_src
 
 y por construcción sabemos que es simétrico con respecto al valor estimado, pero 
@@ -1524,9 +1526,9 @@ confirmar por ejemplo calculando el porcentaje de muestras bootstrap que caen
 por arriba y por debajo del intervalo construido:
 
 #+begin_src R :exports both :results org 
-  totales_boot %>% 
+  totales_boot |> 
     mutate(upper = total_boot >= max(intervalo_total * 1000), 
-           lower = total_boot <= min(intervalo_total * 1000)) %>% 
+           lower = total_boot <= min(intervalo_total * 1000)) |>
     summarise(prop_inf = mean(lower), 
               prop_sup = mean(upper))
 #+end_src
@@ -1563,16 +1565,16 @@ en las colas de la distribución.
 Para el ejemplo de las casas, calcularíamos simplemente
 
 #+begin_src R :exports both :results org 
-  intervalo_95 <- totales_boot %>% pull(total_boot) %>% quantile(., probs = c(0.025, 0.975)) / 1000
+  intervalo_95 <- totales_boot |> pull(total_boot) %>%
+    quantile(., probs = c(0.025, 0.50, 0.975)) / 1000
   (intervalo_95) %>% round(1)
 #+end_src
 
 #+RESULTS:
 #+begin_src org
- 2.5% 97.5% 
-204.3 232.5
+ 2.5%   50% 97.5% 
+204.3 217.8 232.5
 #+end_src
-
 que está en millones de dólares. Nótese que es similar al intervalo de error estándar.
 
 Otro punto interesante sobre los intervalos /bootstrap/ de percentiles es que
@@ -1585,8 +1587,8 @@ esto con la distancia de las extremos del intervalo con respecto a la media:
 
 #+RESULTS:
 #+begin_src org
-  2.5%  97.5% 
-13.539 14.647
+      2.5%        50%      97.5% 
+13.5391163  0.0033367 14.6467418
 #+end_src
 
 Los intervalos de confianza nos permiten presentar un rango de valores posibles
@@ -1601,7 +1603,7 @@ compensar dichas observaciones.
 :reveal_background: #00468b
 :END:
 Explica por qué cuando la aproximación normal es apropiada, el intervalo de
-percentiles al 95% es muy similar al intervalo normal de 2 errores estándar.
+percentiles al $95\%$ es muy similar al intervalo normal de 2 errores estándar.
 
 ** Ejemplo 
 
@@ -1612,7 +1614,9 @@ por separado:
 #+begin_src R :exports both :results org
   ## en este ejemplo usamos rsample, pero puedes escribir tu propio código
   library(rsample)
-  propinas <- read_csv("data/propinas.csv", progress = FALSE, show_col_types = FALSE) |>
+  propinas <- read_csv("data/propinas.csv",
+                       progress = FALSE,
+                       show_col_types = FALSE) |>
     mutate(id = 1:244)
   propinas
 #+end_src
@@ -1636,8 +1640,7 @@ por separado:
 # ℹ Use `print(n = ...)` to see more rows
 #+end_src
 
-
-#+begin_src R :exports both :results org 
+#+begin_src R :exports code :results none 
   ## paso 1: define el estimador
   estimador <- function(split, ...){
     muestra <- analysis(split) |> group_by(momento)
@@ -1645,6 +1648,9 @@ por separado:
       summarise(estimate = mean(cuenta_total), .groups = 'drop') |>
       mutate(term = momento)
   }
+#+end_src
+
+#+begin_src R :exports both :results org 
   ## paso 2: remuestrea y calcula estimador
   boot_samples <- bootstraps(propinas, strata = momento, 1000) |>
     mutate(res_boot = map(splits, estimador))
@@ -1672,9 +1678,9 @@ grande que la de la comida.  Podemos graficar agregando los estimadores /plug-in
 
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/propinas-bootstrap.jpeg :exports results :results output graphics file
-  estimadores <- propinas %>% 
-    group_by(momento) %>% 
-    rename(term = momento) %>% 
+  estimadores <- propinas |>
+    group_by(momento) |> 
+    rename(term = momento) |> 
     summarise(media = mean(cuenta_total))
 
   ggplot(intervalo_propinas_90, aes(x = term)) +
@@ -1803,7 +1809,7 @@ acerca del muestreo se deben satisfacer? ¿Deben ser muestras aleatorias simples
 de cada momento del día, por ejemplo? ¿Qué harías si no fuera así, por ejemplo, si 
 se escogieron al azar tickets de todos los disponibles en un periodo?
 
-* /Boostrap/ y otras estadísticas :draft:
+* /Boostrap/ y otras estadísticas 
 
 
 El /bootstrap/ es una técnica versátil. Un ejemplo son *estimadores de razón*, que
@@ -1890,7 +1896,7 @@ El estimador de interés es:
     muestra |>
       summarise(estimate = sum(area_habitable_sup_m2) / sum(area_lote_m2),
                 .groups = "drop") |>
-      mutate(term = "% area del lote construida")
+      mutate(term = "area del lote construida")
   }
 #+end_src
 
@@ -1931,36 +1937,20 @@ En este caso la cola derecha parece tener menos dispersión que una distribució
 Usamos un intervalo de percentiles para obtener:
 
 #+begin_src R :exports both :results org 
-  dist_boot %>% int_pctl(res_boot) %>% 
-    mutate(estimador = estimador$estimate) %>% 
-    rename(media_boot = .estimate) %>% 
-    mutate(bias = media_boot - estimador) %>% 
-    pivot_longer(where(is_numeric)) %>% 
-    mutate(value = round(value, 3))  
+  dist_boot |> int_pctl(res_boot) |>
+    mutate(estimador = estimador$estimate) |>
+    rename(media_boot = .estimate) |>
+    mutate(sesgo = media_boot - estimador) |>
+    select(-.method, -term)
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-# A tibble: 6 × 4
-  term                       .method    name        value
-  <chr>                      <chr>      <chr>       <dbl>
-1 % area del lote construida percentile .lower      0.121
-2 % area del lote construida percentile media_boot  0.142
-3 % area del lote construida percentile .upper      0.159
-4 % area del lote construida percentile .alpha      0.05 
-5 % area del lote construida percentile estimador   0.148
-6 % area del lote construida percentile bias       -0.006
-Warning messages:
-1: Deprecated 
-2: Deprecated 
-3: Deprecated 
-4: Deprecated 
-5: Deprecated 
-6: Deprecated 
-7: Deprecated 
-8: Deprecated
+# A tibble: 1 × 6
+  .lower media_boot .upper .alpha estimador    sesgo
+   <dbl>      <dbl>  <dbl>  <dbl>     <dbl>    <dbl>
+1  0.120      0.142  0.159   0.05     0.148 -0.00582
 #+end_src
-
 
 
 Nótese que el sesgo es bajo.  De modo que en esta zona, entre $12\%$ y $16\%$ de toda
