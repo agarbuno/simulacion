@@ -105,9 +105,9 @@
 
 El remuestreo se refiere a un conjunto de técnicas estadísticas,
 computacionalmente intensivas, que ~estiman~ la /distribución de una población/
-basadas en ~muestreo aleatorio con reemplazo~.
+basadas en ~muestreo aleatorio con reemplazo~ de una muestra observada.
 
-Se considera que una muestra aleatoria $X_{1}, \ldots, X_{n}$ como si fuera una
+Se considera una muestra aleatoria $X_{1}, \ldots, X_{n}$ como si fuera una
 población finita y se generan muestras aleatorias de la misma muestra para
 estimar características poblacionales y hacer inferencia de la población
 muestreada.
@@ -142,7 +142,7 @@ También interesan las propiedades de la distribución de estimador, sin hacer s
 restrictivos sobre la forma de la distribución de los datos originales.
 
 Para una muestra aleatoria $X_1, \ldots , X_n$ , la distribución de remuestreo es la distribución
-empírica $\hat{\mathbb{P}}_n$ , que asigna probabilidad $1/n$ a cada una de las observaciones de la muestra.
+empírica $\hat{\mathbb{P}}_n$, que asigna probabilidad $1/n$ a cada una de las observaciones de la muestra.
 
 \newpage
 
@@ -254,7 +254,7 @@ hicimos arriba y evaluar qué tan preciso es nuestro estimador. Sin embargo,
 podemos hacer lo siguiente:
 
 Supongamos que tenemos una muestra $X_1,X_2,\dots, X_n$ independientes de alguna
-población desconocida y un estimador $T=t(X_1,\dots, X_n)$
+población desconocida y un estimador $T_n=t(X_1,\dots, X_n)$
 
 *Mundo poblacional*
 
@@ -414,13 +414,13 @@ distribución de muestreo:
 #+end_src
 
 *** ~Definición~:
-Sea $X_1,X_2,\ldots,X_n$ una muestra independiente y idénticamente
-distribuida, y $T=t(X_1, X_2, \ldots, X_n)$ una estadística. Supongamos que sus valores
-que obervamos son $x_1, x_2,\ldots, x_n$.
+Sea $X_1,X_2,\ldots,X_n$ una muestra independiente y idénticamente distribuida
+($\mathsf{iid}$), y $T_n=t(X_1, X_2, \ldots, X_n)$ una estadística. Supongamos
+que los valores que obervamos son $x_1, x_2,\ldots, x_n$.
 
-La **distribución de remuestreo** de $T$ es la
-distribución de $T^*=t(X_1^*, X_2^*, \dots X_n^*)$, donde cada $X_i^*$ se obtiene
-tomando al azar uno de los valores de $x_1,x_2,\ldots, x_n$.
+La *distribución de remuestreo* de $T_n$ es la distribución de $T^*=t(X_1^*, X_2^*,
+\dots X_n^*)$, donde cada $X_i^*$ se obtiene tomando al azar uno de los valores
+de $x_1,x_2,\ldots, x_n$.
 
 Otra manera de decir esto es que la remuestra $X_1^*, X_2^*, \ldots, X_n^*$ es una muestra
 con reemplazo de los valores observados $x_1, x_2, \ldots, x_n$
@@ -453,12 +453,11 @@ Una remuestra se obtiene:
 Nótese que algunos valores de la muestra original pueden aparecer varias veces, y otros no aparecen del todo.
 
 ** Nota
-*La idea del bootstrap*. La muestra original es una aproximación de la población
+La muestra original es una aproximación de la población
 de donde fue extraída. Así que remuestrear la muestra aproxima lo que pasaría si
 tomáramos muestras de la población. La *distribución de remuestreo* de una
 estadística, que se construye tomando muchas remuestras, aproxima la
 distribución de muestreo de la estadística.
-
 
 Y el proceso que hacemos es:
 
@@ -466,9 +465,9 @@ Y el proceso que hacemos es:
 Dada una muestra de tamaño $n$ de una población, 
 
 1. Obtenemos una remuestra de tamaño $n$ con reemplazo de la muestra original
-2. Repetimos este remuestreo muchas veces (por ejemplo, 10,000).
-3. Construímos la distribución bootstrap, y examinamos sus características 
-(dónde está centrada, dispersión y forma).
+2. Repetimos este remuestreo muchas veces (por ejemplo $10,000$).
+3. Construímos la distribución /bootstrap/, y examinamos sus características
+   (dónde está centrada, dispersión y forma).
 
 * El principio de /plug-in/
 
@@ -485,22 +484,22 @@ así sucesivamente.
 En todos estos casos, lo que estamos haciendo es:
 
 - Tenemos una fórmula para la cantidad poblacional de interés en términos de la
-distribución poblacional.  
+  distribución poblacional.
 - Tenemos una muestra, que usamos para estimar la cantidad poblacional. La
-distribución que da una muestra se llama distribución *empírica*.
+  distribución que da una muestra se llama distribución *empírica*.
 - Contruimos nuestro estimador "enchufando" la distribución empírica de la
-muestra en la fórmula del estimador.
+  muestra en la fórmula del estimador.
 
 En el bootstrap aplicamos este principio simple a la *distribución de 
 muestreo*:
 
 - *Si tenemos la población*, podemos *calcular* la distribución de muestreo de
-nuestro estimador tomando muchas muestras de la *población*.
+  nuestro estimador tomando muchas muestras de la *población*.
 - Estimamos la *poblacion* con la *muestra* y enchufamos en la frase anterior:
-- Podemos *estimar* la distribucion de muestreo de nuestro estimador
-tomando muchas muestras de la *muestra* (bootstrap).
+- Podemos *estimar* la distribucion de muestreo de nuestro estimador tomando
+  muchas muestras de la *muestra* (bootstrap).
 
-Nótese que el proceso de muestreo en el último paso **debe ser el mismo** que
+Nótese que el proceso de muestreo en el último paso *debe ser el mismo* que
 se usó para tomar la muestra original. Estas dos imágenes simuladas con base en 
 un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
 
@@ -628,9 +627,11 @@ muestra. Igualmente, las remuestras deben ser del mismo tamaño que la muestra
 original.
 
 *** ~Ejercicio~:
-- ¿Porqué no funcionaría tomar muestras sin reemplazo? Piensa si hay independencia
-entre las observaciones de la remuestra, y cómo serían las remuestras sin reemplazo.
-- ¿Por qué no se puede hacer bootstrap si no conocemos cómo se obtuvo la muestra original?
+- ¿Porqué no funcionaría tomar muestras sin reemplazo? Piensa si hay
+  independencia entre las observaciones de la remuestra, y cómo serían las
+  remuestras sin reemplazo.
+- ¿Por qué no se puede hacer bootstrap si no conocemos cómo se obtuvo la muestra
+  original?
 
 
 ** Observación
@@ -641,9 +642,9 @@ poblacional que queremos estimar, su estimador /plug-in/ es $\hat{\theta} =
 t(\hat{F})$.
 
 ** Observación
-La distribución empírica $\hat{F}$ es un estimador "razonable" de la
-distribución poblacional $F,$ pues por el teorema de Glivenko-Cantelli
-(citep:Wasserman2004, o [[https://en.wikipedia.org/wiki/Glivenko-Cantelli_theorem][aquí]]), $\hat{F}$ converge a $F$ cuando el tamaño de
+La distribución empírica $\hat{\mathbb{P}}_n$ es un estimador /razonable/ de la
+distribución poblacional $\mathbb{P}$ pues por el teorema de Glivenko-Cantelli
+(citep:Wasserman2004, o [[https://en.wikipedia.org/wiki/Glivenko-Cantelli_theorem][aquí]]), $\hat{\mathbb{P}}_n$ converge a $\mathbb{P}$ cuando el tamaño de
 muestra $n\to\infty$, lo cual es intuitivamente claro.
 
 ** Ejemplo 
@@ -835,13 +836,13 @@ y compararlas con la distribución de muestreo real.
 
 Obsérvese que:
 
-- En algunos casos la aproximación es mejor que en otros (a veces
-la muestra tiene valores ligeramente más altos o más bajos). 
-- La dispersión de cada una de estas distribuciones bootstrap es similar a la de la verdadera
-distribución de muestreo (en rojo), pero puede está desplazada dependiendo
-de la muestra original que utilizamos.
-- Adicionalmente, los valores centrales de la distribución de bootstrap
-tiende cubrir el verdadero valor que buscamos estimar, que es:
+- En algunos casos la aproximación es mejor que en otros (a veces la muestra
+  tiene valores ligeramente más altos o más bajos).
+- La dispersión de cada una de estas distribuciones /bootstrap/ es similar a la de
+  la verdadera distribución de muestreo (en rojo), pero puede está desplazada
+  dependiendo de la muestra original que utilizamos.
+- Adicionalmente, los valores centrales de la distribución de /bootstrap/ tiende
+  cubrir el verdadero valor que buscamos estimar, que es:
 
 #+begin_src R :exports both :results org 
   poblacion_casas |>
@@ -862,10 +863,10 @@ tiende cubrir el verdadero valor que buscamos estimar, que es:
 En el proceso de estimación bootstrap hay dos fuentes de variación pues:
 
 - La muestra original se selecciona con aleatoriedad de una población.
-- Las muestras /bootstrap/ se seleccionan con aleatoriedad de la muestra 
-original. Esto es, la estimación bootstrap ideal es un resultado asintótico
-$B=\infty$, en esta caso $\hat{\textsf{ee}}_B$ iguala la estimación /plug-in/
-$\mathsf{ee}_{P_n}$.
+- Las muestras /bootstrap/ se seleccionan con aleatoriedad de la muestra
+  original. Esto es, la estimación bootstrap ideal es un resultado asintótico
+  $B=\infty$, en esta caso $\hat{\textsf{ee}}_B$ iguala la estimación /plug-in/
+  $\mathsf{ee}_{\mathbb{P}_n}$.
 
 En el proceso de *bootstrap* podemos controlar la variación del segundo aspecto,
 conocida como *implementación de muestreo Monte Carlo*, y la variación Monte Carlo
@@ -998,7 +999,7 @@ basados en la distribución bootstrap.
   aproximadamente normal (el teorema central del límite aplica), y está centrada
   en el verdadero valor poblacional $\theta$.
 
-Ahora queremos construir un intervalo que tenga probabilidad 95\% de cubrir al
+Ahora queremos construir un intervalo que tenga probabilidad $95\%$ de cubrir al
 valor poblacional $\theta$. Tenemos que
 \begin{align}
 P(-2\mathsf{ee}(\hat{\theta}) < \hat{\theta} - \theta < 2\mathsf{ee}(\hat{\theta})) \approx 0.95\,,
@@ -1009,15 +1010,16 @@ $\sigma$). Entonces
 \begin{align}
 P(\hat{\theta} - 2\mathsf{ee}(\hat{\theta}) < \theta < \hat{\theta} + 2\mathsf{ee}(\hat{\theta})) \approx 0.95\,.
 \end{align}
-Es decir, la probabilidad de que el verdadero valor poblacional $\theta$ esté en el intervalo
-$$[\hat{\theta} - 2\mathsf{ee}(\hat{\theta}), \hat{\theta} + 2\mathsf{ee}(\hat{\theta})]$$
-es cercano a 0.95. En este intervalo no conocemos el error estándar (es la desviación estándar
-de la distribución de muestreo de $\hat{\theta}$), y aquí es donde
-entre la distribución bootstrap, que aproxima la distribución de muestreo. Lo estimamos con
+Es decir, la probabilidad de que el verdadero valor poblacional $\theta$ esté en
+el intervalo $$[\hat{\theta} - 2\mathsf{ee}(\hat{\theta}), \hat{\theta} +
+2\mathsf{ee}(\hat{\theta})]$$ es cercano a 0.95. En este intervalo no conocemos
+el error estándar (es la desviación estándar de la distribución de muestreo de
+$\hat{\theta}$), y aquí es donde entre la distribución /bootstrap/, que aproxima
+la distribución de muestreo (en términos de varianza). Lo estimamos con
 \begin{align}
-\hat{\mathsf{ee}}_{\textrm{boot}}(\hat{\theta})\,,
+\hat{\mathsf{ee}}_{\mathsf{boot}}(\hat{\theta})\,,
 \end{align}
-que es la desviación estándar de la *distribución bootsrap*.
+que es la desviación estándar de la *distribución /bootstrap/*.
 
 *** ~Definición~:
 El *error estándar bootstrap* $\hat{\mathsf{ee}}_{\textrm{boot}}(\hat{\theta})$ se
@@ -1025,7 +1027,7 @@ define como la desviación estándar de la distribución bootstrap de $\theta$. 
 *intervalo de confianza normal bootstrap* al $95\%$ está dado por
 \begin{align}
 [\hat{\theta} -
-2\mathsf{ee}(\hat{\theta}), \hat{\theta} + 2\mathsf{ee}(\hat{\theta})]\,.
+2\hat{\mathsf{ee}}_{\mathsf{boot}}(\hat{\theta}), \hat{\theta} + 2\hat{\mathsf{ee}}_{\mathsf{boot}}(\hat{\theta})]\,.
 \end{align}
   
 Nótese que hay varias cosas qué checar aquí: que el teorema central del límite aplica y
@@ -1218,8 +1220,8 @@ calibración e interpretación.
 ¿Cómo sabemos que nuestros intervalos de confianza del $95\%$ nominal 
 tienen cobertura real de $95\%$? Es decir, tenemos que checar:
 
-- El procedimiento para construir intervalos debe dar intervalos tales
-que el valor poblacional está en el intervalo de confianza para 95% de las muestras.
+- El procedimiento para construir intervalos debe dar intervalos tales que el
+  valor poblacional está en el intervalo de confianza para 95% de las muestras.
 
 Como solo tenemos una muestra, la calibración depende de argumentos teóricos o
 estudios de simulación previos. Para nuestro ejemplo de casas tenemos la
