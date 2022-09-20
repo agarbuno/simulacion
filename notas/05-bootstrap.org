@@ -27,7 +27,7 @@
 #+EXPORT_FILE_NAME: ../docs/05-bootstrap.pdf
 :END:
 #+PROPERTY: header-args:R :session bootstrap :exports both :results output org :tangle ../rscript/05-bootstrap.R :mkdirp yes :dir ../
-#+EXCLUDE_TAGS: toc noexport draft
+#+EXCLUDE_TAGS: toc noexport 
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | /Bootstrap/.\\
@@ -71,11 +71,12 @@
   - [[#ejemplo][Ejemplo]]
     - [[#ejercicio][Ejercicio:]]
   - [[#observaciones][Observaciones:]]
+  - [[#la-distribución-de-muestreo][La distribución de muestreo]]
 - [[#la-idea-del-bootstrap][La idea del bootstrap]]
   - [[#definición][Definición:]]
   - [[#ejemplo][Ejemplo:]]
 - [[#el-principio-de-plug-in][El principio de plug-in]]
-  - [[#observación][Observación:]]
+  - [[#observación][Observación]]
     - [[#ejercicio][Ejercicio:]]
   - [[#observación][Observación]]
   - [[#observación][Observación]]
@@ -96,6 +97,8 @@
 - [[#boostrap-y-otras-estadísticas][Boostrap y otras estadísticas]]
   - [[#estimadores-de-razón][Estimadores de razón]]
   - [[#suavizadores][Suavizadores]]
+- [[#jacknife-y-cuantificación-de-sesgo][Jacknife y cuantificación de sesgo]]
+- [[#generalización-intervalos-de-confianza][Generalización intervalos de confianza]]
 - [[#conclusiones-y-observaciones][Conclusiones y observaciones]]
 :END:
 
@@ -119,7 +122,7 @@ otras medidas) a los estimados basados en muestras.
 Estas técnicas son usualmente no paramétricas, y varias son tan antiguas como la
 estadística misma. Por ejemplo, las técnicas de permutación son de Fisher (1935)
 y Pitmann (1937); la validación cruzadas fue propuesta por Kurtz en 1948, y el
-Jackknife fue propuesto por Maurice Quenouille en 1949 aunque fue John Tukey en
+/Jackknife/ fue propuesto por Maurice Quenouille en 1949 aunque fue John Tukey en
 1958 quién le dio el nombre a la técnica.
 
 ** Contexto histórico
@@ -129,8 +132,9 @@ Trevor Hastie han aportado mucho a la ciencia estadística. Ofrecen un curso en
 Statistical Learning en la plataforma MOOC de la Universidad de Stanford.
 
 El término ‘bootstrapping’ se refiere al concepto de “pulling oneself up by
-one’s bootstraps”, frase que aparentemente se usó por primera vez en The
-Singular Travels, Campaigns and Adventures of Varon Munchausen.
+one’s bootstraps”, frase que aparentemente se usó por primera vez en:
+- Raspe, R. E. (1786). /Gulliver Revived: Or the Singular Travels, Campaigns,
+  Voyages, and Adventures of Baron Munikhouson, Commonly Called Munchausen/.
 
 ** Idea general
 
@@ -246,7 +250,11 @@ Escribe la fórmula del error estándar bajo los siguientes supuestos:
 #+RESULTS:
 [[file:../images/bootstrap-medianas-grupos.jpeg]]
 
-* La idea del /bootstrap/
+** TODO La distribución de muestreo
+
+
+
+* La idea del /bootstrap/ :draft:
 
 Como explicamos, el problema que tenemos ahora es que normalmente sólo tenemos
 una muestra, así que no es posible calcular las distribuciones de muestreo como
@@ -259,23 +267,30 @@ población desconocida y un estimador $T_n=t(X_1,\dots, X_n)$
 *Mundo poblacional*
 
 1. Si tuviéramos la distribución poblacional, simulamos muestras iid para
-aproximar la distribución de muestreo de nuestro estimador, y así entender su
-variabilidad.
-2. Pero **no** tenemos la distribución poblacional.
-3. **Sin embargo, podemos estimar la distribución poblacional con nuestros valores muestrales**.
+   aproximar la distribución de muestreo de nuestro estimador, y así entender su
+   variabilidad.
+2. Pero *no* tenemos la distribución poblacional.
+3. *Sin embargo, podemos estimar la distribución poblacional con nuestros valores muestrales*.
 
-*Mundo bootstrap*
+*Mundo /bootstrap/*
 
 4. Si usamos la estimación del inciso 3, entonces usando el inciso 1 podríamos
-tomar muestras de nuestros datos muestrales, como si fueran de la población, y
-usando el mismo tamaño de muestra. El muestreo lo hacemos con reemplazo de 
-manera que produzcamos muestras independientes de la misma "población estimada",
-que es la muestra.
+   tomar muestras de nuestros datos muestrales, como si fueran de la población,
+   y usando el mismo tamaño de muestra. El muestreo lo hacemos con reemplazo de
+   manera que produzcamos muestras independientes de la misma "población
+   estimada", que es la muestra.
 5. Evaluamos nuestra estadística en cada una de estas remuestras.
-6. A la distribución resultante le llamamos **distribución bootstrap** o
-**distribución de remuestreo** del estimador.
-7. Usamos la distribución bootstrap de la muestra para estimar la variabilidad
-en nuestra estimación con **la muestra original**.
+6. A la distribución resultante le llamamos *distribución /bootstrap/* o
+   *distribución de remuestreo* del estimador.
+7. Usamos la distribución /bootstrap/ de la muestra para estimar la variabilidad
+   en nuestra estimación con *la muestra original*.
+
+El esquema de esta estrategia lo podemos representar con la figura siguiente
+#+DOWNLOADED: screenshot @ 2022-09-20 08:58:18
+#+attr_html: :width 700 :align center
+#+attr_latex: :width .65 \linewidth
+[[file:images/20220920-085818_screenshot.png]]
+
 
 Veamos que sucede para un ejemplo concreto, donde  nos interesa estimar
 la media de los precios de venta de una población de casas. Tenemos nuestra muestra:
@@ -283,7 +298,35 @@ la media de los precios de venta de una población de casas. Tenemos nuestra mue
 #+begin_src R :exports both :results none
   set.seed(2112)
   poblacion_casas <- read_csv("data/casas.csv")
-  muestra <- sample_n(poblacion_casas, 200, replace = TRUE)
+  muestra <- sample_n(poblacion_casas, 200, replace = TRUE) |>
+    select(id, nombre_zona, area_habitable_sup_m2, precio_miles)
+#+end_src
+
+#+begin_src R :exports results :results org 
+  head(muestra)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 6 × 4
+     id nombre_zona area_habitable_sup_m2 precio_miles
+  <dbl> <chr>                       <dbl>        <dbl>
+1   502 Somerst                     164.          227.
+2    79 Sawyer                      164.          136.
+3   440 Edwards                     111.          110 
+4   524 Edwards                     434.          185.
+5  1442 CollgCr                      78.8         149.
+6   769 CollgCr                     171.          217.
+#+end_src
+
+#+begin_src R :exports results :results org 
+  sprintf("Hay %0.0f casas en total, tomamos muestra de %0.0f",
+        nrow(poblacion_casas), nrow(muestra))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] "Hay 1144 casas en total, tomamos muestra de 200"
 #+end_src
 
 #+begin_src R :exports both :results org 
@@ -384,7 +427,7 @@ Y nuestra estimación de la distribución de muestreo para la media es entonces:
 [[file:../images/casas-bootstrap.jpeg]]
 
 A esta le llamamos la distribución de remuestreo de la media, que definimos más
-abajo. Ahora podemos calcular un intervalo de confianza del 90\% simplemente
+abajo. Ahora podemos calcular un intervalo de confianza del $90\%$ simplemente
 calculando los cuantiles de esta distribución (no son los cuantiles de la
 muestra original!):
 
@@ -469,7 +512,7 @@ Dada una muestra de tamaño $n$ de una población,
 3. Construímos la distribución /bootstrap/, y examinamos sus características
    (dónde está centrada, dispersión y forma).
 
-* El principio de /plug-in/
+* El principio de /plug-in/ :draft:
 
 La idea básica detrás del /bootstrap/ es el principio de /plug-in/ para estimar
 parámetros poblacionales: si queremos estimar una cantidad poblacional,
@@ -487,17 +530,17 @@ En todos estos casos, lo que estamos haciendo es:
   distribución poblacional.
 - Tenemos una muestra, que usamos para estimar la cantidad poblacional. La
   distribución que da una muestra se llama distribución *empírica*.
-- Contruimos nuestro estimador "enchufando" la distribución empírica de la
+- Contruimos nuestro estimador ``enchufando'' la distribución empírica de la
   muestra en la fórmula del estimador.
 
-En el bootstrap aplicamos este principio simple a la *distribución de 
+En el /bootstrap/ aplicamos este principio simple a la *distribución de 
 muestreo*:
 
 - *Si tenemos la población*, podemos *calcular* la distribución de muestreo de
   nuestro estimador tomando muchas muestras de la *población*.
 - Estimamos la *poblacion* con la *muestra* y enchufamos en la frase anterior:
 - Podemos *estimar* la distribucion de muestreo de nuestro estimador tomando
-  muchas muestras de la *muestra* (bootstrap).
+  muchas muestras de la *muestra* (/bootstrap/).
 
 Nótese que el proceso de muestreo en el último paso *debe ser el mismo* que
 se usó para tomar la muestra original. Estas dos imágenes simuladas con base en 
@@ -619,7 +662,7 @@ un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
 #+RESULTS:
 [[file:../images/mundo-bootstrap.jpeg]]
 
-** Observación: 
+** Observación
 Veremos ejemplos más complejos, pero nótese que si la muestra original son
 observaciones independientes obtenidas de la distribución poblacional, entonces
 logramos esto en las remuestras tomando observaciones con reemplazo de la
@@ -636,10 +679,10 @@ original.
 
 ** Observación
 Estos argumentos se pueden escribir con fórmulas usando por ejemplo la función
-de distribución acumulada $F$ de la población y su estimador, que es la función
-empírica $\hat{F}$, como en citep:Efron1993.  Si $\theta = t(F)$ es una cantidad
+de distribución acumulada $\mathbb{P}$ de la población y su estimador, que es la función
+empírica $\hat{\mathbb{P}}_n$, como en citep:Efron1993.  Si $\theta = t(\mathbb{P})$ es una cantidad
 poblacional que queremos estimar, su estimador /plug-in/ es $\hat{\theta} =
-t(\hat{F})$.
+t(\hat{\mathbb{P}}_n)$.
 
 ** Observación
 La distribución empírica $\hat{\mathbb{P}}_n$ es un estimador /razonable/ de la
@@ -713,7 +756,7 @@ nos interesa. Podemos entonces usar el boostrap:
 [[file:../images/bootstrap-tea-mean.jpeg]]
 
 Y podemos evaluar varios aspectos, por ejemplo dónde está centrada y 
-qué tan dispersa es la distribución bootstrap:
+qué tan dispersa es la distribución /bootstrap/:
 
 #+begin_src R :exports both :results org 
   prop_negro_tbl |>
@@ -739,7 +782,7 @@ qué tan dispersa es la distribución bootstrap:
 5 cuantil_25  0.23
 #+end_src
 
-* Propiedades distribución /bootstrap/ 
+* Propiedades distribución /bootstrap/ :draft:
 
 Uasremos la distribución /bootstrap/ principalmente para evaluar la variabilidad
 de nuestros estimadores (y también otros aspectos como sesgo) estimando
@@ -986,7 +1029,7 @@ Entonces, ¿cuántas muestras bootstrap?
 2. Cuando se busca estimar error estándar (citep:Chihara2018) recomienda $B=1000$
    muestras, o $B=10,000$ muestras dependiendo la precisión que se busque.
 
-* Error estándar /bootstrap/ e intervalos normales 
+* Error estándar /bootstrap/ e intervalos normales :draft:
 
 Ahora podemos construir nuestra primera versión de intervalos de confianza
 basados en la distribución bootstrap.
@@ -1022,9 +1065,9 @@ la distribución de muestreo (en términos de varianza). Lo estimamos con
 que es la desviación estándar de la *distribución /bootstrap/*.
 
 *** ~Definición~:
-El *error estándar bootstrap* $\hat{\mathsf{ee}}_{\textrm{boot}}(\hat{\theta})$ se
+El *error estándar /bootstrap/* $\hat{\mathsf{ee}}_{\textrm{boot}}(\hat{\theta})$ se
 define como la desviación estándar de la distribución bootstrap de $\theta$. El
-*intervalo de confianza normal bootstrap* al $95\%$ está dado por
+*intervalo de confianza normal /bootstrap/* al $95\%$ está dado por
 \begin{align}
 [\hat{\theta} -
 2\hat{\mathsf{ee}}_{\mathsf{boot}}(\hat{\theta}), \hat{\theta} + 2\hat{\mathsf{ee}}_{\mathsf{boot}}(\hat{\theta})]\,.
@@ -1118,7 +1161,7 @@ y construimos un intervalo de confianza del $95\%$:
 
 Este intervalo tiene probabilidad del $95\%$ de capturar al verdadero poblacional.
 
-* Inventarios de casas vendidas                                      
+* Inventarios de casas vendidas :draft:
 
 Ahora consideremos el problema de estimar el total del valor de las casas
 vendidas en un periodo. Tenemos una muestra de tamaño $n=150$:
@@ -1215,7 +1258,7 @@ más apropiado cuando observamos asimetría. Sin embargo, primero tendremos que
 hablar de dos conceptos clave con respecto a intervalos de confianza:
 calibración e interpretación.
 
-* Calibración de intervalos de confianza
+* Calibración de intervalos de confianza :draft:
 
 ¿Cómo sabemos que nuestros intervalos de confianza del $95\%$ nominal 
 tienen cobertura real de $95\%$? Es decir, tenemos que checar:
@@ -1225,7 +1268,8 @@ tienen cobertura real de $95\%$? Es decir, tenemos que checar:
 
 Como solo tenemos una muestra, la calibración depende de argumentos teóricos o
 estudios de simulación previos. Para nuestro ejemplo de casas tenemos la
-población, así que podemos checar qué cobertura real tienen los intervalos normales:
+población, así que podemos checar qué cobertura real tienen los intervalos
+normales:
 
 #+begin_src R :exports none :results none :eval never
   simular_intervalos <- function(rep, size = 150){
@@ -1286,7 +1330,7 @@ La cobertura para estos 100 intervalos simulados da
 #+end_src
 
 que es *consistente* con una cobertura real del $95\%$ (¿qué significa
-"consistente"? ¿Cómo puedes checarlo con el /bootstrap/?)
+``consistente''? ¿Cómo puedes checarlo con el /bootstrap/?)
 
 *** ~Observación~:
 En este caso teníamos la población real, y pudimos verificar la cobertura de
@@ -1309,9 +1353,9 @@ poblaciones teóricas. En general sabemos que los procedimientos funcionan bien 
 - estimación de proporciones donde no tratamos con casos raros o casos seguros
   (probabilidades cercanas a 0 o 1).
 
-* Interpretación intervalos de confianza
+* Interpretación intervalos de confianza :draft:
 
-Como hemos visto, "intervalo de confianza" (de $90\%$ de confianza, por ejemplo)
+Como hemos visto, ``intervalo de confianza'' (de $90\%$ de confianza, por ejemplo)
 es un término *frecuentista*, que significa:
 
 - *Cada muestra produce un intervalo distinto*. Para el $90\%$ de las muestras
@@ -1321,7 +1365,7 @@ es un término *frecuentista*, que significa:
 - Intervalos más anchos nos dan más incertidumbre acerca de dónde está el
   verdadero valor poblacional (y al revés para intervalos más angostos).
 
-Existen también "intervalos de credibilidad" (de $90\%$ de probabilidad, por
+Existen también ``intervalos de credibilidad'' (de $90\%$ de probabilidad, por
 ejemplo), que se interpetan de forma *bayesiana*:
 
 - Con $90\%$ de probabilidad (relativamente alta), creemos que el valor
@@ -1340,14 +1384,14 @@ Sin embargo,
 
 - La interpretación frecuentista nos da maneras empíricas de probar si los
   intervalos de confianza están bien calibrados o no: es un mínimo que
-  "intervalos del $90\%$" deberían satisfacer.
+  ``intervalos del $90\%$'' deberían satisfacer.
 
 Así que tomamos el punto de vista bayesiano en la intepretación, pero buscamos
 que nuestros intervalos cumplan o aproximen bien garantías frecuentistas
 (discutimos esto más adelante). Los intervalos que producimos en esta sección
 pueden interpretarse de las dos maneras.
 
-* Intervalos /bootstrap/ de percentiles
+* Intervalos /bootstrap/ de percentiles :draft:
 
 Retomemos nuestro ejemplo del valor total del precio de las casas. A través de
 remuestras bootstrap hemos verificado gráficamente que la distribución de
@@ -1400,19 +1444,19 @@ por arriba y por debajo del intervalo construido:
 1   0.0192    0.026
 #+end_src
 
-los cuales se han calculado como el porcentaje de medias bootstrap por debajo
+los cuales se han calculado como el porcentaje de medias /bootstrap/ por debajo
 (arriba) de la cota inferior (superior), y vemos que no coinciden con el nivel de 
-confianza prestablecido ($2.5\%$ para cada extremo).
+confianza preestablecido ($2.5\%$ para cada extremo).
 
 Otra opción común que se usa específicamente cuando la distribución bootstrap 
-no es muy cercana a la normal son los intervalos de percentiles bootstrap:
+no es muy cercana a la normal son los intervalos de percentiles /bootstrap/:
 
 *** ~Definición~:
-El *intervalo de percentiles bootstrap* al $95\%$ de confianza está dado por
+El *intervalo de percentiles /bootstrap/* al $95\%$ de confianza está dado por
 \begin{align}
 [q_{0.025}, q_{0.975}]\,,
 \end{align}
-donde $q_f$ es el percentil $f$ de la distribución bootstrap.
+donde $q_f$ es el percentil $f$ de la distribución /bootstrap/.
 
 
 Otros intervalos comunes son el de $80\%$ o $90\%$ de confianza, por ejemplo,
@@ -1473,20 +1517,12 @@ por separado:
 #+begin_src R :exports both :results org
   ## en este ejemplo usamos rsample, pero puedes escribir tu propio código
   library(rsample)
-  propinas <- read_csv("data/propinas.csv", progress = FALSE)
+  propinas <- read_csv("data/propinas.csv", progress = FALSE, show_col_types = FALSE)
   propinas
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-Rows: 244 Columns: 6
-── Column specification ──────────────────────────────────────────────────────────────────────────
-Delimiter: ","
-chr (3): fumador, dia, momento
-dbl (3): cuenta_total, propina, num_personas
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 # A tibble: 244 × 6
    cuenta_total propina fumador dia   momento num_personas
           <dbl>   <dbl> <chr>   <chr> <chr>          <dbl>
@@ -1506,14 +1542,18 @@ dbl (3): cuenta_total, propina, num_personas
 
 
 #+begin_src R :exports both :results org 
+  ## paso 1: define el estimador
   estimador <- function(split, ...){
     muestra <- analysis(split) |> group_by(momento)
     muestra |>
       summarise(estimate = mean(cuenta_total), .groups = 'drop') |>
       mutate(term = momento)
   }
-  intervalo_propinas_90 <- bootstraps(propinas, strata = momento, 1000) |>
-    mutate(res_boot = map(splits, estimador)) |>
+  ## paso 2: remuestrea y calcula estimador
+  boot_samples <- bootstraps(propinas, strata = momento, 1000) |>
+    mutate(res_boot = map(splits, estimador))
+  ## paso 3: construye intervalos de confianza
+  intervalo_propinas_90 <- boot_samples |>
     int_pctl(res_boot, alpha = 0.10) |> 
     mutate(across(where(is.numeric), round, 2))
   intervalo_propinas_90
@@ -1524,8 +1564,8 @@ dbl (3): cuenta_total, propina, num_personas
 # A tibble: 2 × 6
   term   .lower .estimate .upper .alpha .method   
   <chr>   <dbl>     <dbl>  <dbl>  <dbl> <chr>     
-1 Cena     19.7      20.8   22.0    0.1 percentile
-2 Comida   15.6      17.2   18.7    0.1 percentile
+1 Cena     19.8      20.8   22.0    0.1 percentile
+2 Comida   15.6      17.2   18.8    0.1 percentile
 #+end_src
 
 Nota: ~.estimate~ es la media de los valores de la estadística sobre las
@@ -1554,6 +1594,10 @@ grande que la de la comida.  Podemos graficar agregando los estimadores /plug-in
 Nótese que el /bootstrap/ lo hicimos por separado en cada momento del día (por eso
 el argumento ~strata~ en la llamada a *bootstraps*):
 
+*** TODO ~Nota~: 
+
+Preferimos ~rsample~ 
+
 
 *** ~Ejercicio~:
 :PROPERTIES:
@@ -1564,7 +1608,7 @@ acerca del muestreo se deben satisfacer? ¿Deben ser muestras aleatorias simples
 de cada momento del día, por ejemplo? ¿Qué harías si no fuera así, por ejemplo, si 
 se escogieron al azar tickets de todos los disponibles en un periodo?
 
-* /Boostrap/ y otras estadísticas
+* /Boostrap/ y otras estadísticas :draft:
 
 
 El /bootstrap/ es una técnica versátil. Un ejemplo son *estimadores de razón*, que
@@ -1736,11 +1780,12 @@ consideramos como nuestra estadística:
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/casas-suavizador.jpeg :exports results :results output graphics file
   graf_casas <- function(data){
-      ggplot(data %>% filter(calidad_gral < 7), 
-          aes(x = area_habitable_sup_m2)) + 
-          geom_point(aes(y = precio_m2_miles), alpha = 0.75) +
-          geom_smooth(aes(y = precio_m2_miles), method = "loess", span = 0.7, 
-                  se = FALSE, method.args = list(degree = 1, family = "symmetric"))     
+    ggplot(data %>% filter(calidad_gral < 7), 
+           aes(x = area_habitable_sup_m2)) + 
+      geom_point(aes(y = precio_m2_miles), alpha = 0.75) +
+      geom_smooth(aes(y = precio_m2_miles), method = "loess", span = 0.7, 
+                  se = FALSE, method.args = list(degree = 1, family = "symmetric")) +
+      sin_lineas 
   }
   graf_casas(muestra_casas)
 #+end_src
@@ -1752,26 +1797,26 @@ consideramos como nuestra estadística:
 Podemos hacer bootstrap para juzgar la estabilidad del suavizador:
 
 #+begin_src R :exports none :results none
-suaviza_boot <- function(x, data){
-    # remuestreo
+  suaviza_boot <- function(x, data){
+    ## remuestreo
     muestra_boot <- sample_n(data, nrow(data), replace = T)
     ajuste <- loess(precio_m2_miles ~ area_habitable_sup_m2, data = muestra_boot, 
                     degree = 1, span = 0.7, family = "symmetric")
     datos_grafica <- tibble(area_habitable_sup_m2 = seq(25, 250, 5))
     ajustados <- predict(ajuste, newdata = datos_grafica)
     datos_grafica %>% mutate(ajustados = ajustados) %>% 
-        mutate(rep = x)
-}
-reps <- map(1:10, ~ suaviza_boot(.x, casas_muestra %>% filter(calidad_gral < 7))) %>% 
+      mutate(rep = x)
+  }
+  reps <- map(1:10, ~ suaviza_boot(.x, casas_muestra %>% filter(calidad_gral < 7))) %>% 
     bind_rows()
 #+end_src
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/casas-suavizador-bs.jpeg :exports results :results output graphics file
-  # ojo: la rutina loess no tienen soporte para extrapolación
+  ## ojo: la rutina loess no tienen soporte para extrapolación
   graf_casas(casas_muestra) + 
     geom_line(data = reps, aes(y = ajustados, group = rep), alpha = 1, colour = "red") +
-    coord_cartesian(xlim = c(50, 225)) + sin_lineas
+    coord_cartesian(xlim = c(50, 225))
 #+end_src
 
 #+RESULTS:
@@ -1789,7 +1834,7 @@ confianza:
   ## ojo: la rutina loess no tienen soporte para extrapolación
   graf_casas(casas_muestra) + 
     geom_line(data = reps, aes(y = ajustados, group = rep), alpha = 0.2, colour = "red") +
-    coord_cartesian(xlim = c(50, 225)) + sin_lineas
+    coord_cartesian(xlim = c(50, 225))
 #+end_src
 
 #+RESULTS:
@@ -1802,7 +1847,11 @@ remuestras de esta manera es informativo: por ejempo: vemos cómo es probable
 también que para casas de emnos de 70 metros cuadrados el precio por metro
 cuadrado no cambia tanto (líneas constantes)
 
-* Conclusiones y observaciones
+* TODO /Jacknife/ y cuantificación de sesgo
+
+* TODO Generalización intervalos de confianza
+
+* Conclusiones y observaciones 
 
 - El principio fundamental del /bootstrap/ es que podemos estimar
   la distribución poblacional con la distribución empírica. Por tanto para hacer
@@ -1839,6 +1888,5 @@ bibliography:references.bib
 * Temas por ver                                                    :noexport:
 
 - Jacknife (sesgo, reducción de sesgo)
-- Bootstrap (sesgo, reducción de sesgo)
 - Pruebas de permutación (pruebas estadisticas exactas)
 - Validación cruzada
