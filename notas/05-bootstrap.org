@@ -103,7 +103,6 @@
 :END:
 
 
-
 * Introducción 
 
 El remuestreo se refiere a un conjunto de técnicas estadísticas,
@@ -250,11 +249,48 @@ Escribe la fórmula del error estándar bajo los siguientes supuestos:
 #+RESULTS:
 [[file:../images/bootstrap-medianas-grupos.jpeg]]
 
-** TODO La distribución de muestreo
+** La distribución de muestreo
 
+Hasta ahora lo que hemos hecho es estimar $\hat{\pi}_N^{\mathsf{MC}}(f) \approx
+\pi(f) = \int f(x) \, \pi(x) \, \text{d}x$ por medio de muestras de la densidad
+$\pi(\cdot)$. Es decir, por medio de
+\begin{align}
+X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \pi\,.
+\end{align}
 
+Hemos considerado la noción frecuentista de medir nuestra incertidumbre en nuestro estimador por medio del *error estándar* de nuestro estimador. Donde éste último está definido como
+\begin{align}
+\mathsf{ee}\left(\hat{\pi}_N^{\mathsf{MC}}(f) \right) = \left( \mathbb{V}(\hat{\pi}_N^{\mathsf{MC}}(f) ) \right)^{1/2}\,,
+\end{align}
+y la varianza es con respecto a la variabilidad que /nace/ por haber observado distintas muestras.
 
-* La idea del /bootstrap/ :draft:
+Es decir, estamos considerando la situación en que podemos replicar el proceso
+de muestreo tantas veces como queramos (o recursos computacionales tengamos).
+Denotemos por $B$ el número de réplicas que podemos realizar y denotemos por
+\begin{align}
+X^{(b)}_{1}, \ldots, X^{(b)}_{N} \overset{\mathsf{iid}}{\sim} \pi\,, \qquad b = 1, \ldots, B\,,
+\end{align}
+la réplica que generamos.
+
+Notemos que es a través de este proceso de crear réplicas podemos construir
+una distribución para $\hat{\pi}_N^{\mathsf{MC}}(f)$ y notemos, además, que
+nuestro estimador es el resultado de aplicar una función a la muestra dada
+\begin{align}
+\hat{\pi}_N^{\mathsf{MC}, (b)}(f) = t(X^{(b)}_{1}, \ldots, X^{(b)}_{N})\,, \qquad b = 1, \ldots, B\,.
+\end{align}
+
+La distribución de resultante de nuestro estimador
+$\hat{\pi}_N^{\mathsf{MC}}(f)$ derivada de haber observado un conjunto de datos
+distinto es lo que en sus cursos de estadística le llamamos ~distribución de
+muestreo~ del estimador.
+
+Nota que en esta situación asumimos que podemos generar tantas muestras como
+queramos de la distribución de interés $\pi$. En esta sección del curso
+estudiaremos un mecanismo para cuando no podemos hacer eso (generar muestras de
+una población) y sólo tenemos acceso a una muestra---que asumimos aleatoria---de
+la población que nos interesa.
+
+* La idea del /bootstrap/
 
 Como explicamos, el problema que tenemos ahora es que normalmente sólo tenemos
 una muestra, así que no es posible calcular las distribuciones de muestreo como
@@ -335,15 +371,15 @@ la media de los precios de venta de una población de casas. Tenemos nuestra mue
 
 #+RESULTS:
 #+begin_src org
-[1] 180
+[1] 179.96
 #+end_src
 
 Esta muestra nos da nuestro estimador de la distribución poblacional. Por ejemplo, podemos fijarnos en un gráfico de cuantiles:
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/casas-qqplot.jpeg :exports results :results output graphics file
-  bind_rows(muestra %>% mutate(tipo = "muestra"),
-      poblacion_casas %>% mutate(tipo = "población")) |>  
+  bind_rows(muestra |> mutate(tipo = "muestra"),
+      poblacion_casas |> mutate(tipo = "población")) |>  
   ggplot(aes(sample = precio_miles, colour = tipo, group = tipo)) + 
     geom_qq(distribution = stats::qunif, alpha = 0.4, size = 1) +
     facet_wrap(~ tipo) + sin_lineas + sin_leyenda
@@ -352,12 +388,12 @@ Esta muestra nos da nuestro estimador de la distribución poblacional. Por ejemp
 #+RESULTS:
 [[file:../images/casas-qqplot.jpeg]]
 
-O en histogramas:
+o en histogramas:
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/casas-histogramas.jpeg :exports results :results output graphics file
-  bind_rows(muestra %>% mutate(tipo = "muestra"),
-      poblacion_casas %>% mutate(tipo = "población")) %>% 
+  bind_rows(muestra |> mutate(tipo = "muestra"),
+      poblacion_casas |> mutate(tipo = "población")) |>
   ggplot(aes(x = precio_miles, group = tipo)) + 
       geom_histogram(aes(y=..density..), binwidth = 50) + 
     facet_wrap(~ tipo) + sin_lineas + sin_leyenda
@@ -397,17 +433,32 @@ Podemos entonces extraer un número grande de muestras con reemplazo de tamaño
 muestra original. Evaluamos nuestra estadística (en este caso la media) en cada
 una de estas remuestras:
 
-#+begin_src R :exports both :results org 
-  media_muestras <- map_dbl(1:1000, ~ muestra %>%  
-          sample_n(200, replace = T) %>%
-          summarise(media_precio = mean(precio_miles), .groups = "drop") %>%
-          pull(media_precio))
+#+begin_src R :exports code :results none
+  genera_remuestras <- function(data, n = 200){
+    data |>
+      sample_n(200, replace = TRUE)
+  }
+#+end_src
+
+#+begin_src R :exports code :results none
+  calcula_estimador <- function(data){
+    data |>
+      summarise(media_precio = mean(precio_miles), .groups = "drop")
+  }
+#+end_src
+
+
+#+begin_src R :exports code :results org 
+  media_muestras <- map_dbl(1:1000, function(id){
+    genera_remuestras(muestras) |>
+      calcula_estimador() |>
+      pull(media_precio)})
   media_muestras[1:10]
 #+end_src
 
 #+RESULTS:
 #+begin_src org
- [1] 177.3 169.3 180.1 183.9 184.7 180.4 188.9 178.8 180.9 177.9
+ [1] 190.55 185.34 180.38 189.50 187.53 174.71 180.99 199.31 180.84 188.57
 #+end_src
 
 Y nuestra estimación de la distribución de muestreo para la media es entonces:
@@ -417,9 +468,11 @@ Y nuestra estimación de la distribución de muestreo para la media es entonces:
   bootstrap <- tibble(media = media_muestras)
   g_cuantiles <- ggplot(bootstrap, aes(sample = media)) +
     geom_qq(distribution = stats::qunif) +
+    ggtitle("QQ-plots de la distribución \nde la media") +
     sin_lineas
   g_histograma <- ggplot(bootstrap, aes(x = media)) +
-    geom_histogram(binwidth = 2) + sin_lineas
+    geom_histogram(binwidth = 2) + sin_lineas +
+    ggtitle("Histograma de la distribución \nde la media")
   g_cuantiles + g_histograma
 #+end_src
 
@@ -432,14 +485,14 @@ calculando los cuantiles de esta distribución (no son los cuantiles de la
 muestra original!):
 
 #+begin_src R :exports both :results org 
-  limites_ic <- quantile(media_muestras, c(0.05,  0.95)) %>% round
+  limites_ic <- quantile(media_muestras, c(0.05,  0.95)) |> round(4)
   limites_ic
 #+end_src
 
 #+RESULTS:
 #+begin_src org
- 5% 95% 
-171 190
+    5%    95% 
+174.81 194.06
 #+end_src
 
 Otra cosa que podríamos hacer para describir la dispersión de nuestro estimador
@@ -453,7 +506,7 @@ distribución de muestreo:
 
 #+RESULTS:
 #+begin_src org
-[1] 5.55
+[1] 5.71
 #+end_src
 
 *** ~Definición~:
@@ -512,7 +565,7 @@ Dada una muestra de tamaño $n$ de una población,
 3. Construímos la distribución /bootstrap/, y examinamos sus características
    (dónde está centrada, dispersión y forma).
 
-* El principio de /plug-in/ :draft:
+* El principio de /plug-in/
 
 La idea básica detrás del /bootstrap/ es el principio de /plug-in/ para estimar
 parámetros poblacionales: si queremos estimar una cantidad poblacional,
@@ -547,7 +600,7 @@ se usó para tomar la muestra original. Estas dos imágenes simuladas con base e
 un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
-#+begin_src R :file images/mundo-poblacional.jpeg :exports results :results output graphics file
+#+begin_src R :file images/mundo-poblacional.jpeg :exports results :results output graphics file :tangle no
   library(LaplacesDemon)
   library(patchwork)
   ## En este ejemplo la población es una mezcla de normales
@@ -561,13 +614,13 @@ un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
     labs(x = "", subtitle = expression("Población "~F), color = "") +
     theme_classic()
 
-  samples <- data_frame(sample = 1:3) %>% 
-    mutate(
-      sims = rerun(3, rnormm(30, p = c(0.3, 0.7), mu = c(-2, 8), 
-                             sigma = c(3.5, 3))), 
-      x_bar = map_dbl(sims, mean))
-  muestras_plot <- samples %>% 
-    unnest(cols = c(sims)) %>% 
+  samples <- data_frame(sample = 1:3) |>
+    mutate(sims = rerun(3, rnormm(30, p = c(0.3, 0.7), mu = c(-2, 8), 
+                                  sigma = c(3.5, 3))), 
+           x_bar = map_dbl(sims, mean))
+
+  muestras_plot <- samples |>
+    unnest(cols = c(sims)) |> 
     ggplot(aes(x = sims)) +
     geom_histogram(binwidth = 2, alpha = 0.5, fill = "darkgray") +
     geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
@@ -582,7 +635,7 @@ un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
     theme_classic() +
     theme(strip.background = element_blank(), strip.text.x = element_blank())
 
-  samples_dist <- tibble(sample = 1:10000) %>% 
+  samples_dist <- tibble(sample = 1:10000) |>
     mutate(sims = rerun(10000, rnormm(100, p = c(0.3, 0.7), mu = c(-2, 8), 
                                       sigma = c(3.5, 3))), 
            mu_hat = map_dbl(sims, mean))
@@ -598,11 +651,11 @@ un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
 #+end_src
 
 #+RESULTS:
-[[file:../images/chihara-ejemplo.jpeg]]
+[[file:../images/mundo-poblacional.jpeg]]
 
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
-#+begin_src R :file images/mundo-bootstrap.jpeg :exports results :results output graphics file
+#+begin_src R :file images/mundo-bootstrap.jpeg :exports results :results output graphics file :tangle no
   dist_empirica <- tibble(id = 1:30, obs = samples$sims[[1]])
 
   dist_empirica_plot <- ggplot(dist_empirica, aes(x = obs)) +
@@ -618,14 +671,14 @@ un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
     scale_y_continuous(breaks = NULL) +
     theme_classic()
 
-  samples_boot <- tibble(sample_boot = 1:3) %>% 
+  samples_boot <- tibble(sample_boot = 1:3) |> 
     mutate(
       sims_boot = rerun(3, sample(dist_empirica$obs, replace = TRUE)), 
       x_bar_boot = map_dbl(sims_boot, mean)
     )
 
-  muestras_boot_plot <- samples_boot %>% 
-    unnest(cols = c(sims_boot)) %>% 
+  muestras_boot_plot <- samples_boot |>
+    unnest(cols = c(sims_boot)) |> 
     ggplot(aes(x = sims_boot)) +
     geom_histogram(binwidth = 2, alpha = 0.5, fill = "darkgray") +
     geom_vline(aes(xintercept = samples$x_bar[1]), color = "blue",
@@ -642,7 +695,7 @@ un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
     theme_classic() +
     theme(strip.background = element_blank(), strip.text.x = element_blank())
 
-  boot_dist <- data_frame(sample = 1:10000) %>% 
+  boot_dist <- data_frame(sample = 1:10000) |>
     mutate(
       sims_boot = rerun(10000, sample(dist_empirica$obs, replace = TRUE)), 
       mu_hat_star = map_dbl(sims_boot, mean))
@@ -665,9 +718,9 @@ un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
 ** Observación
 Veremos ejemplos más complejos, pero nótese que si la muestra original son
 observaciones independientes obtenidas de la distribución poblacional, entonces
-logramos esto en las remuestras tomando observaciones con reemplazo de la
-muestra. Igualmente, las remuestras deben ser del mismo tamaño que la muestra
-original.
+logramos esto en las remuestras tomando aleatoriamente observaciones con
+reemplazo de la muestra. Igualmente, las remuestras deben ser del mismo tamaño
+que la muestra original.
 
 *** ~Ejercicio~:
 - ¿Porqué no funcionaría tomar muestras sin reemplazo? Piensa si hay
@@ -739,15 +792,25 @@ nos interesa. Podemos entonces usar el boostrap:
 #+end_src
 
 #+begin_src R :exports code :results none 
-  # paso 3: remuestrea y calcula el estimador
-  prop_negro_tbl <- map_dbl(1:2000,  ~ calc_estimador(muestra_boot(datos = te))) %>%
-    tibble(prop_negro = .)  
+  ## paso 3: define el proceso de bootstrap
+  aplica_bootstrap <- function(id){
+    muestra_boot(datos = te) |>
+      calc_estimador()
+  }
+#+end_src
+
+
+#+begin_src R :exports code :results none 
+  # paso 4: aplica el proceso de bootstrap
+  prop_negro_tbl <- map_dbl(1:2000, aplica_bootstrap ) |>
+    as_tibble() |>
+    rename( prop_negro = value)
 #+end_src
 
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/bootstrap-tea-mean.jpeg :exports results :results output graphics file
-  ## paso 4: examina la distribución bootstrap
-  prop_negro_tbl %>% 
+  ## paso 5: examina la distribución bootstrap
+  prop_negro_tbl |>
     ggplot(aes(x = prop_negro)) +
     geom_histogram(bins = 15) + sin_lineas
 #+end_src
@@ -782,13 +845,13 @@ qué tan dispersa es la distribución /bootstrap/:
 5 cuantil_25  0.23
 #+end_src
 
-* Propiedades distribución /bootstrap/ :draft:
+* Propiedades distribución /bootstrap/
 
 Uasremos la distribución /bootstrap/ principalmente para evaluar la variabilidad
 de nuestros estimadores (y también otros aspectos como sesgo) estimando
 la dispersión de la distribución de muestreo. Sin embargo, es importante notar
-que no la usamos, por ejemplo, para saber dónde está centrada la distribución 
-de muestreo, o para "mejorar" la estimación remuestreando.
+que *no* la usamos, por ejemplo, para saber dónde está centrada la distribución 
+de muestreo, o para ``mejorar'' la estimación remuestreando.
 
 ** Ejemplo
 
@@ -821,8 +884,8 @@ y compararlas con la distribución de muestreo real.
 #+begin_src R :exports code :results none 
   ## paso 1: define el estimador
   calc_estimador <- function(datos){
-    media_precio <- datos %>% 
-      summarise(media = mean(precio_miles), .groups = "drop") %>% 
+    media_precio <- datos |>
+      summarise(media = mean(precio_miles), .groups = "drop") |>
       pull(media)
     media_precio
   }
@@ -841,31 +904,45 @@ y compararlas con la distribución de muestreo real.
   }
 #+end_src
 
-#+begin_src R :exports code :results none :eval never
+#+begin_src R :exports code :results none 
+  ## paso 3: define el proceso de bootstrap
+  aplica_bootstrap <- function(data, n = NULL){
+    data |>
+      muestra_boot(n) |>
+      calc_estimador()
+  }
+#+end_src
+
+
+#+begin_src R :exports code :results none :eval never :tangle no
+  ## paso 3: realiza el remuestreo y calcula estimadores
   dist_boot <- datos_sim |>
     filter(tipo == "muestras") |>
     select(precio_miles, rep) |> 
     group_by(rep) |> nest() |> 
     mutate(precio_miles =  map(data, function(data){
-      tibble(precio_miles = map_dbl(1:1000, ~ calc_estimador(muestra_boot(data))))
+      tibble(precio_miles = rerun(1000, aplica_bootstrap(data)))
     })) |>
     select(rep, precio_miles) |>
-    unnest()
+    unnest(precio_miles) |>
+    mutate(precio_miles = unlist(precio_miles))
 #+end_src
 
-#+begin_src R :exports code :results none :eval never
+#+begin_src R :exports code :results none :eval never :tangle no
+  ## extra: comparamos contra distribucion de muestreo
   dist_muestreo <- datos_sim |>
     filter(tipo == "población") |>
     group_by(rep) |> nest() |>
     mutate(precio_miles =  map(data, function(data){
-      tibble(precio_miles = map_dbl(1:1000, ~ calc_estimador(muestra_boot(data, n = 200))))
+      tibble(precio_miles = rerun(1000, aplica_bootstrap(data, n = 200)))
     })) |>
     select(rep, precio_miles) |>
-    unnest()
+    unnest(precio_miles) |>
+    mutate(precio_miles = unlist(precio_miles))
 #+end_src
 
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
-#+begin_src R :file images/distribucion-bootstrap.jpeg :exports results :results output graphics file
+#+begin_src R :file images/distribucion-bootstrap.jpeg :exports results :results output graphics file :tangle no
   ggplot(dist_boot, aes(sample = precio_miles, group = interaction(rep))) + 
     geom_qq(distribution = stats::qunif, size = 0.1, alpha = 0.1) + 
     geom_qq(data = dist_muestreo, aes(sample = precio_miles), colour = "red",
