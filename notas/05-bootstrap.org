@@ -1517,25 +1517,26 @@ por separado:
 #+begin_src R :exports both :results org
   ## en este ejemplo usamos rsample, pero puedes escribir tu propio código
   library(rsample)
-  propinas <- read_csv("data/propinas.csv", progress = FALSE, show_col_types = FALSE)
+  propinas <- read_csv("data/propinas.csv", progress = FALSE, show_col_types = FALSE) |>
+    mutate(id = 1:244)
   propinas
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-# A tibble: 244 × 6
-   cuenta_total propina fumador dia   momento num_personas
-          <dbl>   <dbl> <chr>   <chr> <chr>          <dbl>
- 1        17.0     1.01 No      Dom   Cena               2
- 2        10.3     1.66 No      Dom   Cena               3
- 3        21.0     3.5  No      Dom   Cena               3
- 4        23.7     3.31 No      Dom   Cena               2
- 5        24.6     3.61 No      Dom   Cena               4
- 6        25.3     4.71 No      Dom   Cena               4
- 7         8.77    2    No      Dom   Cena               2
- 8        26.9     3.12 No      Dom   Cena               4
- 9        15.0     1.96 No      Dom   Cena               2
-10        14.8     3.23 No      Dom   Cena               2
+# A tibble: 244 × 7
+   cuenta_total propina fumador dia   momento num_personas    id
+          <dbl>   <dbl> <chr>   <chr> <chr>          <dbl> <int>
+ 1        17.0     1.01 No      Dom   Cena               2     1
+ 2        10.3     1.66 No      Dom   Cena               3     2
+ 3        21.0     3.5  No      Dom   Cena               3     3
+ 4        23.7     3.31 No      Dom   Cena               2     4
+ 5        24.6     3.61 No      Dom   Cena               4     5
+ 6        25.3     4.71 No      Dom   Cena               4     6
+ 7         8.77    2    No      Dom   Cena               2     7
+ 8        26.9     3.12 No      Dom   Cena               4     8
+ 9        15.0     1.96 No      Dom   Cena               2     9
+10        14.8     3.23 No      Dom   Cena               2    10
 # … with 234 more rows
 # ℹ Use `print(n = ...)` to see more rows
 #+end_src
@@ -1564,8 +1565,8 @@ por separado:
 # A tibble: 2 × 6
   term   .lower .estimate .upper .alpha .method   
   <chr>   <dbl>     <dbl>  <dbl>  <dbl> <chr>     
-1 Cena     19.8      20.8   22.0    0.1 percentile
-2 Comida   15.6      17.2   18.8    0.1 percentile
+1 Cena     19.6      20.8   21.9    0.1 percentile
+2 Comida   15.5      17.1   18.5    0.1 percentile
 #+end_src
 
 Nota: ~.estimate~ es la media de los valores de la estadística sobre las
@@ -1594,10 +1595,109 @@ grande que la de la comida.  Podemos graficar agregando los estimadores /plug-in
 Nótese que el /bootstrap/ lo hicimos por separado en cada momento del día (por eso
 el argumento ~strata~ en la llamada a *bootstraps*):
 
-*** TODO ~Nota~: 
+*** ~Funciones de cómputo~: 
 
-Preferimos ~rsample~ 
+Es común crear nuestras propias funciones cuando usamos /bootstrap/, sin embargo,
+en R también hay alternativas que pueden resultar convenientes:
 
+1. El paquete ~rsample~ (forma parte de la colección [[https://www.tidyverse.org/articles/2018/08/tidymodels-0-0-1/][tidymodels]] y tiene una
+   función para realizar el remuestreo: ~bootsrtraps()~ que regresa un arreglo
+   cuadrangular (~tibble~, ~data.frame~) que incluye una columna con las muestras
+   bootstrap y un identificador del número y tipo de muestra.
+
+   #+begin_src R :exports both :results org 
+     boot_samples
+   #+end_src
+
+   #+RESULTS:
+   #+begin_src org
+   # Bootstrap sampling using stratification 
+   # A tibble: 1,000 × 3
+      splits            id            res_boot        
+      <list>            <chr>         <list>          
+    1 <split [244/91]>  Bootstrap0001 <tibble [2 × 3]>
+    2 <split [244/100]> Bootstrap0002 <tibble [2 × 3]>
+    3 <split [244/95]>  Bootstrap0003 <tibble [2 × 3]>
+    4 <split [244/83]>  Bootstrap0004 <tibble [2 × 3]>
+    5 <split [244/91]>  Bootstrap0005 <tibble [2 × 3]>
+    6 <split [244/86]>  Bootstrap0006 <tibble [2 × 3]>
+    7 <split [244/98]>  Bootstrap0007 <tibble [2 × 3]>
+    8 <split [244/83]>  Bootstrap0008 <tibble [2 × 3]>
+    9 <split [244/86]>  Bootstrap0009 <tibble [2 × 3]>
+   10 <split [244/84]>  Bootstrap0010 <tibble [2 × 3]>
+   # … with 990 more rows
+   # ℹ Use `print(n = ...)` to see more rows
+   #+end_src
+
+   Los objetos ~splits~ tienen muestras de tamaño 244. Sin embargo, utilizan (por
+   el muestreo aleatorio con reemplazo) una fracción de los datos.
+
+   #+begin_src R :exports both :results org 
+     boot_samples$splits[[1]]
+   #+end_src
+
+   #+RESULTS:
+   #+begin_src org
+   <Analysis/Assess/Total>
+   <244/91/244>
+   #+end_src
+
+   #+begin_src R :exports both :results org 
+     analysis(boot_samples$splits[[1]]) |>
+       group_by(id)
+   #+end_src
+
+   #+RESULTS:
+   #+begin_src org
+   # A tibble: 244 × 7
+   # Groups:   id [153]
+      cuenta_total propina fumador dia   momento num_personas    id
+             <dbl>   <dbl> <chr>   <chr> <chr>          <dbl> <int>
+    1         21.0    3.5  No      Dom   Cena               3     3
+    2         21.0    3.5  No      Dom   Cena               3     3
+    3         24.6    3.61 No      Dom   Cena               4     5
+    4         25.3    4.71 No      Dom   Cena               4     6
+    5         25.3    4.71 No      Dom   Cena               4     6
+    6         26.9    3.12 No      Dom   Cena               4     8
+    7         15.0    1.96 No      Dom   Cena               2     9
+    8         14.8    3.23 No      Dom   Cena               2    10
+    9         14.8    3.23 No      Dom   Cena               2    10
+   10         14.8    3.23 No      Dom   Cena               2    10
+   # … with 234 more rows
+   # ℹ Use `print(n = ...)` to see more rows
+   #+end_src
+
+   El paquete de ~rsample~ es un paquete muy eficiente para la creación de
+   los conjunto de remuestreo y es una de sus principales ventajas. 
+
+   #+begin_src R :exports both :results org 
+     library(pryr)
+     c(objeto_boot = object_size(boot_samples),
+       original    = object_size(propinas),
+       remuestra   = object_size(boot_samples)/nrow(boot_samples), 
+       incremento  = object_size(boot_samples)/object_size(propinas))
+   #+end_src
+
+   #+RESULTS:
+   #+begin_src org
+   objeto_boot:  2.40 MB
+   original   : 16.38 kB
+   remuestra  :  2.40 kB
+   incremento : 146.25 B
+   #+end_src
+
+2. El paquete ~boot~ está asociado al libro *Bootstrap Methods and Their
+   Applications* y tiene, entre otras, funciones para calcular replicaciones
+   /bootstrap/ y para construir intervalos de confianza usando /bootstrap/:
+   1. calculo de replicaciones /bootstrap/ con la función ~boot()~,
+   2. intervalos normales, de percentiles y $\mathsf{BC}_a$ con la función ~boot.ci()~,
+   3. intevalos ABC con la función ~abc.ci()~.
+    
+3. El paquete ~bootstrap~ contiene datos usados en citep:Efron1993, y la implementación de
+   funciones para calcular replicaciones y construir intervalos de confianza:
+   1. calculo de replicaciones /bootstrap/ con la función ~bootstrap()~,
+   2. intervalos $\mathsf{BC}_a$ con la función ~bcanon()~, 
+   3. intevalos ABC con la función ~abcnon()~.
 
 *** ~Ejercicio~:
 :PROPERTIES:
