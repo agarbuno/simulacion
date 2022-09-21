@@ -812,26 +812,22 @@ qué tan dispersa es la distribución /bootstrap/:
 
 #+begin_src R :exports both :results org 
   prop_negro_tbl |>
-    summarise(media = mean(prop_negro),
-              sesgo = mean(prop_negro) - 0.2499,
-              ee = sd(prop_negro),
-              cuantil_75 = quantile(prop_negro, 0.75), 
-              cuantil_25 = quantile(prop_negro, 0.25),
-              .groups = "drop") |>
-    mutate(across(where(is.numeric), round, 3)) |>
-    pivot_longer(cols = everything())
+    summarise(
+      cuantil_75 = quantile(prop_negro, 0.75), 
+      media = mean(prop_negro),
+      cuantil_25 = quantile(prop_negro, 0.25),
+      sesgo = mean(prop_negro) - 0.2499,
+      ee = sd(prop_negro),
+      .groups = "drop") |>
+    mutate(across(where(is.numeric), round, 4))
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-# A tibble: 5 × 2
-  name        value
-  <chr>       <dbl>
-1 media       0.247
-2 sesgo      -0.003
-3 ee          0.025
-4 cuantil_75  0.263
-5 cuantil_25  0.23
+# A tibble: 1 × 5
+  cuantil_75 media cuantil_25   sesgo     ee
+       <dbl> <dbl>      <dbl>   <dbl>  <dbl>
+1      0.263 0.246       0.23 -0.0034 0.0242
 #+end_src
 
 * Propiedades distribución /bootstrap/
@@ -903,7 +899,7 @@ y compararlas con la distribución de muestreo real.
 #+end_src
 
 
-#+begin_src R :exports code :results none :eval never :tangle no
+#+begin_src R :exports code :results none :tangle no :eval never
   ## paso 3: realiza el remuestreo y calcula estimadores
   dist_boot <- datos_sim |>
     filter(tipo == "muestras") |>
@@ -915,9 +911,11 @@ y compararlas con la distribución de muestreo real.
     select(rep, precio_miles) |>
     unnest(precio_miles) |>
     mutate(precio_miles = unlist(precio_miles))
+
+  write_rds(dist_boot, "cache/sims_boot_precios.rds")
 #+end_src
 
-#+begin_src R :exports code :results none :eval never :tangle no
+#+begin_src R :exports code :results none :tangle no :eval never
   ## extra: comparamos contra distribucion de muestreo
   dist_muestreo <- datos_sim |>
     filter(tipo == "población") |>
@@ -928,10 +926,37 @@ y compararlas con la distribución de muestreo real.
     select(rep, precio_miles) |>
     unnest(precio_miles) |>
     mutate(precio_miles = unlist(precio_miles))
+  write_rds(dist_muestreo, "cache/sims_muestreo_precios.rds")
 #+end_src
 
-#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
-#+begin_src R :file images/distribucion-bootstrap.jpeg :exports results :results output graphics file :tangle no
+#+HEADER: :width 1200 :height 900 :R-dev-args bg="transparent"
+#+begin_src R :file images/precios-distribucion-bootstrap.jpeg :exports results :results output graphics file :eval never
+  dist_muestreo <- read_rds("cache/sims_muestreo_precios.rds")
+  dist_boot <- read_rds("cache/sims_boot_precios.rds")
+  mean_boot <- dist_boot |> summarise(media = mean(precio_miles)) |> filter(rep <= 16)
+  dist_boot |>
+    ungroup() |>
+    filter(rep <= 16) |>
+    ggplot(aes(x = precio_miles)) +
+    geom_histogram(data = dist_muestreo |> ungroup() |> select(precio_miles),
+                   fill = "lightblue", alpha = .6,
+                   position = "identity", bins = 20) +
+    geom_histogram(alpha = .6, fill = "salmon", bins = 20) +
+    geom_vline(data = mean_boot, aes(xintercept = media), color = 'black', lty = 2) +
+    geom_vline(data = dist_muestreo |>
+                 ungroup() |>
+                 select(precio_miles) |>
+                 summarise(media = mean(precio_miles)),
+               aes(xintercept = media), color = 'black') +
+    facet_wrap(~rep) + sin_lineas
+#+end_src
+
+#+RESULTS:
+[[file:../images/precios-distribucion-bootstrap.jpeg]]
+
+
+#+HEADER: :width 1200 :height 700 :R-dev-args bg="transparent"
+#+begin_src R :file images/distribucion-bootstrap.jpeg :exports results :results output graphics file :tangle no :eval never
   ggplot(dist_boot, aes(sample = precio_miles, group = interaction(rep))) + 
     geom_qq(distribution = stats::qunif, size = 0.1, alpha = 0.1) + 
     geom_qq(data = dist_muestreo, aes(sample = precio_miles), colour = "red",
@@ -939,9 +964,6 @@ y compararlas con la distribución de muestreo real.
     ylim(c(125, 230)) + sin_lineas + 
     labs(subtitle = "Estimaciones de distribución \n de muestreo (media)")
 #+end_src
-
-#+RESULTS:
-[[file:../images/distribucion-bootstrap.jpeg]]
 
 Obsérvese que:
 
