@@ -363,21 +363,17 @@ la media de los precios de venta de una población de casas. Tenemos nuestra mue
 [1] 179.96
 #+end_src
 
-Esta muestra nos da nuestro estimador de la distribución poblacional. Por ejemplo, podemos fijarnos en un gráfico de cuantiles:
+Esta muestra nos da nuestro estimador de la distribución poblacional. Por ejemplo, podemos fijarnos en un gráfico con histogramas:
+
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
-#+begin_src R :file images/casas-qqplot.jpeg :exports results :results output graphics file
+#+begin_src R :file images/casas-qqplot.jpeg :exports results :results output graphics file :tangle no :eval never
   bind_rows(muestra |> mutate(tipo = "muestra"),
       poblacion_casas |> mutate(tipo = "población")) |>  
   ggplot(aes(sample = precio_miles, colour = tipo, group = tipo)) + 
     geom_qq(distribution = stats::qunif, alpha = 0.4, size = 1) +
     facet_wrap(~ tipo) + sin_lineas + sin_leyenda
 #+end_src
-
-#+RESULTS:
-[[file:../images/casas-qqplot.jpeg]]
-
-o en histogramas:
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/casas-histogramas.jpeg :exports results :results output graphics file
@@ -405,7 +401,7 @@ muestral para hacer esto. Para nuestra muestra, nuestra estimación puntual es:
 
 #+RESULTS:
 #+begin_src org
-[1] 180
+[1] 179.96
 #+end_src
 
 
@@ -439,7 +435,7 @@ una de estas remuestras:
 
 #+begin_src R :exports code :results org 
   media_muestras <- map_dbl(1:1000, function(id){
-    genera_remuestras(muestras) |>
+    genera_remuestras(muestra) |>
       calcula_estimador() |>
       pull(media_precio)})
   media_muestras[1:10]
@@ -447,7 +443,7 @@ una de estas remuestras:
 
 #+RESULTS:
 #+begin_src org
- [1] 190.55 185.34 180.38 189.50 187.53 174.71 180.99 199.31 180.84 188.57
+ [1] 176.38 175.96 175.91 176.35 177.77 186.78 179.23 181.62 175.07 177.13
 #+end_src
 
 Y nuestra estimación de la distribución de muestreo para la media es entonces:
@@ -840,11 +836,13 @@ de muestreo, o para ``mejorar'' la estimación remuestreando.
 
 ** Ejemplo
 
-En nuestro ejemplo, podemos ver varias muestras (por ejemplo 20) de tamaño 200, y
-vemos cómo se ve la aproximación a la distribución de la población:
+En nuestro ejemplo, podemos ver varias muestras (por ejemplo 20) de tamaño 200.
+Podemos calcular las distribuciones de remuestreo para cada muestra bootstrap y
+compararlas con la distribución de muestreo real. El procedimiento es como sigue.
+
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
-#+begin_src R :file images/distribucion-boostrap.jpeg :exports results :results output graphics file
+#+begin_src R :file images/distribucion-boostrap.jpeg :exports results :results output graphics file :tangle no :eval never
   set.seed(911)
   muestras <- map(1:20, function(x) {
     muestra <- sample_n(poblacion_casas, 200, replace = T) |>
@@ -859,12 +857,6 @@ vemos cómo se ve la aproximación a la distribución de la población:
     scale_y_log10(breaks = c(50, 100, 200, 400, 800)) + sin_lineas
 #+end_src
 
-#+RESULTS:
-[[file:../images/distribucion-boostrap.jpeg]]
-
-
-Podemos calcular las distribuciones de remuestreo para cada muestra bootstrap,
-y compararlas con la distribución de muestreo real.
 
 #+begin_src R :exports code :results none 
   ## paso 1: define el estimador
@@ -1211,7 +1203,7 @@ El estimador de interés es:
 Y nuestra estimación puntual es
 
 #+begin_src R :exports both :results org 
-  estimador <- muestra_casas |>
+  estimador <- casas_muestra |>
     summarise(estimate = sum(area_habitable_sup_m2) / sum(area_lote_m2))
   estimador
 #+end_src
@@ -1221,15 +1213,16 @@ Y nuestra estimación puntual es
 # A tibble: 1 × 1
   estimate
      <dbl>
-1    0.148
+1    0.141
 #+end_src
 
-Es decir que en promedio, un poco más de $15\%$ del lote total es ocupado por área habitable. 
+Es decir que en promedio, un poco menos del $15\%$ del lote total es ocupado por área habitable. 
 Ahora hacemos bootstrap para construir un intervalo:
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/casas-bootstrap-razon.jpeg :exports results :results output graphics file
-  dist_boot <- bootstraps(casas_muestra,  2000) %>% 
+  library(rsample)
+  dist_boot <- bootstraps(casas_muestra,  2000) |>
     mutate(res_boot = map(splits, estimador_razon)) 
   g_1 <- ggplot(dist_boot %>% unnest(res_boot), aes(x = estimate)) +
     geom_histogram(bins = 20) + sin_lineas
@@ -1255,9 +1248,9 @@ Usamos un intervalo de percentiles para obtener:
 #+RESULTS:
 #+begin_src org
 # A tibble: 1 × 6
-  .lower media_boot .upper .alpha estimador    sesgo
-   <dbl>      <dbl>  <dbl>  <dbl>     <dbl>    <dbl>
-1  0.120      0.142  0.159   0.05     0.148 -0.00582
+  .lower media_boot .upper .alpha estimador   sesgo
+   <dbl>      <dbl>  <dbl>  <dbl>     <dbl>   <dbl>
+1  0.121      0.142  0.159   0.05     0.141 0.00101
 #+end_src
 
 
@@ -1280,7 +1273,7 @@ consideramos como nuestra estadística:
                   se = FALSE, method.args = list(degree = 1, family = "symmetric")) +
       sin_lineas 
   }
-  graf_casas(muestra_casas)
+  graf_casas(casas_muestra)
 #+end_src
 
 #+RESULTS:
