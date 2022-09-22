@@ -73,8 +73,12 @@
   - [[#observaciones][Observaciones:]]
   - [[#la-distribución-de-muestreo][La distribución de muestreo]]
 - [[#la-idea-del-bootstrap][La idea del bootstrap]]
-  - [[#definición][Definición:]]
-  - [[#ejemplo][Ejemplo:]]
+  - [[#mundo-poblacional][Mundo poblacional]]
+  - [[#mundo-bootstrap][Mundo bootstrap]]
+    - [[#definición][Definición:]]
+    - [[#ejemplo][Ejemplo:]]
+  - [[#nota][Nota]]
+    - [[#remuestreo-para-una-población][Remuestreo para una población:]]
 - [[#el-principio-de-plug-in][El principio de plug-in]]
   - [[#observación][Observación]]
     - [[#ejercicio][Ejercicio:]]
@@ -103,6 +107,7 @@ población finita y se generan muestras aleatorias de la misma muestra para
 estimar características poblacionales y hacer inferencia de la población
 muestreada.
 
+#+REVEAL: split
 Las técnicas de remuestreo permiten calcular medidas de ajuste (en términos de
 sesgo, varianza, intervalos de confianza, errores de predicción o de algunas
 otras medidas) a los estimados basados en muestras.
@@ -115,28 +120,25 @@ y Pitmann (1937); la validación cruzadas fue propuesta por Kurtz en 1948, y el
 
 ** Contexto histórico
 
-Bradley Efron introdujo el Bootstrap en 1979, y sus estudiantes Rob Tibshirani y
-Trevor Hastie han aportado mucho a la ciencia estadística. Ofrecen un curso en
-Statistical Learning en la plataforma MOOC de la Universidad de Stanford.
-
-El término ‘bootstrapping’ se refiere al concepto de “pulling oneself up by
-one’s bootstraps”, frase que aparentemente se usó por primera vez en:
+Bradley Efron introdujo el ~bootstrap~ en 1979.  El término ‘bootstrapping’ se
+refiere al concepto de “pulling oneself up by one’s bootstraps”, frase que
+aparentemente se usó por primera vez en:
 - Raspe, R. E. (1786). /Gulliver Revived: Or the Singular Travels, Campaigns,
   Voyages, and Adventures of Baron Munikhouson, Commonly Called Munchausen/.
 
 ** Idea general
 
-El objetivo del remuestreo es estimar alguna característica poblacional, representada por θ (tal
-como media, mediana, desviación estándar, coeficientes de regresión, matriz de covarianza,
-etc.) basado en los datos.
+El objetivo del remuestreo es estimar alguna característica poblacional,
+representada por $\theta$ (tal como media, mediana, desviación estándar,
+coeficientes de regresión, matriz de covarianza, etc.) ~basada sólo en los datos observados~.
 
-\newpage
-
-También interesan las propiedades de la distribución de estimador, sin hacer supuestos
+También interesan las propiedades de la ~distribución de estimador~, sin hacer supuestos
 restrictivos sobre la forma de la distribución de los datos originales.
 
-Para una muestra aleatoria $X_1, \ldots , X_n$ , la distribución de remuestreo es la distribución
+Para una muestra aleatoria $X_1, \ldots , X_n$ , la ~distribución de remuestreo~ es la distribución
 empírica $\hat{\mathbb{P}}_n$, que asigna probabilidad $1/n$ a cada una de las observaciones de la muestra.
+
+\newpage
 
 ** Ejemplo
 
@@ -171,13 +173,13 @@ Escribe la fórmula del error estándar bajo los siguientes supuestos:
 2. La varianza $\sigma^2$ es conocida.
 
 ** ~Observaciones~:
-- Suponer que la diferencia de ingresos es $d_i$ como una variable normal puede
+- Suponer que la diferencia de ingresos $d_i$ se comporta como una variable normal puede
   no estar /tan/ errado. Pues con un número suficiente de muestras podríamos
   suponer que el resultado del $\mathsf{TLC}$ se cumple. Entonces, ¿qué hacemos
   si no conocemos la distribución de las observaciones?
 
 - Si no conocemos $\sigma^2$  lo podemos estimar con la muestra. Por ejemplo, podemos
-  utilizar intervalos de confianza derivados de una distribución $t$.
+  utilizar intervalos de confianza derivados de una distribución $t_{n-1}$.
 
 - Si nos interesa otro parámetro de la población podemos construir estimadores
   diferentes. Por ejemplo, nos podría interesar la ~mediana~ de una población
@@ -247,32 +249,36 @@ $\pi(\cdot)$. Es decir, por medio de
 X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \pi\,.
 \end{align}
 
-Hemos considerado la noción frecuentista de medir nuestra incertidumbre en nuestro estimador por medio del *error estándar* de nuestro estimador. Donde éste último está definido como
+#+REVEAL: split
+Hemos considerado la noción ~frecuentista~ de medir nuestra incertidumbre en nuestro estimador por medio del *error estándar* de nuestro estimador. Donde éste último está definido como
 \begin{align}
 \mathsf{ee}\left(\hat{\pi}_N^{\mathsf{MC}}(f) \right) = \left( \mathbb{V}(\hat{\pi}_N^{\mathsf{MC}}(f) ) \right)^{1/2}\,,
 \end{align}
 y la varianza es con respecto a la variabilidad que /nace/ por haber observado distintas muestras.
 
+#+REVEAL: split
 Es decir, estamos considerando la situación en que podemos replicar el proceso
 de muestreo tantas veces como queramos (o recursos computacionales tengamos).
 Denotemos por $B$ el número de réplicas que podemos realizar y denotemos por
 \begin{align}
 X^{(b)}_{1}, \ldots, X^{(b)}_{N} \overset{\mathsf{iid}}{\sim} \pi\,, \qquad b = 1, \ldots, B\,,
 \end{align}
-la réplica que generamos.
+las réplicas que generamos.
 
-Notemos que es a través de este proceso de crear réplicas podemos construir
+#+REVEAL: split
+Notemos que es a través de este proceso de crear réplicas que podemos construir
 una distribución para $\hat{\pi}_N^{\mathsf{MC}}(f)$ y notemos, además, que
 nuestro estimador es el resultado de aplicar una función a la muestra dada
 \begin{align}
 \hat{\pi}_N^{\mathsf{MC}, (b)}(f) = t(X^{(b)}_{1}, \ldots, X^{(b)}_{N})\,, \qquad b = 1, \ldots, B\,.
 \end{align}
 
-La distribución de resultante de nuestro estimador
+La distribución resultante de nuestro estimador
 $\hat{\pi}_N^{\mathsf{MC}}(f)$ derivada de haber observado un conjunto de datos
 distinto es lo que en sus cursos de estadística le llamamos ~distribución de
 muestreo~ del estimador.
 
+#+REVEAL: split
 Nota que en esta situación asumimos que podemos generar tantas muestras como
 queramos de la distribución de interés $\pi$. En esta sección del curso
 estudiaremos un mecanismo para cuando no podemos hacer eso (generar muestras de
@@ -289,7 +295,7 @@ podemos hacer lo siguiente:
 Supongamos que tenemos una muestra $X_1,X_2,\dots, X_n$ independientes de alguna
 población desconocida y un estimador $T_n=t(X_1,\dots, X_n)$
 
-*Mundo poblacional*
+** Mundo poblacional
 
 1. Si tuviéramos la distribución poblacional, simulamos muestras iid para
    aproximar la distribución de muestreo de nuestro estimador, y así entender su
@@ -297,7 +303,7 @@ población desconocida y un estimador $T_n=t(X_1,\dots, X_n)$
 2. Pero *no* tenemos la distribución poblacional.
 3. *Sin embargo, podemos estimar la distribución poblacional con nuestros valores muestrales*.
 
-*Mundo /bootstrap/*
+** Mundo /bootstrap/
 
 4. Si usamos la estimación del inciso 3, entonces usando el inciso 1 podríamos
    tomar muestras de nuestros datos muestrales, como si fueran de la población,
@@ -310,6 +316,7 @@ población desconocida y un estimador $T_n=t(X_1,\dots, X_n)$
 7. Usamos la distribución /bootstrap/ de la muestra para estimar la variabilidad
    en nuestra estimación con *la muestra original*.
 
+#+REVEAL: split
 El esquema de esta estrategia lo podemos representar con la figura siguiente
 #+DOWNLOADED: screenshot @ 2022-09-20 08:58:18
 #+attr_html: :width 700 :align center
@@ -317,6 +324,7 @@ El esquema de esta estrategia lo podemos representar con la figura siguiente
 [[file:images/20220920-085818_screenshot.png]]
 
 
+#+REVEAL: split
 Veamos que sucede para un ejemplo concreto, donde  nos interesa estimar
 la media de los precios de venta de una población de casas. Tenemos nuestra muestra:
 
@@ -354,6 +362,9 @@ la media de los precios de venta de una población de casas. Tenemos nuestra mue
 [1] "Hay 1144 casas en total, tomamos muestra de 200"
 #+end_src
 
+#+REVEAL: split
+Esta muestra nos da nuestro estimador de la distribución poblacional.
+
 #+begin_src R :exports both :results org 
   mean(muestra$precio_miles)  
 #+end_src
@@ -363,7 +374,7 @@ la media de los precios de venta de una población de casas. Tenemos nuestra mue
 [1] 179.96
 #+end_src
 
-Esta muestra nos da nuestro estimador de la distribución poblacional. Por ejemplo, podemos fijarnos en un gráfico con histogramas:
+Por ejemplo, podemos fijarnos en un gráfico con histogramas:
 
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
@@ -390,6 +401,7 @@ Esta muestra nos da nuestro estimador de la distribución poblacional. Por ejemp
 Y vemos que la aproximación es razonable en las partes centrales de la 
 distribución. 
 
+#+REVEAL: split
 Ahora supongamos que nos interesa cuantificar la precisión de nuestra
 estimación de la media poblacional de precios de casas, y usaremos la media
 muestral para hacer esto. Para nuestra muestra, nuestra estimación puntual es:
@@ -410,6 +422,7 @@ repetidamente la población y calcular el valor del estimador en cada una de
 estas muestras. Aquí no tenemos la población, *pero tenemos una estimación de la
 población*: la muestra obtenida.
 
+#+REVEAL: split
 Así que para evaluar la variabilidad de nuestro estimador, entramos en el mundo
 boostrap, y consideramos que la población es nuestra muestra.
 
@@ -418,22 +431,27 @@ Podemos entonces extraer un número grande de muestras con reemplazo de tamaño
 muestra original. Evaluamos nuestra estadística (en este caso la media) en cada
 una de estas remuestras:
 
+#+REVEAL: split
 #+begin_src R :exports code :results none
+  ## paso 1: definimos un mecanismo de remuestreo
   genera_remuestras <- function(data, n = 200){
     data |>
       sample_n(200, replace = TRUE)
   }
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none
+  ## paso 2: definimos la estimacion del parametro
   calcula_estimador <- function(data){
     data |>
       summarise(media_precio = mean(precio_miles), .groups = "drop")
   }
 #+end_src
 
-
+#+REVEAL: split
 #+begin_src R :exports code :results org 
+  ## paso 3: aplicamos el proceso de remuestreo y estimacion
   media_muestras <- map_dbl(1:1000, function(id){
     genera_remuestras(muestra) |>
       calcula_estimador() |>
@@ -446,6 +464,7 @@ una de estas remuestras:
  [1] 176.38 175.96 175.91 176.35 177.77 186.78 179.23 181.62 175.07 177.13
 #+end_src
 
+#+REVEAL: split
 Y nuestra estimación de la distribución de muestreo para la media es entonces:
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
@@ -464,6 +483,7 @@ Y nuestra estimación de la distribución de muestreo para la media es entonces:
 #+RESULTS:
 [[file:../images/casas-bootstrap.jpeg]]
 
+#+REVEAL: split
 A esta le llamamos la distribución de remuestreo de la media, que definimos más
 abajo. Ahora podemos calcular un intervalo de confianza del $90\%$ simplemente
 calculando los cuantiles de esta distribución (no son los cuantiles de la
@@ -480,6 +500,7 @@ muestra original!):
 174.81 194.06
 #+end_src
 
+#+REVEAL: split
 Otra cosa que podríamos hacer para describir la dispersión de nuestro estimador
 es calcular el error estándar de remuestreo, que estima el error estándar de la
 distribución de muestreo:
@@ -499,13 +520,13 @@ Sea $X_1,X_2,\ldots,X_n$ una muestra independiente y idénticamente distribuida
 ($\mathsf{iid}$), y $T_n=t(X_1, X_2, \ldots, X_n)$ una estadística. Supongamos
 que los valores que obervamos son $x_1, x_2,\ldots, x_n$.
 
+#+REVEAL: split
 La *distribución de remuestreo* de $T_n$ es la distribución de $T^*=t(X_1^*, X_2^*,
 \dots X_n^*)$, donde cada $X_i^*$ se obtiene tomando al azar uno de los valores
 de $x_1,x_2,\ldots, x_n$.
 
 Otra manera de decir esto es que la remuestra $X_1^*, X_2^*, \ldots, X_n^*$ es una muestra
 con reemplazo de los valores observados $x_1, x_2, \ldots, x_n$
-
 
 *** ~Ejemplo~:
 Si observamos la muestra
@@ -543,6 +564,10 @@ distribución de muestreo de la estadística.
 Y el proceso que hacemos es:
 
 *** ~Remuestreo para una población~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+
 Dada una muestra de tamaño $n$ de una población, 
 
 1. Obtenemos una remuestra de tamaño $n$ con reemplazo de la muestra original
@@ -557,11 +582,13 @@ parámetros poblacionales: si queremos estimar una cantidad poblacional,
 calculamos esa cantidad poblacional con la muestra obtenida. Es un principio
 común en estadística.
 
+#+REVEAL: split
 Por ejemplo, si queremos estimar la media o desviación estándar poblacional,
 usamos la media muestral o la desviación estándar muestral. Si queremos estimar
 un cuantil de la población usamos el cuantil correspondiente de la muestra, y
 así sucesivamente.
 
+#+REVEAL: split
 En todos estos casos, lo que estamos haciendo es:
 
 - Tenemos una fórmula para la cantidad poblacional de interés en términos de la
@@ -571,6 +598,7 @@ En todos estos casos, lo que estamos haciendo es:
 - Contruimos nuestro estimador ``enchufando'' la distribución empírica de la
   muestra en la fórmula del estimador.
 
+#+REVEAL: split
 En el /bootstrap/ aplicamos este principio simple a la *distribución de 
 muestreo*:
 
@@ -580,12 +608,14 @@ muestreo*:
 - Podemos *estimar* la distribucion de muestreo de nuestro estimador tomando
   muchas muestras de la *muestra* (/bootstrap/).
 
+#+REVEAL: split
 Nótese que el proceso de muestreo en el último paso *debe ser el mismo* que
 se usó para tomar la muestra original. Estas dos imágenes simuladas con base en 
 un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
 
+#+REVEAL: split
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
-#+begin_src R :file images/mundo-poblacional.jpeg :exports results :results output graphics file :tangle no
+#+begin_src R :file images/mundo-poblacional.jpeg :exports results :results output graphics file :tangle no 
   library(LaplacesDemon)
   library(patchwork)
   ## En este ejemplo la población es una mezcla de normales
@@ -638,8 +668,8 @@ un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
 #+RESULTS:
 [[file:../images/mundo-poblacional.jpeg]]
 
-
-#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+REVEAL: split
+ #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/mundo-bootstrap.jpeg :exports results :results output graphics file :tangle no
   dist_empirica <- tibble(id = 1:30, obs = samples$sims[[1]])
 
@@ -708,6 +738,10 @@ reemplazo de la muestra. Igualmente, las remuestras deben ser del mismo tamaño
 que la muestra original.
 
 *** ~Ejercicio~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+
 - ¿Porqué no funcionaría tomar muestras sin reemplazo? Piensa si hay
   independencia entre las observaciones de la remuestra, y cómo serían las
   remuestras sin reemplazo.
@@ -753,10 +787,12 @@ tomadores de té que prefiere el té negro usando nuestra muestra:
 1      0.247   300
 #+end_src
 
+#+REVEAL: split
 ¿Cómo evaluamos la precisión de este estimador? Supondremos que el estudio se
 hizo tomando una muestra aleatoria simple de tamaño 300 de la población de tomadores de té que
 nos interesa. Podemos entonces usar el boostrap:
 
+#+REVEAL: split
 #+begin_src R :exports code :results none 
   ## paso 1: define el estimador
   calc_estimador <- function(datos){
@@ -768,6 +804,7 @@ nos interesa. Podemos entonces usar el boostrap:
   }  
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none 
   ## paso 2: define el proceso de remuestreo
   muestra_boot <- function(datos){
@@ -776,6 +813,7 @@ nos interesa. Podemos entonces usar el boostrap:
   }  
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none 
   ## paso 3: define el proceso de bootstrap
   aplica_bootstrap <- function(id){
@@ -785,6 +823,7 @@ nos interesa. Podemos entonces usar el boostrap:
 #+end_src
 
 
+#+REVEAL: split
 #+begin_src R :exports code :results none 
   # paso 4: aplica el proceso de bootstrap
   prop_negro_tbl <- map_dbl(1:2000, aplica_bootstrap ) |>
@@ -792,6 +831,7 @@ nos interesa. Podemos entonces usar el boostrap:
     rename( prop_negro = value)
 #+end_src
 
+#+REVEAL: split
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/bootstrap-tea-mean.jpeg :exports results :results output graphics file
   ## paso 5: examina la distribución bootstrap
@@ -803,6 +843,7 @@ nos interesa. Podemos entonces usar el boostrap:
 #+RESULTS:
 [[file:../images/bootstrap-tea-mean.jpeg]]
 
+#+REVEAL: split
 Y podemos evaluar varios aspectos, por ejemplo dónde está centrada y 
 qué tan dispersa es la distribución /bootstrap/:
 
@@ -840,7 +881,7 @@ En nuestro ejemplo, podemos ver varias muestras (por ejemplo 20) de tamaño 200.
 Podemos calcular las distribuciones de remuestreo para cada muestra bootstrap y
 compararlas con la distribución de muestreo real. El procedimiento es como sigue.
 
-
+#+REVEAL: split
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/distribucion-boostrap.jpeg :exports results :results output graphics file :tangle no :eval never
   set.seed(911)
@@ -868,12 +909,13 @@ compararlas con la distribución de muestreo real. El procedimiento es como sigu
   }
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none 
   ## paso 2: define el proceso de remuestreo
   muestra_boot <- function(datos, n = NULL){
     ## tomar muestra con reemplazo del mismo tamaño
     if(is.null(n)){
-      m <- sample_n(datos, size = nrow(datos), replace = TRUE)}
+        m <- sample_n(datos, size = nrow(datos), replace = TRUE)}
     else {
         m <- sample_n(datos, size = n, replace = TRUE)
       }
@@ -881,6 +923,7 @@ compararlas con la distribución de muestreo real. El procedimiento es como sigu
   }
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none 
   ## paso 3: define el proceso de bootstrap
   aplica_bootstrap <- function(data, n = NULL){
@@ -891,8 +934,9 @@ compararlas con la distribución de muestreo real. El procedimiento es como sigu
 #+end_src
 
 
+#+REVEAL: split
 #+begin_src R :exports code :results none :tangle no :eval never
-  ## paso 3: realiza el remuestreo y calcula estimadores
+  ## paso 4: realiza el remuestreo y calcula estimadores
   dist_boot <- datos_sim |>
     filter(tipo == "muestras") |>
     select(precio_miles, rep) |> 
@@ -907,6 +951,7 @@ compararlas con la distribución de muestreo real. El procedimiento es como sigu
   write_rds(dist_boot, "cache/sims_boot_precios.rds")
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none :tangle no :eval never
   ## extra: comparamos contra distribucion de muestreo
   dist_muestreo <- datos_sim |>
@@ -921,6 +966,7 @@ compararlas con la distribución de muestreo real. El procedimiento es como sigu
   write_rds(dist_muestreo, "cache/sims_muestreo_precios.rds")
 #+end_src
 
+#+REVEAL: split
 #+HEADER: :width 1200 :height 900 :R-dev-args bg="transparent"
 #+begin_src R :file images/precios-distribucion-bootstrap.jpeg :exports results :results output graphics file :eval never
   dist_muestreo <- read_rds("cache/sims_muestreo_precios.rds")
@@ -957,6 +1003,7 @@ compararlas con la distribución de muestreo real. El procedimiento es como sigu
     labs(subtitle = "Estimaciones de distribución \n de muestreo (media)")
 #+end_src
 
+#+REVEAL: split
 Obsérvese que:
 
 - En algunos casos la aproximación es mejor que en otros (a veces la muestra
@@ -966,20 +1013,18 @@ Obsérvese que:
   dependiendo de la muestra original que utilizamos.
 - Adicionalmente, los valores centrales de la distribución de /bootstrap/ tiende
   cubrir el verdadero valor que buscamos estimar, que es:
+  #+begin_src R :exports both :results org 
+    poblacion_casas |>
+      summarise(media = mean(precio_miles), .groups = "drop")  
+  #+end_src
 
-#+begin_src R :exports both :results org 
-  poblacion_casas |>
-    summarise(media = mean(precio_miles), .groups = "drop")  
-#+end_src
-
-#+RESULTS:
-#+begin_src org
-# A tibble: 1 × 1
-  media
-  <dbl>
-1  183.
-#+end_src
-
+  #+RESULTS:
+  #+begin_src org
+  # A tibble: 1 × 1
+    media
+    <dbl>
+  1  183.
+  #+end_src
 
 ** Variación en distribución /bootstrap/
 
@@ -991,10 +1036,12 @@ En el proceso de estimación bootstrap hay dos fuentes de variación pues:
   $B=\infty$, en esta caso $\hat{\textsf{ee}}_B$ iguala la estimación /plug-in/
   $\mathsf{ee}_{\mathbb{P}_n}$.
 
+#+REVEAL: split
 En el proceso de *bootstrap* podemos controlar la variación del segundo aspecto,
 conocida como *implementación de muestreo Monte Carlo*, y la variación Monte Carlo
 decrece conforme incrementamos el número de muestras.
 
+#+REVEAL: split
 Podemos eliminar la variación Monte Carlo si seleccionamos todas las posibles
 muestras con reemplazo de tamaño $n$, hay ${2n-1}\choose{n}$ posibles muestras y
 si seleccionamos todas obtenemos $\hat{\textsf{ee}}_\infty$ (bootstrap ideal),
@@ -1087,6 +1134,7 @@ sin embargo, en la mayor parte de los problemas no es factible proceder así.
     plot_layout(heights = c(1, 5), "cm")
 #+end_src
 
+#+REVEAL: split
 En la siguiente gráfica mostramos 6 posibles muestras de tamaño 50 simuladas de
 la población, para cada una de ellas se graficó la distribución empírica y se
 se realizan histogramas de la distribución bootstrap con $B=30$ y $B=1000$, en 
@@ -1097,9 +1145,11 @@ También vale la pena recalcar que la distribución bootstrap está centrada en 
 valor observado en la muestra (línea azúl punteada) y no en el valor poblacional
 sin embargo la forma de la distribución es similar a lo largo de las filas.
 
-#+attr_html: :width 700 :align center
+#+REVEAL: split
+#+attr_html: :width 1200 :align center
 file:images/bootstrap_mc_error.png
 
+#+REVEAL: split
 Entonces, ¿cuántas muestras bootstrap? 
 
 1. Incluso un número chico de replicaciones bootstrap, digamos $B=25$ es
@@ -1188,6 +1238,7 @@ Nuestra muestra original es:
  $ precio_m2            : num  1671 1029 1129 1884 1175 ...
 #+end_src
 
+#+REVEAL: split
 El estimador de interés es:
 
 #+begin_src R :exports code :results none 
@@ -1200,6 +1251,7 @@ El estimador de interés es:
   }
 #+end_src
 
+#+REVEAL: split
 Y nuestra estimación puntual es
 
 #+begin_src R :exports both :results org 
@@ -1219,6 +1271,7 @@ Y nuestra estimación puntual es
 Es decir que en promedio, un poco menos del $15\%$ del lote total es ocupado por área habitable. 
 Ahora hacemos bootstrap para construir un intervalo:
 
+#+REVEAL: split
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/casas-bootstrap-razon.jpeg :exports results :results output graphics file
   library(rsample)
@@ -1234,6 +1287,7 @@ Ahora hacemos bootstrap para construir un intervalo:
 #+RESULTS:
 [[file:../images/casas-bootstrap-razon.jpeg]]
 
+#+REVEAL: split
 En este caso la cola derecha parece tener menos dispersión que una distribución normal.
 Usamos un intervalo de percentiles para obtener:
 
@@ -1254,6 +1308,7 @@ Usamos un intervalo de percentiles para obtener:
 #+end_src
 
 
+#+REVEAL: split
 Nótese que el sesgo es bajo.  De modo que en esta zona, entre $12\%$ y $16\%$ de toda
 el área disponible es ocupada por área habitable: estas son casas que tienen
 jardines o terrenos, garage relativamente grandes.
@@ -1279,7 +1334,7 @@ consideramos como nuestra estadística:
 #+RESULTS:
 [[file:../images/casas-suavizador.jpeg]]
 
-
+#+REVEAL: split
 Podemos hacer bootstrap para juzgar la estabilidad del suavizador:
 
 #+begin_src R :exports none :results none
@@ -1308,6 +1363,7 @@ Podemos hacer bootstrap para juzgar la estabilidad del suavizador:
 #+RESULTS:
 [[file:../images/casas-suavizador-bs.jpeg]]
 
+#+REVEAL: split
 Donde vemos que algunas cambios de pendiente del suavizador original no son muy
 interpretables (por ejemplo, para áreas chicas) y alta variabilidad en general
 en los extremos. Podemos hacer más iteraciones para calcular bandas de
@@ -1326,6 +1382,7 @@ confianza:
 #+RESULTS:
 [[file:../images/casas-suavizador-bandas.jpeg]]
 
+#+REVEAL: split
 Donde observamos cómo tenemos incertidumbre en cuanto al nivel y forma de las
 curvas en los extremos de los datos (casas grandes y chicas), lo cual es
 natural. Aunque podemos resumir para hacer bandas de confianza, mostrar
