@@ -1387,7 +1387,7 @@ Donde observamos cómo tenemos incertidumbre en cuanto al nivel y forma de las
 curvas en los extremos de los datos (casas grandes y chicas), lo cual es
 natural. Aunque podemos resumir para hacer bandas de confianza, mostrar
 remuestras de esta manera es informativo: por ejempo: vemos cómo es probable
-también que para casas de emnos de 70 metros cuadrados el precio por metro
+también que para casas de menos de 70 metros cuadrados el precio por metro
 cuadrado no cambia tanto (líneas constantes). 
 
 bibliographystyle:abbrvnat
