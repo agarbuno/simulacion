@@ -26,7 +26,7 @@
 #+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
 #+EXPORT_FILE_NAME: ../docs/05-bootstrap.pdf
 :END:
-#+PROPERTY: header-args:R :session bootstrap :exports both :results output org :tangle ../rscript/05-bootstrap.R :mkdirp yes :dir ../
+#+PROPERTY: header-args:R :session bootstrap :exports both :results output org :tangle ../rscripts/05-bootstrap.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc noexport 
 
 #+BEGIN_NOTES
@@ -327,6 +327,10 @@ El esquema de esta estrategia lo podemos representar con la figura siguiente
 #+REVEAL: split
 Veamos que sucede para un ejemplo concreto, donde  nos interesa estimar
 la media de los precios de venta de una población de casas. Tenemos nuestra muestra:
+
+#+begin_src R :exports none :results none
+  ## Idea de bootstrap ---------------------------------------------------------
+#+end_src
 
 #+begin_src R :exports both :results none
   set.seed(2112)
@@ -766,6 +770,10 @@ muestra $n\to\infty$, lo cual es intuitivamente claro.
 En el siguiente ejemplo (tomadores de té), podemos estimar la proporción de
 tomadores de té que prefiere el té negro usando nuestra muestra:
 
+#+begin_src R :exports none :results none
+  ## Datos de te (plugin) ------------------------------------------------------
+#+end_src
+
 #+begin_src R :exports both :results none
   te <- read_csv("data/tea.csv") |>
     rowid_to_column() |>
@@ -876,6 +884,10 @@ que *no* la usamos, por ejemplo, para saber dónde está centrada la distribuci�
 de muestreo, o para ``mejorar'' la estimación remuestreando.
 
 ** Ejemplo
+
+#+begin_src R :exports none :results none
+  ## Propiedadesde distirbucion bootstrap --------------------------------------
+#+end_src
 
 En nuestro ejemplo, podemos ver varias muestras (por ejemplo 20) de tamaño 200.
 Podemos calcular las distribuciones de remuestreo para cada muestra bootstrap y
@@ -1161,6 +1173,9 @@ Entonces, ¿cuántas muestras bootstrap?
 
 * /Boostrap/ y otras estadísticas 
 
+#+begin_src R :exports none :results none
+  ## Bootstrap para razon y suavizadores ---------------------------------------
+#+end_src
 
 El /bootstrap/ es una técnica versátil. Un ejemplo son *estimadores de razón*, que
 tienen la forma
