@@ -44,23 +44,28 @@ ggplot(aes(x = precio_miles, group = tipo)) +
 media <- mean(muestra$precio_miles)
 media
 
-## paso 1: definimos un mecanismo de remuestreo
-genera_remuestras <- function(data, n = 200){
-  data |>
-    sample_n(200, replace = TRUE)
-}
-
-## paso 2: definimos la estimacion del parametro
+## paso 1: define el estimador
 calcula_estimador <- function(data){
   data |>
     summarise(media_precio = mean(precio_miles), .groups = "drop")
 }
 
-## paso 3: aplicamos el proceso de remuestreo y estimacion
-media_muestras <- map_dbl(1:1000, function(id){
-  genera_remuestras(muestra) |>
+## paso 2: define el proceso de remuestreo
+genera_remuestras <- function(data, n = 200){
+  data |>
+    sample_n(200, replace = TRUE)
+}
+
+## paso 3: definimos el paso bootstrap
+paso_bootstrap <-function(id){
+  muestra |>
+  genera_remuestras() |>
     calcula_estimador() |>
-    pull(media_precio)})
+    pull(media_precio)
+}
+
+## paso 4: aplica el procedimiento bootstrap
+media_muestras <- map_dbl(1:1000, paso_bootstrap)
 media_muestras[1:10]
 
 bootstrap <- tibble(media = media_muestras)
@@ -94,6 +99,10 @@ te |>
   mutate(negro = ifelse(Tea == "black", 1, 0)) |>
   summarise(prop_negro = mean(negro), n = length(negro), .groups = "drop")
 
+muestra.obs <- te |>
+  mutate(negro = ifelse(Tea == "black", 1, 0)) |>
+  summarise(media = mean(negro), n = length(negro), .groups = "drop")
+
 ## paso 1: define el estimador
 calc_estimador <- function(datos){
   prop_negro <- datos |>
@@ -109,14 +118,14 @@ muestra_boot <- function(datos){
   sample_n(datos, size = nrow(datos), replace = TRUE)
 }
 
-## paso 3: define el proceso de bootstrap
-aplica_bootstrap <- function(id){
+## paso 3: definimos el paso bootstrap
+paso_bootstrap <- function(id){
   muestra_boot(datos = te) |>
     calc_estimador()
 }
 
-# paso 4: aplica el proceso de bootstrap
-prop_negro_tbl <- map_dbl(1:2000, aplica_bootstrap ) |>
+## paso 4: aplica el procedimiento bootstrap
+prop_negro_tbl <- map_dbl(1:2000, paso_bootstrap ) |>
   as_tibble() |>
   rename( prop_negro = value)
 
@@ -127,15 +136,26 @@ prop_negro_tbl |>
 
 prop_negro_tbl |>
   summarise(
+    cuantil_25 = quantile(prop_negro, 0.25),
     cuantil_75 = quantile(prop_negro, 0.75), 
     media = mean(prop_negro),
-    cuantil_25 = quantile(prop_negro, 0.25),
-    sesgo = mean(prop_negro) - 0.2499,
-    ee = sd(prop_negro),
+    ee = sd(prop_negro)/sqrt(muestra.obs$n),
+    sesgo = mean(prop_negro) - muestra.obs$media,
     .groups = "drop") |>
   mutate(across(where(is.numeric), round, 4))
 
 ## Propiedadesde distirbucion bootstrap --------------------------------------
+
+set.seed(911)
+## Generamos 20 conjuntos de datos observados 
+muestras <- map(1:16, function(x) {
+  muestra <- sample_n(poblacion_casas, 200, replace = F) |>
+    mutate(rep = x, tipo = "muestras")
+}) |> bind_rows()
+## Agregamos las columnas tipo y rep
+dat_pob <- poblacion_casas |> mutate(tipo = "población", rep = 1)
+## Pegamos las tablas
+datos_sim <- bind_rows(dat_pob, muestras)
 
 ## paso 1: define el estimador
 calc_estimador <- function(datos){
@@ -156,11 +176,16 @@ muestra_boot <- function(datos, n = NULL){
   m
 }
 
-## paso 3: define el proceso de bootstrap
-aplica_bootstrap <- function(data, n = NULL){
+## paso 3: definimos el paso bootstrap
+paso_bootstrap <- function(data, n = NULL){
   data |>
     muestra_boot(n) |>
     calc_estimador()
+}
+
+## paso 4: define el procedimiento bootstrap
+procedimiento_bootstrap <- function(data){
+  tibble(precio_miles = rerun(1000, paso_bootstrap(data)))
 }
 
 dist_muestreo <- read_rds("cache/sims_muestreo_precios.rds")
@@ -184,6 +209,17 @@ dist_boot |>
 
 poblacion_casas |>
   summarise(media = mean(precio_miles), .groups = "drop")
+
+tibble(n = 1:100) |>
+  mutate(combinaciones = choose(2 * n - 1, n)) |>
+  ggplot(aes(n, combinaciones)) + geom_point() + geom_line() +
+  geom_hline(yintercept = choose(11, 6), lty = 2)+
+  geom_vline(xintercept = 6, lty = 2) + 
+  scale_x_continuous(trans='log10', 
+                     labels = trans_format("log10", math_format(10^.x))) +
+  scale_y_continuous(trans='log10', 
+                     labels = trans_format("log10", math_format(10^.x))) + 
+  sin_lineas
 
 ## Bootstrap para razon y suavizadores ---------------------------------------
 

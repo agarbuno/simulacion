@@ -97,7 +97,7 @@
     - [[#observación][Observación:]]
 - [[#jackknife][Jackknife]]
   - [[#nota][Nota:]]
-- [[#boostrap-y-otras-estadísticas][Boostrap y otras estadísticas]]
+- [[#bootstrap-y-otras-estadísticas][Bootstrap y otras estadísticas]]
   - [[#estimadores-de-razón][Estimadores de razón]]
   - [[#suavizadores][Suavizadores]]
 :END:
@@ -277,7 +277,7 @@ Notemos que es a través de este proceso de crear réplicas que podemos construi
 una distribución para $\hat{\pi}_N^{\mathsf{MC}}(f)$ y notemos, además, que
 nuestro estimador es el resultado de aplicar una función a la muestra dada
 \begin{align}
-\hat{\pi}_{N, b}^{\mathsf{MC}}(f) = t(X^{(b)}_{1}, \ldots, X^{(b)}_{N})\,, \qquad b = 1, \ldots, B\,.
+\hat{\pi}_{N, b}^{\mathsf{MC}}(f) = s(X^{(b)}_{1}, \ldots, X^{(b)}_{N})\,, \qquad b = 1, \ldots, B\,.
 \end{align}
 
 La distribución resultante de nuestro estimador
@@ -300,7 +300,7 @@ hicimos arriba y evaluar qué tan preciso es nuestro estimador. Sin embargo,
 podemos hacer lo siguiente:
 
 Supongamos que tenemos una muestra $X_1,X_2,\dots, X_N$ de alguna
-población desconocida y un estimador $\hat \theta_N=t(X_1,\dots, X_N)$.
+población desconocida y un estimador $\hat \theta_N=s(X_1,\dots, X_N)$.
 
 ** Mundo poblacional
 
@@ -316,7 +316,7 @@ población desconocida y un estimador $\hat \theta_N=t(X_1,\dots, X_N)$.
    tomar muestras de nuestros datos muestrales, como si fueran de la población,
    y usando el mismo tamaño de muestra. El muestreo lo hacemos con reemplazo de
    manera que produzcamos muestras independientes de la misma ``población
-   estimad'', que es la muestra.
+   estimada'', que es la muestra.
 5. Evaluamos nuestra estadística en cada una de estas remuestras.
 6. A la distribución resultante le llamamos *distribución /bootstrap/* o
    *distribución de remuestreo* del estimador.
@@ -435,7 +435,7 @@ población*: la muestra obtenida.
 
 #+REVEAL: split
 Así que para evaluar la variabilidad de nuestro estimador, entramos en el mundo
-boostrap, y consideramos que la población es nuestra muestra.
+/bootstrap/, y consideramos que la población es nuestra muestra.
 
 Podemos entonces extraer un número grande de muestras con reemplazo de tamaño
 200 *de la muestra*: el muestreo debe ser análogo al que se tomó para nuestra
@@ -778,10 +778,14 @@ que la muestra original.
   t(\mathbb{P})$ una cantidad poblacional de interés y que queremos estimar.
 
 *** Aclaración:
-La notación hace enfásis en que la característica de la distribución
-que nos interesa es resultado de aplicar un procedimiento numérico $t(\cdot)$ a
-nuestra distribución $\mathbb{P}$. Esto no contradice nuestra notación. Pues
-nosotros hemos considerado
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+
+La notación hace enfásis en que la característica de la distribución que nos
+interesa es resultado de aplicar un procedimiento numérico $t(\cdot)$ a nuestra
+distribución $\mathbb{P}$. Esto no contradice nuestra notación. Pues nosotros
+hemos considerado
 \begin{align}
 \theta = t(\mathbb{P}) = \mathbb{P}(f)\,,
     \end{align}
@@ -801,7 +805,11 @@ Es decir, para estimar $\theta$ por medio del procedimiento $t(\cdot)$
 utilizamos la aproximación la distribución de acumulación empírica como si fuera
 la distribución real.
 
-*** Aclaración: 
+*** Aclaración:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+ 
 - Hemos visto que nuestras aproximaciones a $\pi(f)$ son de la forma
   \begin{align}
   \hat{\pi}^{(\cdot)}_N(f) = \frac1N \sum_{n = 1}^{N} f(x_n)\,,
@@ -832,7 +840,7 @@ la distribución real.
 #+REVEAL: split
 - Nuestros estimadores /bootstrap/ son estimadores
   \begin{align}
-  \hat \theta_N^* = t(X^*_{1}, \ldots, X^*_{N})\,,
+  \hat \theta_N^* = s(X^*_{1}, \ldots, X^*_{N})\,,
   \end{align}
   donde $X^*_{1}, \ldots, X^*_{N}$ son muestras escogidas por ~muestreo aleatorio simple~ de la muestra original.
 
@@ -879,7 +887,7 @@ tomadores de té que prefiere el té negro usando nuestra muestra:
 #+REVEAL: split
 ¿Cómo evaluamos la precisión de este estimador? Supondremos que el estudio se
 hizo tomando una muestra aleatoria simple de tamaño 300 de la población de tomadores de té que
-nos interesa. Podemos entonces usar el boostrap:
+nos interesa. Podemos entonces usar el /bootstrap/:
 
 #+REVEAL: split
 #+begin_src R :exports code :results none 
@@ -1048,7 +1056,7 @@ compararlas con la distribución de muestreo real. El procedimiento es como sigu
     filter(tipo == "muestras") |>
     select(precio_miles, rep) |> 
     group_by(rep) |> nest() |> 
-    mutate(precio_miles =  map(data, procedimiento_boostrap)) |>
+    mutate(precio_miles =  map(data, procedimiento_bootstrap)) |>
     select(rep, precio_miles) |>
     unnest(precio_miles) |>
     mutate(precio_miles = unlist(precio_miles))
@@ -1338,6 +1346,9 @@ Nota que
 \end{gather}
 
 *** ~Observación~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
 El sesgo y el error estándar están relacionados por medio del error cuadrático medio $(\mathsf{MSE})$, el cual definimos como
 \begin{align}
 \mathsf{MSE} = \mathsf{MSE}(\hat \theta, \theta) = \mathbb{E}\left[ (\hat \theta - \theta)^2\right]\,.
@@ -1356,6 +1367,9 @@ Se utilizan dichas remuestras para calcular nuestra colección de estimadores
 \end{align}
 
 *** ~Nota~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
 para estimadores /plug-in/ de la forma $\hat \theta = t(\hat{\mathbb{P}})$, tenemos
 \begin{align}
 \hat \theta_{(i)} = t \left(  \hat{\mathbb{P}}_{(i)} \right)\,,
@@ -1405,8 +1419,7 @@ Verifica que el estimador /jackknife/ corregido por sesgo es el estimador insesg
 \hat  \theta _{\mathsf{jack}} = \hat \theta - \widehat{\mathsf{sesgo}}_{\mathsf{jack}} = \frac{1}{N-1} \sum_{i = 1}^{N} \left( X_i - \bar X_N \right)^2\,.
 \end{align}
 
-
-#+REVEAL: split
+** Justificación fórmula de sesgo  
 El sesgo del estimador /plug-in/ satisface la siguiente ecuación:
 \begin{align}
 \mathsf{sesgo}(\hat \theta) = \mathbb{E}(\hat \theta - \sigma^2) = \frac{N-1}{N} \sigma^2 - \sigma^2 = - \frac{\sigma^2}{N}\,.
@@ -1438,7 +1451,7 @@ Nota que necesitamos un ~factor de inflación~ para los términos cuadráticos. 
 es por que, intuitivamente, los términos son cercanos entre si y no caracterizan
 las desviaciones que observaríamos con promedios de $N$ observaciones.
 
-* /Boostrap/ y otras estadísticas 
+* /Bootstrap/ y otras estadísticas 
 
 #+begin_src R :exports none :results none
   ## Bootstrap para razon y suavizadores ---------------------------------------
