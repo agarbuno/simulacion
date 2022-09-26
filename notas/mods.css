@@ -19,4 +19,5 @@
     border-radius: 10px;
     font-family: "Fira Code";
     font-size: .8em;
+    max-height: 600px;
 }
