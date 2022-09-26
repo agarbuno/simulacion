@@ -2,7 +2,6 @@
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Remuestreo~
-#+STARTUP: showall
 :LATEX_PROPERTIES:
 #+OPTIONS: toc:nil date:nil author:nil tasks:nil
 #+LANGUAGE: sp
@@ -26,6 +25,7 @@
 #+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
 #+EXPORT_FILE_NAME: ../docs/05-bootstrap.pdf
 :END:
+#+STARTUP: showall
 #+PROPERTY: header-args:R :session bootstrap :exports both :results output org :tangle ../rscripts/05-bootstrap.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc noexport 
 
@@ -75,24 +75,31 @@
 - [[#la-idea-del-bootstrap][La idea del bootstrap]]
   - [[#mundo-poblacional][Mundo poblacional]]
   - [[#mundo-bootstrap][Mundo bootstrap]]
-    - [[#definición][Definición:]]
+    - [[#definición--la-distribución-de-remuestreo-][Definición [ La distribución de remuestreo ]:]]
     - [[#ejemplo][Ejemplo:]]
   - [[#nota][Nota]]
     - [[#remuestreo-para-una-población][Remuestreo para una población:]]
 - [[#el-principio-de-plug-in][El principio de plug-in]]
   - [[#observación][Observación]]
     - [[#ejercicio][Ejercicio:]]
-  - [[#observación][Observación]]
-  - [[#observación][Observación]]
+  - [[#notación][Notación]]
+    - [[#aclaración][Aclaración:]]
+    - [[#definición--el-principio-de-plug-in-][Definición [ El principio de plug-in ]:]]
+    - [[#aclaración][Aclaración:]]
   - [[#ejemplo][Ejemplo]]
 - [[#propiedades-distribución-bootstrap][Propiedades distribución bootstrap]]
   - [[#ejemplo][Ejemplo]]
   - [[#variación-en-distribución-bootstrap][Variación en distribución bootstrap]]
+    - [[#ejercicio][Ejercicio:]]
+  - [[#error-estándar-bootstrap][Error estándar bootstrap]]
+    - [[#definición--el-error-estándar-bootstrap-][Definición [ El error estándar bootstrap ]:]]
+  - [[#estimación-de-sesgo][Estimación de sesgo]]
+    - [[#observación][Observación:]]
+- [[#jackknife][Jackknife]]
+  - [[#nota][Nota:]]
 - [[#boostrap-y-otras-estadísticas][Boostrap y otras estadísticas]]
   - [[#estimadores-de-razón][Estimadores de razón]]
   - [[#suavizadores][Suavizadores]]
-- [[#jacknife-y-cuantificación-de-sesgo][Jacknife y cuantificación de sesgo]]
-- [[#generalización-intervalos-de-confianza][Generalización intervalos de confianza]]
 :END:
 
 
@@ -102,7 +109,7 @@ El remuestreo se refiere a un conjunto de técnicas estadísticas,
 computacionalmente intensivas, que ~estiman~ la /distribución de una población/
 basadas en ~muestreo aleatorio con reemplazo~ de una muestra observada.
 
-Se considera una muestra aleatoria $X_{1}, \ldots, X_{n}$ como si fuera una
+Se considera una muestra aleatoria $X_{1}, \ldots, X_{N}$ como si fuera una
 población finita y se generan muestras aleatorias de la misma muestra para
 estimar características poblacionales y hacer inferencia de la población
 muestreada.
@@ -121,7 +128,7 @@ y Pitmann (1937); la validación cruzadas fue propuesta por Kurtz en 1948, y el
 ** Contexto histórico
 
 Bradley Efron introdujo el ~bootstrap~ en 1979.  El término ‘bootstrapping’ se
-refiere al concepto de “pulling oneself up by one’s bootstraps”, frase que
+refiere al concepto de /pulling oneself up by one’s bootstraps/, frase que
 aparentemente se usó por primera vez en:
 - Raspe, R. E. (1786). /Gulliver Revived: Or the Singular Travels, Campaigns,
   Voyages, and Adventures of Baron Munikhouson, Commonly Called Munchausen/.
@@ -135,8 +142,8 @@ coeficientes de regresión, matriz de covarianza, etc.) ~basada sólo en los dat
 También interesan las propiedades de la ~distribución de estimador~, sin hacer supuestos
 restrictivos sobre la forma de la distribución de los datos originales.
 
-Para una muestra aleatoria $X_1, \ldots , X_n$ , la ~distribución de remuestreo~ es la distribución
-empírica $\hat{\mathbb{P}}_n$, que asigna probabilidad $1/n$ a cada una de las observaciones de la muestra.
+Para una muestra aleatoria $X_1, \ldots , X_N$ , la ~distribución de remuestreo~ es la distribución
+empírica $\hat{\mathbb{P}}_N$, que asigna probabilidad $1/N$ a cada una de las observaciones de la muestra.
 
 \newpage
 
@@ -159,7 +166,7 @@ del ingreso de los miembros de cada pareja (en miles de pesos al mes).
 #+REVEAL: split
 Definamos $\theta$ como el promedio de las diferencias de ingreso poblacional. Podemos estimar $\theta$ con
 \begin{align}
-\hat \theta_n= \frac{6 - 3 + 5 + 3 - 2+ 0}{6} = 1.5\,.
+\hat \theta_N= \frac{6 - 3 + 5 + 3 - 2+ 0}{6} = 1.5\,.
 \end{align}
 ¿Cómo calculamos la variabilidad de nuestro estimador? Es decir, ¿cómo
 calculamos la variabilidad de $\hat \theta_n$?
@@ -179,7 +186,7 @@ Escribe la fórmula del error estándar bajo los siguientes supuestos:
   si no conocemos la distribución de las observaciones?
 
 - Si no conocemos $\sigma^2$  lo podemos estimar con la muestra. Por ejemplo, podemos
-  utilizar intervalos de confianza derivados de una distribución $t_{n-1}$.
+  utilizar intervalos de confianza derivados de una distribución $t_{N-1}$.
 
 - Si nos interesa otro parámetro de la población podemos construir estimadores
   diferentes. Por ejemplo, nos podría interesar la ~mediana~ de una población
@@ -187,8 +194,8 @@ Escribe la fórmula del error estándar bajo los siguientes supuestos:
   por medio de
   \begin{align}
   \hat q_{0.5} = \begin{cases}
-    X_{(\frac{n+1}{2})} & \text{ si } n \text{ es impar }\\
-    \frac{X_{(n/2)} + X_{(n/2 + 1)}}{2} & \text{ si } n \text{ es par }
+    X_{(\frac{n+1}{2})} & \text{ si } N \text{ es impar }\\
+    \frac{X_{(n/2)} + X_{(n/2 + 1)}}{2} & \text{ si } N \text{ es par }
   \end{cases} \,.
   \end{align}
 
@@ -292,8 +299,8 @@ una muestra, así que no es posible calcular las distribuciones de muestreo como
 hicimos arriba y evaluar qué tan preciso es nuestro estimador. Sin embargo,
 podemos hacer lo siguiente:
 
-Supongamos que tenemos una muestra $X_1,X_2,\dots, X_n$ independientes de alguna
-población desconocida y un estimador $\hat \theta_n=t(X_1,\dots, X_n)$.
+Supongamos que tenemos una muestra $X_1,X_2,\dots, X_N$ de alguna
+población desconocida y un estimador $\hat \theta_N=t(X_1,\dots, X_N)$.
 
 ** Mundo poblacional
 
@@ -530,18 +537,16 @@ distribución de muestreo:
 [1] 5.71
 #+end_src
 
-*** ~Definición~:
-Sea $X_1,X_2,\ldots,X_n$ una muestra independiente y idénticamente distribuida
-($\mathsf{iid}$), y $\hat \theta_n=t(X_1, X_2, \ldots, X_n)$ una estadística. Supongamos
-que los valores que obervamos son $x_1, x_2,\ldots, x_n$.
+*** ~Definición~ [ La distribución de remuestreo ]:
+Sea $X_1,X_2,\ldots,X_N$ una muestra independiente y idénticamente distribuida
+($\mathsf{iid}$), y $\hat \theta_N=s(X_1, X_2, \ldots, X_N)$ una
+estadística. Supongamos que los valores que obervamos son $x_1, x_2,\ldots,
+x_N$. La *distribución de remuestreo* de $\hat \theta_N$ es la distribución de
+$\theta^*_N=s(X_1^*, X_2^*, \dots X_N^*)$, donde cada $X_i^*$ se obtiene tomando
+al azar uno de los valores de $x_1,x_2,\ldots, x_N$.
 
-#+REVEAL: split
-La *distribución de remuestreo* de $\hat \theta_n$ es la distribución de $\theta^*_n=t(X_1^*, X_2^*,
-\dots X_n^*)$, donde cada $X_i^*$ se obtiene tomando al azar uno de los valores
-de $x_1,x_2,\ldots, x_n$.
-
-Otra manera de decir esto es que la remuestra $X_1^*, X_2^*, \ldots, X_n^*$ es una muestra
-con reemplazo de los valores observados $x_1, x_2, \ldots, x_n$
+Otra manera de decir esto es que la remuestra $X_1^*, X_2^*, \ldots, X_N^*$ es una muestra
+con reemplazo de los valores observados $x_1, x_2, \ldots, x_N$. 
 
 *** ~Ejemplo~:
 Si observamos la muestra
@@ -675,7 +680,7 @@ un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
     labs(x = "", y = "",
          subtitle = expression("Distribución muestral de "~hat(mu)==bar(X))) +
     geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
-    theme_classic()
+    theme_classic() + coord_cartesian(x = c(1, 8))
 
   (pob_plot | plot_spacer()) / (muestras_plot | dist_muestral_plot) 
 #+end_src
@@ -684,7 +689,7 @@ un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
 [[file:../images/mundo-poblacional.jpeg]]
 
 #+REVEAL: split
- #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/mundo-bootstrap.jpeg :exports results :results output graphics file :tangle no
   dist_empirica <- tibble(id = 1:30, obs = samples$sims[[1]])
 
@@ -722,7 +727,7 @@ un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
               parse = TRUE, color = "black", alpha = 0.3, hjust = 1) +
     labs(x = "", subtitle = "Muestras bootstrap") +
     scale_y_continuous(breaks = NULL) +
-    theme_classic() +
+    theme_classic() + 
     theme(strip.background = element_blank(), strip.text.x = element_blank())
 
   boot_dist <- data_frame(sample = 1:10000) |>
@@ -737,7 +742,7 @@ un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
     geom_vline(aes(xintercept = samples$x_bar[1]), color = "blue", 
                linetype = "dashed", alpha = 0.8) +
     scale_y_continuous(breaks = NULL) +
-    theme_classic()
+    theme_classic() + coord_cartesian(x = c(1, 8))
 
   (dist_empirica_plot | plot_spacer()) / (muestras_boot_plot | boot_muestral_plot) 
 #+end_src
@@ -764,19 +769,78 @@ que la muestra original.
   original?
 
 
-** Observación
-Estos argumentos se pueden escribir con fórmulas usando por ejemplo la función
-de distribución acumulada $\mathbb{P}$ de la población y su estimador, que es la función
-empírica $\hat{\mathbb{P}}_n$, como en citep:Efron1993.  Si $\theta = t(\mathbb{P})$ es una cantidad
-poblacional que queremos estimar, su estimador /plug-in/ es $\hat{\theta} =
-t(\hat{\mathbb{P}}_n)$.
+** Notación 
+- Denotamos por $\mathbb{P}$ la función de distribución acumulada de la población y su estimador, que es la función
+  empírica $\hat{\mathbb{P}}_n$, como en citep:Efron1993.
 
-** Observación
-La distribución empírica $\hat{\mathbb{P}}_n$ es un estimador /razonable/ de la
-distribución poblacional $\mathbb{P}$ pues por el teorema de Glivenko-Cantelli
-(citep:Wasserman2004, o [[https://en.wikipedia.org/wiki/Glivenko-Cantelli_theorem][aquí]]), $\hat{\mathbb{P}}_n$ converge a $\mathbb{P}$ cuando el tamaño de
-muestra $n\to\infty$, lo cual es intuitivamente claro.
+- Denotamos por $X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \mathbb{P}$
+  una muestra aleatoria de la distribución $\mathbb{P}$ y por $\theta =
+  t(\mathbb{P})$ una cantidad poblacional de interés y que queremos estimar.
 
+*** Aclaración:
+La notación hace enfásis en que la característica de la distribución
+que nos interesa es resultado de aplicar un procedimiento numérico $t(\cdot)$ a
+nuestra distribución $\mathbb{P}$. Esto no contradice nuestra notación. Pues
+nosotros hemos considerado
+\begin{align}
+\theta = t(\mathbb{P}) = \mathbb{P}(f)\,,
+    \end{align}
+donde $\mathbb{P}(f)$ es el procedimiento asociado a realizar la integral de la
+función $f$ ponderada por $\mathbb{P}$. Es decir, $\int f(u)
+\text{d}\mathbb{P}(u)$.
+
+
+*** ~Definición~ [ El principio de /plug-in/ ]:
+Es un método de estimación de parámetros que utiliza muestras para el
+procedimiento de estimación. El estimador /plug-in/ del parámetro $\theta =
+t(\mathbb{P})$ está definido como
+\begin{align}
+\hat{\theta} = t(\hat{\mathbb{P}}_n)\,.
+\end{align}
+Es decir, para estimar $\theta$ por medio del procedimiento $t(\cdot)$
+utilizamos la aproximación la distribución de acumulación empírica como si fuera
+la distribución real.
+
+*** Aclaración: 
+- Hemos visto que nuestras aproximaciones a $\pi(f)$ son de la forma
+  \begin{align}
+  \hat{\pi}^{(\cdot)}_N(f) = \frac1N \sum_{n = 1}^{N} f(x_n)\,,
+  \end{align}
+  donde las $x_n$ son realizaciones aleatorias de la distribución $\pi$.
+
+- Noten que nuestros estimadores de la familia de métodos Monte Carlo también
+  son estimadores /plug-in/ pues tomamos la distribución
+  \begin{align}
+  \pi^{(\cdot)}_N(x) = \frac1N \sum_{n = 1}^{N} \delta(x - x_n)\,,
+  \end{align}
+  como la aproximación de $\pi(\cdot)$ para obtener valores de estimador que nos
+  interesa $\theta = \pi(f)$.
+
+#+REVEAL: split
+- Esto nos permite escribir nuestros estimadores como
+  \begin{align}
+  \hat \theta = t\left(\hat{\pi}_N^{(\cdot)}\right)\,.
+  \end{align}
+
+#+REVEAL: split
+- La distribución empírica $\hat{\mathbb{P}}_n$ es un estimador /razonable/ de la
+  distribución poblacional $\mathbb{P}$ pues por el teorema de Glivenko-Cantelli
+  (citep:Wasserman2004, o [[https://en.wikipedia.org/wiki/Glivenko-Cantelli_theorem][aquí]]), $\hat{\mathbb{P}}_n$ converge a $\mathbb{P}$
+  cuando el tamaño de muestra $n\to\infty$, lo cual es intuitivamente claro.
+
+
+#+REVEAL: split
+- Nuestros estimadores /bootstrap/ son estimadores
+  \begin{align}
+  \hat \theta_N^* = t(X^*_{1}, \ldots, X^*_{N})\,,
+  \end{align}
+  donde $X^*_{1}, \ldots, X^*_{N}$ son muestras escogidas por ~muestreo aleatorio simple~ de la muestra original.
+
+- Es decir, podemos pensar en $X^*_{1}, \ldots, X^*_{N} \overset{\mathsf{iid}}{\sim} \hat{\mathbb{P}}_N$. Por lo que nuestros estimadores /bootstrap/ son de la forma
+  \begin{align}
+  \hat \theta^*_N = t \left( \hat{\mathbb{P}}_N \right)\,.
+  \end{align} 
+  
 ** Ejemplo 
 En el siguiente ejemplo (tomadores de té), podemos estimar la proporción de
 tomadores de té que prefiere el té negro usando nuestra muestra:
@@ -969,17 +1033,22 @@ compararlas con la distribución de muestreo real. El procedimiento es como sigu
   }
 #+end_src
 
+#+begin_src R :exports code :results none 
+  ## paso 4: define el procedimiento bootstrap
+  procedimiento_bootstrap <- function(data){
+    tibble(precio_miles = rerun(1000, paso_bootstrap(data)))
+  }
+#+end_src
+
 
 #+REVEAL: split
 #+begin_src R :exports code :results none :tangle no :eval never
-  ## paso 4: aplica el procedimiento bootstrap
+  ## paso 5: aplica el procedimiento bootstrap
   dist_boot <- datos_sim |>
     filter(tipo == "muestras") |>
     select(precio_miles, rep) |> 
     group_by(rep) |> nest() |> 
-    mutate(precio_miles =  map(data, function(data){
-      tibble(precio_miles = rerun(1000, paso_bootstrap(data)))
-    })) |>
+    mutate(precio_miles =  map(data, procedimiento_boostrap)) |>
     select(rep, precio_miles) |>
     unnest(precio_miles) |>
     mutate(precio_miles = unlist(precio_miles))
@@ -1068,7 +1137,7 @@ En el proceso de estimación /bootstrap/ hay dos fuentes de variación pues:
 
 - La muestra original se selecciona con aleatoriedad de una población.
 - Las muestras /bootstrap/ se seleccionan con aleatoriedad de la muestra
-  original. Esto es, la estimación bootstrap ideal es un resultado asintótico
+  original. Esto es, la estimación /bootstrap/ ideal es un resultado asintótico
   $B=\infty$, en esta caso $\hat{\textsf{ee}}_B$ iguala la estimación /plug-in/
   $\mathsf{ee}_{\mathbb{P}_n}$.
 
@@ -1082,6 +1151,31 @@ Podemos eliminar la variación Monte Carlo si seleccionamos todas las posibles
 muestras con reemplazo de tamaño $n$, hay ${2n-1}\choose{n}$ posibles muestras y
 si seleccionamos todas obtenemos $\hat{\textsf{ee}}_\infty$ (/bootstrap/ ideal),
 sin embargo, en la mayor parte de los problemas no es factible proceder así.
+
+*** ~Ejercicio~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+¿Cuántas remuestras posibles existen para nuestro ejemplo introductorio de la
+diferencia de nivel de ingreso?
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/remuestras-combinaciones.jpeg :exports results :results output graphics file
+  tibble(n = 1:100) |>
+    mutate(combinaciones = choose(2 * n - 1, n)) |>
+    ggplot(aes(n, combinaciones)) + geom_point() + geom_line() +
+    geom_hline(yintercept = choose(11, 6), lty = 2)+
+    geom_vline(xintercept = 6, lty = 2) + 
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) +
+    scale_y_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    sin_lineas
+#+end_src
+#+caption: Número de remuestras posibles como función del tamaño de muestra.
+#+RESULTS:
+[[file:../images/remuestras-combinaciones.jpeg]]
+
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/bootstrap-variacion.jpeg  :exports results :results output graphics file :eval never :tangle no
@@ -1177,7 +1271,7 @@ se realizan histogramas de la distribución bootstrap con $B=30$ y $B=1000$, en
 cada caso hacemos dos repeticiones, notemos que cuando el número de muestras 
 bootstrap es grande las distribuciones bootstrap son muy similares (para una 
 muestra de la población dada), esto es porque disminuimos el erro Monte Carlo. 
-También vale la pena recalcar que la distribución bootstrap está centrada en el 
+También vale la pena recalcar que la distribución /bootstrap/ está centrada en el 
 valor observado en la muestra (línea azúl punteada) y no en el valor poblacional
 sin embargo la forma de la distribución es similar a lo largo de las filas.
 
@@ -1194,6 +1288,155 @@ Entonces, ¿cuántas muestras bootstrap?
 
 2. Cuando se busca estimar error estándar (citep:Chihara2018) recomienda $B=1000$
    muestras, o $B=10,000$ muestras dependiendo la precisión que se busque.
+
+** Error estándar /bootstrap/
+
+La variación de nuestro estimador es lo que conocemos como error estándar y lo denotamos por
+\begin{align}
+\mathsf{ee}\left( \hat \theta_N \right) = \left( \mathbb{V}(\hat \theta_N) \right)^{1/2}\,.
+\end{align}
+El estimador /plug-in/ de esta cantidad (el error estándar) es
+\begin{align}
+\mathsf{ee}_{\hat{\mathbb{P}}_N}\left( \hat \theta_N^* \right)\,,
+\end{align}
+donde $\hat{\theta}^*_N$ es un estimador /bootstrap/ con $\hat{\theta}^*_N = s(X^*_{1}, \ldots, X^*_{N})$ donde $X^*_{1}, \ldots, X^*_{N} \overset{\mathsf{iid}}{\sim} \hat{\mathbb{P}}_N$.
+
+*** ~Definición~ [ El error estándar /bootstrap/ ]:
+El estimador /bootstrap/ del error estándar se calcula por medio de remuestras
+$X^{(b)}_{1}, \ldots, X^{(b)}_{N} \overset{\mathsf{iid}}{\sim}
+\hat{\mathbb{P}}_N$ con $b = 1, \ldots, B$ de acuerdo a
+\begin{align}
+\hat{\mathsf{ee}}_B (\hat \theta^*) = \frac{1}{B-1} \sum_{b = 1}^{B} \left( \hat{\theta}^{(b)} - \hat{\theta}^{(\cdot)} \right)^2\,,
+\end{align}
+donde $\hat \theta^{(b)}$ denota el estimador de $\theta$ utilizando la remuestra $b$ y $\hat \theta ^{(\cdot)}$ es la media de las remuestras. Es decir, 
+\begin{align}
+\hat \theta^{(\cdot)} = \frac1B \sum_{b = 1}^{B} \hat \theta^{(b)}\,.
+\end{align}
+#+REVEAL: split
+Nota que
+\begin{align}
+\lim_{B \rightarrow \infty} \hat{\mathsf{ee}}_{B} \left(\hat \theta^*\right)  = \mathsf{ee}_{\hat{\mathbb{P}}_N}\left( \hat \theta^* \right)\,.
+\end{align}
+
+** Estimación de sesgo 
+
+En tareas de estimación nos interesa cuantificar el sesgo de nuestros procedimientos. Por ejemplo, si nos interesa evaluar un estimador $\hat \theta = s(X_{1:N})$ de una característica $\theta = t(\mathbb{P})$ el sesgo del estimador está definido como
+\begin{align}
+\mathsf{sesgo}_{\mathbb{P}} = \mathsf{sesgo}_{\mathbb{P}} (\hat \theta, \theta ) = \mathbb{E}_\mathbb{P}[\hat \theta] - t(\mathbb{P})\,.
+\end{align}
+
+Los estimadores /plug-in/ usualmente tienen un sesgo pequeño. Pero si nos interesa
+poder cuantificarlo. Para esto utilizamos
+\begin{align}
+\mathsf{sesgo}_{\hat{\mathbb{P}}} = \mathsf{sesgo}_{\hat{\mathbb{P}}} (\hat \theta, \theta ) = \mathbb{E}_{\hat{\mathbb{P}}}[\hat \theta^*] - t(\hat{\mathbb{P}})\,.
+\end{align}
+
+Nota que
+\begin{gather}
+\hat \theta = t(\hat{\mathbb{P}}) = s(X_{1:N})\,, \\
+ \mathbb{E}_{\hat{\mathbb{P}}}[\hat \theta^*] \approx \frac{1}{B} \sum_{b = 1}^{B} \hat \theta ^{(b)}\,, \qquad \text{ donde } \qquad \hat \theta^{(b)} = s(X^{(b)}_{1}, \ldots, X^{(b)}_{N})\,.
+\end{gather}
+
+*** ~Observación~:
+El sesgo y el error estándar están relacionados por medio del error cuadrático medio $(\mathsf{MSE})$, el cual definimos como
+\begin{align}
+\mathsf{MSE} = \mathsf{MSE}(\hat \theta, \theta) = \mathbb{E}\left[ (\hat \theta - \theta)^2\right]\,.
+\end{align}
+
+* /Jackknife/
+
+Es una técnica originalmente propuesta para medir sesgo (Quenouille, 1949) y errores estándar (Tukey, 1958). Para una muestra $X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \mathbb{P}$ de observaciones se consideran $N$ remuestreos de la forma
+\begin{align}
+X_{(i)} = (X_{1}, \ldots, X_{i-1}, X_{i+1}, \ldots, X_{N})\,.
+\end{align}
+
+Se utilizan dichas remuestras para calcular nuestra colección de estimadores
+\begin{align}
+\hat \theta_{(i)} = s \left( X_{(i)} \right)\,.
+\end{align}
+
+*** ~Nota~:
+para estimadores /plug-in/ de la forma $\hat \theta = t(\hat{\mathbb{P}})$, tenemos
+\begin{align}
+\hat \theta_{(i)} = t \left(  \hat{\mathbb{P}}_{(i)} \right)\,,
+\end{align}
+donde $\hat{\mathbb{P}}_{(i)}$ denota la función de distribución empírica de las
+$N-1$ observaciones.
+
+** Estimación de sesgo usando /jackknife/
+
+El estimador del sesgo de /jackknife/ se define como
+\begin{align}
+\widehat{\mathsf{sesgo}}_{\mathsf{jack}} = (N - 1) \left( \hat \theta_{(\cdot)} - \hat \theta \right) \,,
+\end{align}
+donde
+\begin{align}
+\hat \theta_{(\cdot)} = \frac1N \sum_{i = 1}^{N} \hat \theta_{(i)}\,.
+\end{align}
+
+#+BEGIN_NOTES
+Mas adelante discutiremos sobre el factor $N-1$ adelante de la estimación de
+sesgo. Pero por el momento puedes pensar en que los estimadores /jackknife/ son
+promedios de $N-1$ observaciones, mientras que el estimador observado es
+producto de $N$ observaciones. Por lo tanto, se necesite un factor que permita
+comparar ambas cantidades.
+#+END_NOTES
+
+#+REVEAL: split
+El uso de la estimación de sesgo es para poder presentar un estimador con una corrección por sesgo. Es decir, el estimador /jackknife/ entonces es
+\begin{align}
+\hat{\theta}_{\mathsf{jack}} = \hat \theta - \widehat{\mathsf{sesgo}}_{\mathsf{jack}}\,,
+\end{align}
+donde si utilizamos la sustitución adecuada obtenemos
+\begin{align}
+\hat{\theta}_{\mathsf{jack}} = N\, \hat \theta - (N-1) \, \hat \theta_{(\cdot)}\,.
+\end{align}
+
+*** ~Ejercicio~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+Considera la situación de estimar la varianza a partir de una muestra $X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \mathbb{P}$ por medio del estimador /plug-in/: 
+\begin{align}
+\hat \theta = \frac{1}{N} \sum_{i= 1}^{N} (X_i - \bar X_N)^2\,.
+\end{align}
+Verifica que el estimador /jackknife/ corregido por sesgo es el estimador insesgado usual 
+\begin{align}
+\hat  \theta _{\mathsf{jack}} = \hat \theta - \widehat{\mathsf{sesgo}}_{\mathsf{jack}} = \frac{1}{N-1} \sum_{i = 1}^{N} \left( X_i - \bar X_N \right)^2\,.
+\end{align}
+
+
+#+REVEAL: split
+El sesgo del estimador /plug-in/ satisface la siguiente ecuación:
+\begin{align}
+\mathsf{sesgo}(\hat \theta) = \mathbb{E}(\hat \theta - \sigma^2) = \frac{N-1}{N} \sigma^2 - \sigma^2 = - \frac{\sigma^2}{N}\,.
+\end{align}
+El método /jackknife/ calcula términos con sesgo igual a 
+\begin{align}
+\mathsf{sesgo}(\hat \theta_{(i)}) = -\frac{\sigma^2}{N-1}\,.
+\end{align}
+
+#+REVEAL: split
+Por lo que, tenemos
+\begin{align}
+\mathbb{E}\left(\hat{\theta}_{(i)}-\hat{\theta}\right) &=\mathbb{E}\left(\hat{\theta}_{(i)}-\theta\right)-\mathbb{E}(\hat{\theta}-\theta) \\
+&=\mathsf{sesgo}\left(\hat{\theta}_{(i)}\right)-\mathsf{sesgo}(\hat{\theta}) \\
+&=-\frac{\sigma^2}{N-1}-\left(-\frac{\sigma^2}{N}\right) \\
+&=-\frac{\sigma^2}{N(N-1)}=\frac{\mathsf{sesgo}(\hat{\theta})}{N-1}\,.
+\end{align}
+Lo que implica que el estimador /jackknife/ con factor $N-1$ nos da una estimación correcta del sesgo de nuestros estimadores.
+
+** Estimación de errores estándar usando /jackknife/
+
+El estimador del error estándar usando las remuestras /jackknife/ se define como
+\begin{align}
+\widehat{\mathsf{ee}}_{\mathsf{jack}} = \left[ \frac{N-1}{N} \sum_{i = 1}^{N} \left( \hat \theta_{(i)} - \hat \theta_{(\cdot)} \right)^2 \right]^{1/2}\,.
+\end{align}
+
+*** Observación sobre el estimador usando /jackknife/:
+Nota que necesitamos un ~factor de inflación~ para los términos cuadráticos. Esto
+es por que, intuitivamente, los términos son cercanos entre si y no caracterizan
+las desviaciones que observaríamos con promedios de $N$ observaciones.
 
 * /Boostrap/ y otras estadísticas 
 
@@ -1432,13 +1675,9 @@ cuadrado no cambia tanto (líneas constantes).
 bibliographystyle:abbrvnat
 bibliography:references.bib
 
-
-* TODO /Jacknife/ y cuantificación de sesgo
-
-* TODO Generalización intervalos de confianza
-
 * Temas por ver                                                    :noexport:
 
 - Jacknife (sesgo, reducción de sesgo)
 - Pruebas de permutación (pruebas estadisticas exactas)
 - Validación cruzada
+- Mapa mental bootstrap world / population world
