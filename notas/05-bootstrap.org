@@ -270,12 +270,12 @@ Notemos que es a través de este proceso de crear réplicas que podemos construi
 una distribución para $\hat{\pi}_N^{\mathsf{MC}}(f)$ y notemos, además, que
 nuestro estimador es el resultado de aplicar una función a la muestra dada
 \begin{align}
-\hat{\pi}_N^{\mathsf{MC}, (b)}(f) = t(X^{(b)}_{1}, \ldots, X^{(b)}_{N})\,, \qquad b = 1, \ldots, B\,.
+\hat{\pi}_{N, b}^{\mathsf{MC}}(f) = t(X^{(b)}_{1}, \ldots, X^{(b)}_{N})\,, \qquad b = 1, \ldots, B\,.
 \end{align}
 
 La distribución resultante de nuestro estimador
-$\hat{\pi}_N^{\mathsf{MC}}(f)$ derivada de haber observado un conjunto de datos
-distinto es lo que en sus cursos de estadística le llamamos ~distribución de
+$\hat{\pi}_N^{\mathsf{MC}}(f)$ ---derivada de haber observado un conjunto de datos
+distinto---es lo que en sus cursos de estadística le llamamos ~distribución de
 muestreo~ del estimador.
 
 #+REVEAL: split
@@ -293,11 +293,11 @@ hicimos arriba y evaluar qué tan preciso es nuestro estimador. Sin embargo,
 podemos hacer lo siguiente:
 
 Supongamos que tenemos una muestra $X_1,X_2,\dots, X_n$ independientes de alguna
-población desconocida y un estimador $T_n=t(X_1,\dots, X_n)$
+población desconocida y un estimador $\hat \theta_n=t(X_1,\dots, X_n)$.
 
 ** Mundo poblacional
 
-1. Si tuviéramos la distribución poblacional, simulamos muestras iid para
+1. Si tuviéramos la distribución poblacional, simulamos muestras $\mathsf{iid}$ para
    aproximar la distribución de muestreo de nuestro estimador, y así entender su
    variabilidad.
 2. Pero *no* tenemos la distribución poblacional.
@@ -308,8 +308,8 @@ población desconocida y un estimador $T_n=t(X_1,\dots, X_n)$
 4. Si usamos la estimación del inciso 3, entonces usando el inciso 1 podríamos
    tomar muestras de nuestros datos muestrales, como si fueran de la población,
    y usando el mismo tamaño de muestra. El muestreo lo hacemos con reemplazo de
-   manera que produzcamos muestras independientes de la misma "población
-   estimada", que es la muestra.
+   manera que produzcamos muestras independientes de la misma ``población
+   estimad'', que es la muestra.
 5. Evaluamos nuestra estadística en cada una de estas remuestras.
 6. A la distribución resultante le llamamos *distribución /bootstrap/* o
    *distribución de remuestreo* del estimador.
@@ -437,29 +437,40 @@ una de estas remuestras:
 
 #+REVEAL: split
 #+begin_src R :exports code :results none
-  ## paso 1: definimos un mecanismo de remuestreo
-  genera_remuestras <- function(data, n = 200){
-    data |>
-      sample_n(200, replace = TRUE)
-  }
-#+end_src
-
-#+REVEAL: split
-#+begin_src R :exports code :results none
-  ## paso 2: definimos la estimacion del parametro
+  ## paso 1: define el estimador
   calcula_estimador <- function(data){
     data |>
       summarise(media_precio = mean(precio_miles), .groups = "drop")
   }
 #+end_src
 
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  ## paso 2: define el proceso de remuestreo
+  genera_remuestras <- function(data, n = 200){
+    data |>
+      sample_n(200, replace = TRUE)
+  }
+#+end_src
+
+
 #+REVEAL: split
 #+begin_src R :exports code :results org 
-  ## paso 3: aplicamos el proceso de remuestreo y estimacion
-  media_muestras <- map_dbl(1:1000, function(id){
-    genera_remuestras(muestra) |>
+  ## paso 3: definimos el paso bootstrap
+  paso_bootstrap <-function(id){
+    muestra |>
+    genera_remuestras() |>
       calcula_estimador() |>
-      pull(media_precio)})
+      pull(media_precio)
+  }
+#+end_src
+
+
+#+REVEAL: split
+#+begin_src R :exports both :results org 
+  ## paso 4: aplica el procedimiento bootstrap
+  media_muestras <- map_dbl(1:1000, paso_bootstrap)
   media_muestras[1:10]
 #+end_src
 
@@ -521,11 +532,11 @@ distribución de muestreo:
 
 *** ~Definición~:
 Sea $X_1,X_2,\ldots,X_n$ una muestra independiente y idénticamente distribuida
-($\mathsf{iid}$), y $T_n=t(X_1, X_2, \ldots, X_n)$ una estadística. Supongamos
+($\mathsf{iid}$), y $\hat \theta_n=t(X_1, X_2, \ldots, X_n)$ una estadística. Supongamos
 que los valores que obervamos son $x_1, x_2,\ldots, x_n$.
 
 #+REVEAL: split
-La *distribución de remuestreo* de $T_n$ es la distribución de $T^*=t(X_1^*, X_2^*,
+La *distribución de remuestreo* de $\hat \theta_n$ es la distribución de $\theta^*_n=t(X_1^*, X_2^*,
 \dots X_n^*)$, donde cada $X_i^*$ se obtiene tomando al azar uno de los valores
 de $x_1,x_2,\ldots, x_n$.
 
@@ -795,6 +806,12 @@ tomadores de té que prefiere el té negro usando nuestra muestra:
 1      0.247   300
 #+end_src
 
+#+begin_src R :exports none :results none
+  muestra.obs <- te |>
+    mutate(negro = ifelse(Tea == "black", 1, 0)) |>
+    summarise(media = mean(negro), n = length(negro), .groups = "drop")
+#+end_src
+
 #+REVEAL: split
 ¿Cómo evaluamos la precisión de este estimador? Supondremos que el estudio se
 hizo tomando una muestra aleatoria simple de tamaño 300 de la población de tomadores de té que
@@ -823,18 +840,17 @@ nos interesa. Podemos entonces usar el boostrap:
 
 #+REVEAL: split
 #+begin_src R :exports code :results none 
-  ## paso 3: define el proceso de bootstrap
-  aplica_bootstrap <- function(id){
+  ## paso 3: definimos el paso bootstrap
+  paso_bootstrap <- function(id){
     muestra_boot(datos = te) |>
       calc_estimador()
   }
 #+end_src
 
-
 #+REVEAL: split
 #+begin_src R :exports code :results none 
-  # paso 4: aplica el proceso de bootstrap
-  prop_negro_tbl <- map_dbl(1:2000, aplica_bootstrap ) |>
+  ## paso 4: aplica el procedimiento bootstrap
+  prop_negro_tbl <- map_dbl(1:2000, paso_bootstrap ) |>
     as_tibble() |>
     rename( prop_negro = value)
 #+end_src
@@ -858,21 +874,21 @@ qué tan dispersa es la distribución /bootstrap/:
 #+begin_src R :exports both :results org 
   prop_negro_tbl |>
     summarise(
+      cuantil_25 = quantile(prop_negro, 0.25),
       cuantil_75 = quantile(prop_negro, 0.75), 
       media = mean(prop_negro),
-      cuantil_25 = quantile(prop_negro, 0.25),
-      sesgo = mean(prop_negro) - 0.2499,
-      ee = sd(prop_negro),
+      ee = sd(prop_negro)/sqrt(muestra.obs$n),
+      sesgo = mean(prop_negro) - muestra.obs$media,
       .groups = "drop") |>
     mutate(across(where(is.numeric), round, 4))
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-# A tibble: 1 × 5
-  cuantil_75 media cuantil_25   sesgo     ee
-       <dbl> <dbl>      <dbl>   <dbl>  <dbl>
-1      0.263 0.246       0.23 -0.0034 0.0242
+Error in `summarise()`:
+! Problem while computing `sesgo = mean(prop_negro) - muestra.obs$media`.
+Caused by error in `mask$eval_all_summarise()`:
+! object 'muestra.obs' not found
 #+end_src
 
 * Propiedades distribución /bootstrap/
@@ -894,15 +910,23 @@ Podemos calcular las distribuciones de remuestreo para cada muestra bootstrap y
 compararlas con la distribución de muestreo real. El procedimiento es como sigue.
 
 #+REVEAL: split
+#+begin_src R :exports code :results none :eval never
+  set.seed(911)
+  ## Generamos 20 conjuntos de datos observados 
+  muestras <- map(1:16, function(x) {
+    muestra <- sample_n(poblacion_casas, 200, replace = F) |>
+      mutate(rep = x, tipo = "muestras")
+  }) |> bind_rows()
+  ## Agregamos las columnas tipo y rep
+  dat_pob <- poblacion_casas |> mutate(tipo = "población", rep = 1)
+  ## Pegamos las tablas
+  datos_sim <- bind_rows(dat_pob, muestras)
+#+end_src
+
+
+#+REVEAL: split
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/distribucion-boostrap.jpeg :exports results :results output graphics file :tangle no :eval never
-  set.seed(911)
-  muestras <- map(1:20, function(x) {
-    muestra <- sample_n(poblacion_casas, 200, replace = T) |>
-      mutate(rep = x, tipo = "muestras")}) |> bind_rows()
-  dat_pob <- poblacion_casas |> mutate(tipo = "población", rep = 1)
-  datos_sim <- bind_rows(dat_pob, muestras)
-
   ggplot(datos_sim, aes(sample = precio_miles, group = interaction(tipo, rep))) + 
     geom_qq(distribution = stats::qunif, alpha = 0.7, size = 0.5, geom = "line") + 
     geom_qq(data = dat_pob, aes(sample = precio_miles), colour = "red", size = 1,
@@ -937,8 +961,8 @@ compararlas con la distribución de muestreo real. El procedimiento es como sigu
 
 #+REVEAL: split
 #+begin_src R :exports code :results none 
-  ## paso 3: define el proceso de bootstrap
-  aplica_bootstrap <- function(data, n = NULL){
+  ## paso 3: definimos el paso bootstrap
+  paso_bootstrap <- function(data, n = NULL){
     data |>
       muestra_boot(n) |>
       calc_estimador()
@@ -948,13 +972,13 @@ compararlas con la distribución de muestreo real. El procedimiento es como sigu
 
 #+REVEAL: split
 #+begin_src R :exports code :results none :tangle no :eval never
-  ## paso 4: realiza el remuestreo y calcula estimadores
+  ## paso 4: aplica el procedimiento bootstrap
   dist_boot <- datos_sim |>
     filter(tipo == "muestras") |>
     select(precio_miles, rep) |> 
     group_by(rep) |> nest() |> 
     mutate(precio_miles =  map(data, function(data){
-      tibble(precio_miles = rerun(1000, aplica_bootstrap(data)))
+      tibble(precio_miles = rerun(1000, paso_bootstrap(data)))
     })) |>
     select(rep, precio_miles) |>
     unnest(precio_miles) |>
@@ -970,7 +994,7 @@ compararlas con la distribución de muestreo real. El procedimiento es como sigu
     filter(tipo == "población") |>
     group_by(rep) |> nest() |>
     mutate(precio_miles =  map(data, function(data){
-      tibble(precio_miles = rerun(1000, aplica_bootstrap(data, n = 200)))
+      tibble(precio_miles = rerun(1000, paso_bootstrap(data, n = 200)))
     })) |>
     select(rep, precio_miles) |>
     unnest(precio_miles) |>
@@ -1040,7 +1064,7 @@ Obsérvese que:
 
 ** Variación en distribución /bootstrap/
 
-En el proceso de estimación bootstrap hay dos fuentes de variación pues:
+En el proceso de estimación /bootstrap/ hay dos fuentes de variación pues:
 
 - La muestra original se selecciona con aleatoriedad de una población.
 - Las muestras /bootstrap/ se seleccionan con aleatoriedad de la muestra
@@ -1049,14 +1073,14 @@ En el proceso de estimación bootstrap hay dos fuentes de variación pues:
   $\mathsf{ee}_{\mathbb{P}_n}$.
 
 #+REVEAL: split
-En el proceso de *bootstrap* podemos controlar la variación del segundo aspecto,
+En el proceso de /bootstrap/ podemos controlar la variación del segundo aspecto,
 conocida como *implementación de muestreo Monte Carlo*, y la variación Monte Carlo
 decrece conforme incrementamos el número de muestras.
 
 #+REVEAL: split
 Podemos eliminar la variación Monte Carlo si seleccionamos todas las posibles
 muestras con reemplazo de tamaño $n$, hay ${2n-1}\choose{n}$ posibles muestras y
-si seleccionamos todas obtenemos $\hat{\textsf{ee}}_\infty$ (bootstrap ideal),
+si seleccionamos todas obtenemos $\hat{\textsf{ee}}_\infty$ (/bootstrap/ ideal),
 sin embargo, en la mayor parte de los problemas no es factible proceder así.
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
