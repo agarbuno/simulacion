@@ -927,6 +927,11 @@ nos interesa. Podemos entonces usar el /bootstrap/:
     rename( prop_negro = value)
 #+end_src
 
+#+begin_src R :exports none :results none 
+  write_rds(prop_negro_tbl, "cache/prop_negro_tbl.rds")
+#+end_src
+
+
 #+REVEAL: split
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/bootstrap-tea-mean.jpeg :exports results :results output graphics file
@@ -957,10 +962,10 @@ qué tan dispersa es la distribución /bootstrap/:
 
 #+RESULTS:
 #+begin_src org
-Error in `summarise()`:
-! Problem while computing `sesgo = mean(prop_negro) - muestra.obs$media`.
-Caused by error in `mask$eval_all_summarise()`:
-! object 'muestra.obs' not found
+# A tibble: 1 × 5
+  cuantil_25 cuantil_75 media     ee   sesgo
+       <dbl>      <dbl> <dbl>  <dbl>   <dbl>
+1       0.23      0.263 0.246 0.0014 -0.0002
 #+end_src
 
 * Propiedades distribución /bootstrap/
@@ -1532,6 +1537,11 @@ Nuestra muestra original es:
  $ precio_m2_miles      : num  1.67 1.03 1.13 1.88 1.18 ...
  $ precio_m2            : num  1671 1029 1129 1884 1175 ...
 #+end_src
+
+#+begin_src R :exports none :results none 
+  write_rds(casas_muestra, "cache/casas_muestra.rds")
+#+end_src
+
 
 #+REVEAL: split
 El estimador de interés es:
