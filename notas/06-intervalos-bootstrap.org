@@ -26,7 +26,7 @@
 #+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
 #+EXPORT_FILE_NAME: ../docs/06-intervalos-bootstrap.pdf
 :END:
-#+PROPERTY: header-args:R :session intervalos :exports both :results output org :tangle ../rscript/06-intervalos-bootstrap.R :mkdirp yes :dir ../
+#+PROPERTY: header-args:R :session intervalos :exports both :results output org :tangle ../rscripts/06-intervalos-bootstrap.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc noexport 
 
 #+BEGIN_NOTES
@@ -84,7 +84,7 @@
 - [[#conclusiones-y-observaciones][Conclusiones y observaciones]]
 :END:
 
-*  Error estándar /bootstrap/ e intervalos normales
+* Error estándar /bootstrap/ e intervalos normales
 
 Ahora podemos construir nuestra primera versión de intervalos de confianza
 basados en la distribución /bootstrap/.
@@ -139,6 +139,10 @@ comprobaciones empíricas.
 
 Consideremos la estimación que hicimos de el procentaje de tomadores de té que
 toma té negro:
+
+#+begin_src R :exports none :results none
+  ## Error estandar e intervalos normales --------------------------------------
+#+end_src
 
 #+begin_src R :exports both :results none
   te <- read_csv("data/tea.csv") |>
@@ -239,7 +243,9 @@ y construimos un intervalo de confianza del $95\%$:
 Este intervalo tiene probabilidad del $95\%$ de capturar al verdadero poblacional.
 
 * Inventarios de casas vendidas 
-
+#+begin_src R :exports none :results none
+  ## Ejemplo casas vendidas --------------------------------------------------
+#+end_src
 Ahora consideremos el problema de estimar el total del valor de las casas
 vendidas en un periodo. Igual que antes, tenemos una muestra de tamaño
 $n=200$. Pero ahora utilizaremos el paquete ~rsample~ para realizar las
@@ -414,6 +420,10 @@ calibración e interpretación.
 
 * Calibración de intervalos de confianza 
 
+#+begin_src R :exports none :results none
+  ## Calibración de intervalos --------------------------------------
+#+end_src
+
 ¿Cómo sabemos que nuestros intervalos de confianza del $95\%$ nominal 
 tienen cobertura real de $95\%$? Es decir, tenemos que checar:
 
@@ -565,7 +575,9 @@ que nuestros intervalos cumplan o aproximen bien garantías frecuentistas
 pueden interpretarse de las dos maneras.
 
 * Intervalos /bootstrap/ de percentiles 
-
+#+begin_src R :exports none :results none
+  ## Intervalos de percentiles  --------------------------------------
+#+end_src
 Retomemos nuestro ejemplo del valor total del precio de las casas. A través de
 remuestras bootstrap hemos verificado gráficamente que la distribución de
 remuestreo es *ligeramente* asimétrica (ver la figura de abajo). 
@@ -798,7 +810,9 @@ Nótese que el /bootstrap/ lo hicimos por separado en cada momento del día (por
 el argumento ~strata~ en la llamada a *bootstraps*):
 
 * Funciones de cómputo: 
-
+#+begin_src R :exports none :results none
+  ## Funciones de computo ------------------------------------------------------
+#+end_src
 Es común crear nuestras propias funciones cuando usamos /bootstrap/, sin embargo,
 en R también hay alternativas que pueden resultar convenientes:
 
@@ -922,7 +936,9 @@ de cada momento del día, por ejemplo? ¿Qué harías si no fuera así, por ejem
 se escogieron al azar tickets de todos los disponibles en un periodo?
 
 * Corrección de intervalos
-
+#+begin_src R :exports none :results none
+  ## Correccion de intervalos --------------------------------------------------
+#+end_src
 - Los intervalos basados en percentiles pueden ser mejorados con ciertos métodos de ajuste. El más popular, es el método acelerado con corrección de sesgo $\mathsf{BC}_a$ (/bias-corrected accelerated/).
 
 - Los intervalos $\mathsf{BC}_a$ tienen mejores propiedades teóricas y mejor desempeño en la práctica.
