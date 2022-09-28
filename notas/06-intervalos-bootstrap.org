@@ -40,6 +40,7 @@
   library(tidyverse)
   library(patchwork)
   library(scales)
+  library(rsample)
 
   ## Cambia el default del tamaño de fuente 
   theme_set(theme_linedraw(base_size = 25))
@@ -78,31 +79,30 @@
 - [[#conclusiones-y-observaciones][Conclusiones y observaciones]]
 :END:
 
-
 *  Error estándar /bootstrap/ e intervalos normales
 
 Ahora podemos construir nuestra primera versión de intervalos de confianza
 basados en la distribución /bootstrap/.
 
 - Supongamos que queremos estimar una cantidad poblacional $\theta$ con una
-  estadística $\hat{\theta} = t(X_1,\ldots, X_n)$, donde $X_1,\ldots, X_n$ es
+  estadística $\hat{\theta} = s(X_1,\ldots, X_N)$, donde $X_1,\ldots, X_N$ es
   una muestra independiente e idénticamente distribuida de la población.
 
 - Suponemos además que la distribución muestral de $\hat{\theta}$ es
   aproximadamente normal (el teorema central del límite aplica), y está centrada
   en el verdadero valor poblacional $\theta$.
 
+#+REVEAL: split
 Ahora queremos construir un intervalo que tenga probabilidad $95\%$ de cubrir al
 valor poblacional $\theta$. Tenemos que
 \begin{align}
-P(-2\mathsf{ee}(\hat{\theta}) < \hat{\theta} - \theta < 2\mathsf{ee}(\hat{\theta})) \approx 0.95\,,
+\mathsf{Prob}\left(-2\mathsf{ee}(\hat{\theta}) < \hat{\theta} - \theta < 2\mathsf{ee}(\hat{\theta})\right) \approx 0.95\,,
 \end{align}
-por las propiedades de la distribución normal ($P(-2\sigma < X -\mu <
-2\sigma)\approx 0.95$ si $X$ es normal con media $\mu$ y desviación estándar
-$\sigma$). Entonces
-\begin{align}
-P(\hat{\theta} - 2\mathsf{ee}(\hat{\theta}) < \theta < \hat{\theta} + 2\mathsf{ee}(\hat{\theta})) \approx 0.95\,.
-\end{align}
+por las propiedades de la distribución normal ($\mathsf{Prob}(-2\sigma < X -\mu
+< 2\sigma)\approx 0.95$ si $X$ es normal con media $\mu$ y desviación estándar
+$\sigma$).
+
+#+REVEAL: split
 Es decir, la probabilidad de que el verdadero valor poblacional $\theta$ esté en
 el intervalo $$[\hat{\theta} - 2\mathsf{ee}(\hat{\theta}), \hat{\theta} +
 2\mathsf{ee}(\hat{\theta})]$$ es cercano a 0.95. En este intervalo no conocemos
@@ -135,7 +135,14 @@ comprobaciones empíricas.
 Consideremos la estimación que hicimos de el procentaje de tomadores de té que
 toma té negro:
 
-#+begin_src R :exports both :results org 
+#+begin_src R :exports both :results none
+  te <- read_csv("data/tea.csv") |>
+    rowid_to_column() |>
+    select(rowid, Tea, sugar)
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
   ## paso 1: define el estimador
   calc_estimador <- function(datos){
     prop_negro <- datos |>
@@ -144,9 +151,13 @@ toma té negro:
       pull(prop_negro)
     prop_negro
   }
+#+END_SRC
+
+#+begin_src R :exports both :results org 
+  ## calcula el estimador
   prop_hat <- calc_estimador(te)
   prop_hat |> round(4)
-#+END_SRC
+#+end_src
 
 #+RESULTS:
 #+begin_src org
@@ -157,6 +168,7 @@ Podemos graficar su distribución bootstrap ---la cual simulamos arriba---.
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/distirbucion-bs-te-negro.jpeg :exports results :results output graphics file :eval never
+  prop_negro_tbl <- read_rds("cache/prop_negro_tbl.rds")
   g_hist <- ggplot(prop_negro_tbl, aes(x = prop_negro)) + geom_histogram(bins = 15) + sin_lineas
   g_qq_normal <- ggplot(prop_negro_tbl, aes(sample = prop_negro)) +
     geom_qq() + geom_qq_line(colour = "red") + sin_lineas
@@ -170,13 +182,14 @@ Y notamos que la distribución /bootstrap/ es aproximadamente normal.
 Adicionalmente, vemos que el sesgo tiene un valor estimado de:
 
 #+begin_src R :exports both :results org 
+  prop_negro_tbl <- read_rds("cache/prop_negro_tbl.rds")
   media_boot <- prop_negro_tbl |> pull(prop_negro) |> mean()
   media_boot - prop_hat
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-[1] -0.00011667
+[1] -0.00021333
 #+end_src
 
 De esta forma, hemos verificado que:
@@ -218,42 +231,72 @@ Este intervalo tiene probabilidad del $95\%$ de capturar al verdadero poblaciona
 * Inventarios de casas vendidas 
 
 Ahora consideremos el problema de estimar el total del valor de las casas
-vendidas en un periodo. Tenemos una muestra de tamaño $n=150$:
+vendidas en un periodo. Igual que antes, tenemos una muestra de tamaño
+$n=200$. Pero ahora utilizaremos el paquete ~rsample~ para realizar las
+estimaciones el método /bootstrap/.
 
 #+begin_src R :exports code :results none 
   ## muestra original
   set.seed(121)
-  muestra_casas <- sample_n(poblacion_casas, size = 150)
+  poblacion_casas <- read_csv("data/casas.csv")
+  muestra_casas   <- read_rds("cache/casas_muestra.rds")
   ## paso 1: define el estimador
-  calc_estimador_casas <- function(datos){
+  estimador_lote <- function(split, ...){
     N <- nrow(poblacion_casas)
-    n <- nrow(datos)
-    total_muestra <- sum(datos$precio_miles)
-    estimador_total <- (N / n) * total_muestra
-    estimador_total
+    muestra <- analysis(split)
+    muestra |>
+      summarise(estimate = (N / n()) * sum(precio_miles)) |>
+      mutate(term = "Valor lote")
   }
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none 
-  ## paso 2: define el proceso de remuestreo
-  muestra_boot <- function(datos){
-    ## tomar muestra con reemplazo del mismo tamaño
-    sample_n(datos, size = nrow(datos), replace = TRUE)
-  }
+  totales_boot <- bootstraps(muestra_casas,  5000) |>  ## paso 2 y 3
+    mutate(res_boot = map(splits, estimador_lote))    ## paso 4
 #+end_src
 
+#+REVEAL: split
+La función ~rsample::bootstraps~ utiliza la estructura del ~tidyverse~. Esto es por
+que genera un ~tibble~ con celdas de distintos tipos de objetos.
+#+begin_src R :exports both :results org 
+  totales_boot 
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# Bootstrap sampling 
+# A tibble: 2,000 × 3
+   splits           id            res_boot        
+   <list>           <chr>         <list>          
+ 1 <split [200/71]> Bootstrap0001 <tibble [1 × 2]>
+ 2 <split [200/70]> Bootstrap0002 <tibble [1 × 2]>
+ 3 <split [200/83]> Bootstrap0003 <tibble [1 × 2]>
+ 4 <split [200/73]> Bootstrap0004 <tibble [1 × 2]>
+ 5 <split [200/76]> Bootstrap0005 <tibble [1 × 2]>
+ 6 <split [200/69]> Bootstrap0006 <tibble [1 × 2]>
+ 7 <split [200/80]> Bootstrap0007 <tibble [1 × 2]>
+ 8 <split [200/72]> Bootstrap0008 <tibble [1 × 2]>
+ 9 <split [200/72]> Bootstrap0009 <tibble [1 × 2]>
+10 <split [200/76]> Bootstrap0010 <tibble [1 × 2]>
+# … with 1,990 more rows
+# ℹ Use `print(n = ...)` to see more rows
+#+end_src
+
+#+REVEAL: split
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
-#+begin_src R :file images/casas-bootstrap-intervalos.jpeg :exports results :results output graphics file :eval never
-  ## paso 3: remuestrea y calcula el estimador
-  totales_boot <- map_dbl(1:5000,  ~ calc_estimador_casas(muestra_boot(muestra_casas))) %>% 
-    tibble(total_boot = .)
+#+begin_src R :file images/casas-bootstrap-intervalos.jpeg :exports results :results output graphics file 
   ## paso 4: examina la distribución bootstrap
-  g_hist <- totales_boot %>% 
+  g_hist <- totales_boot |>
+    unnest(res_boot) |>
+    mutate(total_boot = estimate) |>
     ggplot(aes(x = total_boot)) +
     geom_histogram() + sin_lineas +
     geom_vline(xintercept = quantile(totales_boot$total_boot, 0.975), colour = "gray") +
     geom_vline(xintercept = quantile(totales_boot$total_boot, 0.025), colour = "gray")
-  g_qq <- totales_boot %>%
+  g_qq <- totales_boot |>
+    unnest(res_boot) |>
+    mutate(total_boot = estimate) |>
     ggplot(aes(sample = total_boot)) +
     geom_qq() + geom_qq_line(colour = "red") +
     geom_hline(yintercept = quantile(totales_boot$total_boot, 0.975), colour = "gray") +
@@ -265,64 +308,92 @@ vendidas en un periodo. Tenemos una muestra de tamaño $n=150$:
 #+RESULTS:
 [[file:../images/casas-bootstrap-intervalos.jpeg]]
 
-En este caso, distribución de muestreo presenta cierta asimetría, pero la
+#+REVEAL: split
+En este caso, la distribución de muestreo presenta cierta asimetría, pero la
 desviación no es grande. En la parte central la aproximación normal es
-razonable. Procedemos a checar sesgo
+razonable. Procedemos a checar sesgo:
 
+#+REVEAL: split
+Primero necesitamos calcular el valor del estimador de la muestra original
 #+begin_src R :exports both :results org 
-  total_est <- calc_estimador_casas(muestra_casas)
-  sesgo <- mean(totales_boot$total_boot) - total_est
-  sesgo
+  estimador.obs <- muestra_casas |>
+    summarise(estimador = (nrow(poblacion_casas)/n() * sum(precio_miles))) |>
+    pull(estimador)
+  estimador.obs
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-[1] 110.1
+[1] 207431
 #+end_src
 
-Este número puede parecer grande, pero sí calculamos la desviación relativa
+#+REVEAL: split
+Después necesitamos la media /bootstrap/ para poder calcular el sesgo
+#+begin_src R :exports both :results org 
+  resumen_boot <- totales_boot |>
+    unnest(res_boot) |>
+    summarise(media.boot = mean(estimate)) |>
+    mutate(sesgo = media.boot - estimador.obs)
+  resumen_boot
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 2
+  media.boot sesgo
+       <dbl> <dbl>
+1    207461.  30.5
+#+end_src
+
+#+REVEAL: split
+Este número puede parecer grande, pero si calculamos la diferencia relativa
 con respecto al estimador vemos que es chico en la escala de la distribución 
 /bootstrap/:
 
 #+begin_src R :exports both :results org 
-  sesgo_relativo <- sesgo / total_est
-  sesgo_relativo
+  resumen_boot |>
+    mutate(sesgo_relativo = sesgo / estimador.obs)
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-[1] 0.0005054
+# A tibble: 1 × 3
+  media.boot sesgo sesgo_relativo
+       <dbl> <dbl>          <dbl>
+1    207464.  33.2       0.000160
 #+end_src
 
 De forma que procedemos a construir intervalos de confianza como sigue :
-#+begin_src R :exports both :results org 
-  ee_boot <- sd(totales_boot$total_boot)
-  c(inf = total_est - 2*ee_boot, centro = total_est, sup = total_est + 2*ee_boot)  
+#+begin_src R :exports code :results org 
+  intervalos_normales <- totales_boot |>
+    unnest(res_boot) |>
+    summarise(media_boot = mean(estimate), ee_boot = sd(estimate)) |>
+    mutate(inf = media_boot - 2 * ee_boot, sup = media_boot + 2 * ee_boot)
+  intervalos_normales
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-   inf centro    sup 
-203367 217832 232297
+# A tibble: 1 × 4
+  media_boot ee_boot     inf     sup
+       <dbl>   <dbl>   <dbl>   <dbl>
+1    207464.   6885. 193694. 221234.
 #+end_src
 
 Que está en miles de dólares. En millones de dólares, este intervalo es:
 
 #+begin_src R :exports both :results org 
-  intervalo_total <- c(inf = total_est - 2*ee_boot,
-                       centro = total_est,
-                       sup = total_est + 2*ee_boot) / 1000
-  intervalo_total |> round(5)
+  intervalos_normales / 1000
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-   inf centro    sup 
-203.37 217.83 232.30
+  media_boot ee_boot    inf    sup
+1     207.46  6.8848 193.69 221.23
 #+end_src
 
 *** ~Nota~:
-En este ejemplo mostraremos una alternativa de intervalos de confianza que es
+En el siguiente ejemplo mostraremos una alternativa de intervalos de confianza que es
 más apropiado cuando observamos asimetría. Sin embargo, primero tendremos que
 hablar de dos conceptos clave con respecto a intervalos de confianza:
 calibración e interpretación.
@@ -375,27 +446,37 @@ normales:
   sims_intervalos <- read_rds("cache/sims_intervalos.rds")
 #+end_src
 
+#+begin_src R :exports none :results none
+  sims_tbl <- sims_intervalos |>
+    bind_rows () |>
+    mutate(cubre = inf < total & total < sup) 
+#+end_src
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/casas-estimacion-intervalos.jpeg :exports results :results output graphics file
   total <- sum(poblacion_casas$precio_miles)
-  sims_tbl <- sims_intervalos |>
-    bind_rows |>
-    mutate(cubre = inf < total & total < sup) 
   ggplot(sims_tbl, aes(x = rep)) +
     geom_hline(yintercept = total, colour = "red") +
     geom_linerange(aes(ymin = inf, ymax = sup, colour = cubre)) + sin_lineas
 #+end_src
 
 #+RESULTS:
-[[file:../images/casas-estimacion-intervaloes.jpeg]]
+[[file:../images/casas-estimacion-intervalos.jpeg]]
 
 La cobertura para estos 100 intervalos simulados da
 
 #+begin_src R :exports both :results org 
   total <- sum(poblacion_casas$precio_miles)
-  sims_tbl %>% 
+  sims_tbl |>
     summarise(cobertura = mean(cubre))  
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 1
+  cobertura
+      <dbl>
+1      0.96
 #+end_src
 
 que es *consistente* con una cobertura real del $95\%$ (¿qué significa
@@ -485,13 +566,13 @@ Anteriormente hemos calculado intervalos de confianza basados en supuestos
 normales por medio del error éstandar. Este intervalo está dado por
 
 #+begin_src R :exports both :results org 
-  intervalo_total %>% round(1)  
+  intervalos_normales / 1000 
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-   inf centro    sup 
- 203.4  217.8  232.3
+  media_boot ee_boot    inf    sup
+1     207.46  6.8848 193.69 221.23
 #+end_src
 
 y por construcción sabemos que es simétrico con respecto al valor estimado, pero 
@@ -500,9 +581,9 @@ confirmar por ejemplo calculando el porcentaje de muestras bootstrap que caen
 por arriba y por debajo del intervalo construido:
 
 #+begin_src R :exports both :results org 
-  totales_boot |> 
-    mutate(upper = total_boot >= max(intervalo_total * 1000), 
-           lower = total_boot <= min(intervalo_total * 1000)) |>
+  totales_boot |> unnest(res_boot) |> 
+    mutate(upper = estimate >= max(intervalos_normales$sup), 
+           lower = estimate <= min(intervalos_normales$inf)) |>
     summarise(prop_inf = mean(lower), 
               prop_sup = mean(upper))
 #+end_src
@@ -512,7 +593,7 @@ por arriba y por debajo del intervalo construido:
 # A tibble: 1 × 2
   prop_inf prop_sup
      <dbl>    <dbl>
-1   0.0192    0.026
+1    0.021   0.0275
 #+end_src
 
 los cuales se han calculado como el porcentaje de medias /bootstrap/ por debajo
@@ -539,15 +620,16 @@ en las colas de la distribución.
 Para el ejemplo de las casas, calcularíamos simplemente
 
 #+begin_src R :exports both :results org 
-  intervalo_95 <- totales_boot |> pull(total_boot) %>%
-    quantile(., probs = c(0.025, 0.50, 0.975)) / 1000
-  (intervalo_95) %>% round(1)
+  intervalo_95 <- totales_boot |> unnest(res_boot) |>
+    pull(estimate) |>
+    quantile(probs = c(0.025, 0.50, 0.975))
+  intervalo_95 / 1000
 #+end_src
 
 #+RESULTS:
 #+begin_src org
- 2.5%   50% 97.5% 
-204.3 217.8 232.5
+  2.5%    50%  97.5% 
+194.28 207.40 221.41
 #+end_src
 que está en millones de dólares. Nótese que es similar al intervalo de error estándar.
 
@@ -556,13 +638,13 @@ lidian naturalmente con la asímetría de la distribución bootstrap. Ilustramos
 esto con la distancia de las extremos del intervalo con respecto a la media:
 
 #+begin_src R :exports both :results org 
-  abs(intervalo_95 - total_est/1000)  
+  abs(intervalo_95 - estimador.obs)/1000
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-      2.5%        50%      97.5% 
-13.5391163  0.0033367 14.6467418
+     2.5%       50%     97.5% 
+13.147263  0.030502 13.979160
 #+end_src
 
 Los intervalos de confianza nos permiten presentar un rango de valores posibles
@@ -761,9 +843,10 @@ en R también hay alternativas que pueden resultar convenientes:
    incremento : 146.25 B
    #+end_src
 
-2. El paquete ~boot~ está asociado al libro *Bootstrap Methods and Their
-   Applications* y tiene, entre otras, funciones para calcular replicaciones
-   /bootstrap/ y para construir intervalos de confianza usando /bootstrap/:
+2. El paquete ~boot~ está asociado al libro /Bootstrap Methods and Their
+   Applications/ citep:davison1997 y tiene, entre otras, funciones para
+   calcular replicaciones /bootstrap/ y para construir intervalos de confianza
+   usando /bootstrap/:
    1. calculo de replicaciones /bootstrap/ con la función ~boot()~,
    2. intervalos normales, de percentiles y $\mathsf{BC}_a$ con la función ~boot.ci()~,
    3. intevalos ABC con la función ~abc.ci()~.
