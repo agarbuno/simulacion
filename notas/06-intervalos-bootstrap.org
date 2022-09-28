@@ -30,9 +30,9 @@
 #+EXCLUDE_TAGS: toc noexport 
 
 #+BEGIN_NOTES
-*Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | /Bootstrap/.\\
-*Objetivo*: Que veremos.\\
-*Lectura recomendada*: Referencia.
+*Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | Intervalos /Bootstrap/.\\
+*Objetivo*: En la sección anterior vimos cómo construir con remuestreo una distribución alrededor de un estimador basado en una muestra. En esta sección veremos cómo resumir dicha distribución en una estimación por intervalos.\\
+*Lectura recomendada*: El libro de citep:Efron1993 es una buena introducción al tema. 
 #+END_NOTES
 
 #+begin_src R :exports none :results none
@@ -67,14 +67,19 @@
 :END:
 :CONTENTS:
 - [[#error-estándar-bootstrap-e-intervalos-normales][Error estándar bootstrap e intervalos normales]]
-  - [[#definición][Definición:]]
+  - [[#definición-intervalos-boostrap-normales][Definición [Intervalos boostrap normales]:]]
 - [[#inventarios-de-casas-vendidas][Inventarios de casas vendidas]]
   - [[#nota][Nota:]]
 - [[#calibración-de-intervalos-de-confianza][Calibración de intervalos de confianza]]
   - [[#observación][Observación:]]
 - [[#interpretación-intervalos-de-confianza][Interpretación intervalos de confianza]]
 - [[#intervalos-bootstrap-de-percentiles][Intervalos bootstrap de percentiles]]
-  - [[#definición][Definición:]]
+  - [[#definición-intervalos-bootstrap-de-percentiles][Definición [intervalos bootstrap de percentiles]:]]
+  - [[#ejercicio][Ejercicio:]]
+- [[#funciones-de-cómputo][Funciones de cómputo:]]
+  - [[#ejercicio][Ejercicio:]]
+- [[#corrección-de-intervalos][Corrección de intervalos]]
+  - [[#definición-intervalos-boostrap-corregidos][Definición [intervalos boostrap corregidos]:]]
   - [[#ejercicio][Ejercicio:]]
 - [[#conclusiones-y-observaciones][Conclusiones y observaciones]]
 :END:
@@ -114,7 +119,7 @@ la distribución de muestreo (en términos de varianza). Lo estimamos con
 \end{align}
 que es la desviación estándar de la *distribución /bootstrap/*.
 
-*** ~Definición~:
+*** ~Definición~ [Intervalos /boostrap/ normales]:
 El *error estándar /bootstrap/* $\hat{\mathsf{ee}}_{\textrm{boot}}(\hat{\theta})$ se
 define como la desviación estándar de la distribución bootstrap de $\theta$. El
 *intervalo de confianza normal /bootstrap/* al $95\%$ está dado por
@@ -164,6 +169,7 @@ toma té negro:
 [1] 0.2467
 #+end_src
 
+#+REVEAL: split
 Podemos graficar su distribución bootstrap ---la cual simulamos arriba---.
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
@@ -179,6 +185,8 @@ Podemos graficar su distribución bootstrap ---la cual simulamos arriba---.
 [[file:../images/distirbucion-bs-te-negro.jpeg]]
 
 Y notamos que la distribución /bootstrap/ es aproximadamente normal. 
+
+#+REVEAL: split
 Adicionalmente, vemos que el sesgo tiene un valor estimado de:
 
 #+begin_src R :exports both :results org 
@@ -192,11 +200,13 @@ Adicionalmente, vemos que el sesgo tiene un valor estimado de:
 [1] -0.00021333
 #+end_src
 
+#+REVEAL: split
 De esta forma, hemos verificado que:
 
 - La distribución /bootstrap/ es aproximadamente normal (ver gráfica de cuantiles normales); 
 - La distribución /bootstrap/ es aproximadamente insesgada.
 
+#+REVEAL: split
 Lo cual nos lleva a construir intervalos de confianza basados en la distribución
 normal. Estimamos el error estándar con la desviación estándar de la
 distribución /bootstrap/
@@ -363,8 +373,9 @@ con respecto al estimador vemos que es chico en la escala de la distribución
 1    207464.  33.2       0.000160
 #+end_src
 
+#+REVEAL: split
 De forma que procedemos a construir intervalos de confianza como sigue :
-#+begin_src R :exports code :results org 
+#+begin_src R :exports both :results org 
   intervalos_normales <- totales_boot |>
     unnest(res_boot) |>
     summarise(media_boot = mean(estimate), ee_boot = sd(estimate)) |>
@@ -393,6 +404,9 @@ Que está en miles de dólares. En millones de dólares, este intervalo es:
 #+end_src
 
 *** ~Nota~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
 En el siguiente ejemplo mostraremos una alternativa de intervalos de confianza que es
 más apropiado cuando observamos asimetría. Sin embargo, primero tendremos que
 hablar de dos conceptos clave con respecto a intervalos de confianza:
@@ -406,6 +420,7 @@ tienen cobertura real de $95\%$? Es decir, tenemos que checar:
 - El procedimiento para construir intervalos debe dar intervalos tales que el
   valor poblacional está en el intervalo de confianza para 95% de las muestras.
 
+#+REVEAL: split
 Como solo tenemos una muestra, la calibración depende de argumentos teóricos o
 estudios de simulación previos. Para nuestro ejemplo de casas tenemos la
 población, así que podemos checar qué cobertura real tienen los intervalos
@@ -463,6 +478,7 @@ normales:
 #+RESULTS:
 [[file:../images/casas-estimacion-intervalos.jpeg]]
 
+#+REVEAL: split
 La cobertura para estos 100 intervalos simulados da
 
 #+begin_src R :exports both :results org 
@@ -483,6 +499,10 @@ que es *consistente* con una cobertura real del $95\%$ (¿qué significa
 ``consistente''? ¿Cómo puedes checarlo con el /bootstrap/?)
 
 *** ~Observación~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+
 En este caso teníamos la población real, y pudimos verificar la cobertura de
 nuestros intervalos. En general no la tenemos. Estos ejercicios de simulación se
 pueden hacer con poblaciones sintéticas que se generen con las características
@@ -496,6 +516,7 @@ simulación con poblaciones sintéticas y tanto los procedimientos de muestreo
 como los tamaños de muestra que nos interesa usar.
 #+END_NOTES
 
+#+REVEAL: split
 Verificar la cobertura de nuestros intervalos de confianza por medio simulación está
 bien estudiado para algunos casos. Por ejemplo, cuando trabajamos con estimaciones para 
 poblaciones teóricas. En general sabemos que los procedimientos funcionan bien en casos: 
@@ -515,12 +536,14 @@ es un término *frecuentista*, que significa:
 - Intervalos más anchos nos dan más incertidumbre acerca de dónde está el
   verdadero valor poblacional (y al revés para intervalos más angostos).
 
+#+REVEAL: split
 Existen también ``intervalos de credibilidad'' (de $90\%$ de probabilidad, por
 ejemplo), que se interpetan de forma *bayesiana*:
 
 - Con $90\%$ de probabilidad (relativamente alta), creemos que el valor
   poblacional está dentro del intervalo de credibilidad.
 
+#+REVEAL: split
 Esta última interpretación es más natural. Obsérvese que para hablar de
 intervalos de confianza frecuentista tenemos que decir:
 
@@ -530,12 +553,12 @@ intervalos de confianza frecuentista tenemos que decir:
 - La interpretación bayesiana es más natural porque expresa más claramente
   incertidumbre acerca del valor poblacional.
 
-Sin embargo,
+#+REVEAL: split
+Sin embargo, la interpretación frecuentista nos da maneras empíricas de probar
+si los intervalos de confianza están bien calibrados o no: es un mínimo que
+``intervalos del $90\%$'' deberían satisfacer.
 
-- La interpretación frecuentista nos da maneras empíricas de probar si los
-  intervalos de confianza están bien calibrados o no: es un mínimo que
-  ``intervalos del $90\%$'' deberían satisfacer.
-
+#+REVEAL: split
 Así que tomamos el punto de vista bayesiano en la intepretación, pero buscamos
 que nuestros intervalos cumplan o aproximen bien garantías frecuentistas
 (discutimos esto más adelante). Los intervalos que producimos en esta sección
@@ -562,6 +585,7 @@ remuestreo es *ligeramente* asimétrica (ver la figura de abajo).
 #+RESULTS:
 [[file:../images/casas-histograma.jpeg]]
 
+#+REVEAL: split
 Anteriormente hemos calculado intervalos de confianza basados en supuestos
 normales por medio del error éstandar. Este intervalo está dado por
 
@@ -580,6 +604,7 @@ como podemos ver la distribución de muestreo no es simétrica, lo cual podemos
 confirmar por ejemplo calculando el porcentaje de muestras bootstrap que caen
 por arriba y por debajo del intervalo construido:
 
+#+REVEAL: split
 #+begin_src R :exports both :results org 
   totales_boot |> unnest(res_boot) |> 
     mutate(upper = estimate >= max(intervalos_normales$sup), 
@@ -600,23 +625,38 @@ los cuales se han calculado como el porcentaje de medias /bootstrap/ por debajo
 (arriba) de la cota inferior (superior), y vemos que no coinciden con el nivel de 
 confianza preestablecido ($2.5\%$ para cada extremo).
 
+#+REVEAL: split
 Otra opción común que se usa específicamente cuando la distribución bootstrap 
 no es muy cercana a la normal son los intervalos de percentiles /bootstrap/:
 
-*** ~Definición~:
+*** ~Definición~ [intervalos /bootstrap/ de percentiles]:
 El *intervalo de percentiles /bootstrap/* al $95\%$ de confianza está dado por
 \begin{align}
 [q_{0.025}, q_{0.975}]\,,
 \end{align}
-donde $q_f$ es el percentil $f$ de la distribución /bootstrap/.
+donde $q_f$ es el percentil $f$ de la distribución /bootstrap/. Es decir el intervalo de $1-2 \alpha$ está dado por
+\begin{align}
+[\hat \theta_{\mathsf{inf}}, \hat \theta_{\mathsf{sup}} ] = [\hat \theta^{* (\alpha)}, \hat \theta^{* (1-\alpha)}]\,,
+\end{align}
+donde $\hat \theta^{*(\alpha)}$ es el ~estadístico de orden~ de nuestras
+estimaciones /bootstrap/ $\hat \theta^{(1)}, \ldots, \hat \theta^{(B)}$.
 
+#+BEGIN_NOTES
+Nota que estamos aproximando los percentiles utilizando nuestra muestra
+/bootstrap/ observada $\hat \theta^{(1)}, \ldots, \hat \theta^{(B)}$ pues en
+teoría deberíamos de utilizar la distribución /bootstrap/ ideal (aquella con $B
+\rightarrow \infty$) y que hemos denotado por $\hat \theta^*$. En este sentido,
+seguimos utilizando el principio de /plug-in/ para construir nuestros estimadores. 
+#+END_NOTES
 
+#+REVEAL: split
 Otros intervalos comunes son el de $80\%$ o $90\%$ de confianza, por ejemplo,
 que corresponden a $[q_{0.10}, q_{0.90}]$ y $[q_{0.05}, q_{0.95}]$. *Ojo*:
 intervalos de confianza muy alta (por ejemplo $99.5\%$) pueden tener mala
 calibración o ser muy variables en su longitud pues dependen del comportamiento
 en las colas de la distribución.
 
+#+REVEAL: split
 Para el ejemplo de las casas, calcularíamos simplemente
 
 #+begin_src R :exports both :results org 
@@ -633,6 +673,7 @@ Para el ejemplo de las casas, calcularíamos simplemente
 #+end_src
 que está en millones de dólares. Nótese que es similar al intervalo de error estándar.
 
+#+REVEAL: split
 Otro punto interesante sobre los intervalos /bootstrap/ de percentiles es que
 lidian naturalmente con la asímetría de la distribución bootstrap. Ilustramos
 esto con la distancia de las extremos del intervalo con respecto a la media:
@@ -647,6 +688,7 @@ esto con la distancia de las extremos del intervalo con respecto a la media:
 13.147263  0.030502 13.979160
 #+end_src
 
+#+REVEAL: split
 Los intervalos de confianza nos permiten presentar un rango de valores posibles
 para el parámetro de interés. Esto es una notable diferencia con respecto a
 presentar sólo un candidato como estimador. Nuestra fuente de información son
@@ -696,6 +738,7 @@ por separado:
 # ℹ Use `print(n = ...)` to see more rows
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none 
   ## paso 1: define el estimador
   estimador <- function(split, ...){
@@ -706,11 +749,12 @@ por separado:
   }
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports both :results org 
-  ## paso 2: remuestrea y calcula estimador
+  ## paso 2 y 3: remuestrea y calcula estimador
   boot_samples <- bootstraps(propinas, strata = momento, 1000) |>
     mutate(res_boot = map(splits, estimador))
-  ## paso 3: construye intervalos de confianza
+  ## paso 4: construye intervalos de confianza
   intervalo_propinas_90 <- boot_samples |>
     int_pctl(res_boot, alpha = 0.10) |> 
     mutate(across(where(is.numeric), round, 2))
@@ -729,6 +773,7 @@ por separado:
 Nota: ~.estimate~ es la media de los valores de la estadística sobre las
 remuestras, *no* es el estimador original.
 
+#+REVEAL: split
 De la tabla anterior inferimos que la media en la cuenta en la cena es más
 grande que la de la comida.  Podemos graficar agregando los estimadores /plug-in/:
 
@@ -752,7 +797,7 @@ grande que la de la comida.  Podemos graficar agregando los estimadores /plug-in
 Nótese que el /bootstrap/ lo hicimos por separado en cada momento del día (por eso
 el argumento ~strata~ en la llamada a *bootstraps*):
 
-*** ~Funciones de cómputo~: 
+* Funciones de cómputo: 
 
 Es común crear nuestras propias funciones cuando usamos /bootstrap/, sin embargo,
 en R también hay alternativas que pueden resultar convenientes:
@@ -762,6 +807,7 @@ en R también hay alternativas que pueden resultar convenientes:
    cuadrangular (~tibble~, ~data.frame~) que incluye una columna con las muestras
    bootstrap y un identificador del número y tipo de muestra.
 
+   #+REVEAL: split
    #+begin_src R :exports both :results org 
      boot_samples
    #+end_src
@@ -786,8 +832,9 @@ en R también hay alternativas que pueden resultar convenientes:
    # ℹ Use `print(n = ...)` to see more rows
    #+end_src
 
-   Los objetos ~splits~ tienen muestras de tamaño 244. Sin embargo, utilizan (por
-   el muestreo aleatorio con reemplazo) una fracción de los datos.
+   #+REVEAL: split
+      Los objetos ~splits~ tienen muestras de tamaño 244. Sin embargo, utilizan (por
+      el muestreo aleatorio con reemplazo) una fracción de los datos.
 
    #+begin_src R :exports both :results org 
      boot_samples$splits[[1]]
@@ -799,6 +846,8 @@ en R también hay alternativas que pueden resultar convenientes:
    <244/91/244>
    #+end_src
 
+   #+REVEAL: split
+   
    #+begin_src R :exports both :results org 
      analysis(boot_samples$splits[[1]]) |>
        group_by(id)
@@ -824,8 +873,10 @@ en R también hay alternativas que pueden resultar convenientes:
    # ℹ Use `print(n = ...)` to see more rows
    #+end_src
 
-   El paquete de ~rsample~ es un paquete muy eficiente para la creación de
-   los conjunto de remuestreo y es una de sus principales ventajas. 
+
+    #+REVEAL: split   
+         El paquete de ~rsample~ es un paquete muy eficiente para la creación de los
+         conjunto de remuestreo y es una de sus principales ventajas.
 
    #+begin_src R :exports both :results org 
      library(pryr)
@@ -843,19 +894,23 @@ en R también hay alternativas que pueden resultar convenientes:
    incremento : 146.25 B
    #+end_src
 
+  #+REVEAL: split
+   
 2. El paquete ~boot~ está asociado al libro /Bootstrap Methods and Their
    Applications/ citep:davison1997 y tiene, entre otras, funciones para
    calcular replicaciones /bootstrap/ y para construir intervalos de confianza
    usando /bootstrap/:
    1. calculo de replicaciones /bootstrap/ con la función ~boot()~,
    2. intervalos normales, de percentiles y $\mathsf{BC}_a$ con la función ~boot.ci()~,
-   3. intevalos ABC con la función ~abc.ci()~.
-    
+   3. intervalos ABC con la función ~abc.ci()~.
+
+ #+REVEAL: split
+
 3. El paquete ~bootstrap~ contiene datos usados en citep:Efron1993, y la implementación de
    funciones para calcular replicaciones y construir intervalos de confianza:
    1. calculo de replicaciones /bootstrap/ con la función ~bootstrap()~,
    2. intervalos $\mathsf{BC}_a$ con la función ~bcanon()~, 
-   3. intevalos ABC con la función ~abcnon()~.
+   3. intervalos ABC con la función ~abcnon()~.
 
 *** ~Ejercicio~:
 :PROPERTIES:
@@ -865,6 +920,208 @@ Justifica el procedimiento de hacer el /bootstrap/ separado para cada grupo. ¿Q
 acerca del muestreo se deben satisfacer? ¿Deben ser muestras aleatorias simples 
 de cada momento del día, por ejemplo? ¿Qué harías si no fuera así, por ejemplo, si 
 se escogieron al azar tickets de todos los disponibles en un periodo?
+
+* Corrección de intervalos
+
+- Los intervalos basados en percentiles pueden ser mejorados con ciertos métodos de ajuste. El más popular, es el método acelerado con corrección de sesgo $\mathsf{BC}_a$ (/bias-corrected accelerated/).
+
+- Los intervalos $\mathsf{BC}_a$ tienen mejores propiedades teóricas y mejor desempeño en la práctica.
+
+- Para un intervalo de confianza los cuantiles $\alpha/2$ y $1-\alpha/2$ se ajustan por sesgo (/bias/) y por asimetría (/skewness/).
+
+- Denotaremos por $z_0$ la corrección por sesgo y por $a$ el ajuste por asimetría.
+
+- La aceleración se obtiene de estimar la tasa de cambio del error estándar de $\hat \theta$ con respecto a $\theta$ en una escala normalizada.
+
+*** ~Definición~ [intervalos /boostrap/ corregidos]:
+El *intervalo de confianza* $\mathsf{BC}_a$ se construye como
+\begin{align}
+[\hat \theta_{\mathsf{inf}}, \hat \theta_{\mathsf{sup}}] =  [\hat \theta^{*(\alpha_1)}, \hat \theta^{*(\alpha_2)}]\,,
+\end{align}
+donde
+\begin{gather}
+\alpha_1=\Phi\left(\hat{z}_0+\frac{\hat{z}_0+z^{(\alpha)}}{1-\hat{a}\left(\hat{z}_0+z^{(\alpha)}\right)}\right) \,,\\
+\alpha_2=\Phi\left(\hat{z}_0+\frac{\hat{z}_0+z^{(1-\alpha)}}{1-\hat{a}\left(\hat{z}_0+z^{(1-\alpha)}\right)}\right)\,,
+\end{gather}
+donde $\Phi(\cdot)$ denota la función de acumulación de una normal estándar y
+$z^{(\alpha)}$ es el percentil $\alpha$ de una distribución normal estándar.
+
+*** ~Ejercicio~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+Si no hay sesgo ni modificación por asimetría entonces tenemos los
+intervalos percentiles basados en un aproximación Gaussiana.
+
+** Cómputo del ajuste
+
+El ajuste por sesgo se calcula por medio de la réplicas /bootstrap/ y el estimador observado de nuestra muestra original
+\begin{align}
+\hat z_0 = \Phi^{-1} \left( \frac{|\{ \hat \theta^{(b)} < \hat \theta\}|}{B} \right)\,.
+\end{align}
+Obtenemos $\hat z_0 = 0$ si la mitad de las muestras /bootstrap/ son menores a $\hat \theta$ .
+
+La aceleración $\hat a$ se calcula a través del método /jackknife/ por medio de
+\begin{align}
+\hat{a}=\frac{\sum_{i=1}^n\left(\widehat{\theta}_{(\cdot)}-\widehat{\theta}_{(i)}\right)^3}{6\left\{\sum_{i=1}^n\left(\widehat{\theta}_{(\cdot)}-\widehat{\theta}_{(i)}\right)^2\right\}^{3 / 2}}\,.
+\end{align}
+
+** Ejemplo: Valor de un lote de casas
+
+Recordemos nuestro problema de estimación para el precio total de casas en un
+lote. Para poder construir los intervalos necesitamos agregas la muestra
+original.
+
+#+begin_src R :exports both :results org
+  totales_boot <- bootstraps(muestra_casas,  2000, apparent = TRUE) |> 
+    mutate(res_boot = map(splits, estimador_lote))
+  totales_boot |> tail()
+#+end_src
+
+#+REVEAL: split
+Los intervalos por el método de percentiles son:
+#+begin_src R :exports both :results org 
+  totales_boot |>
+    int_pctl(res_boot) |>
+    select(- .alpha ) |>
+    mutate_if(is.numeric, function(x) {x/1000}) |>
+    mutate(length = .upper - .lower)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 6
+  term       .lower .estimate .upper .method    length
+  <chr>       <dbl>     <dbl>  <dbl> <chr>       <dbl>
+1 Valor lote   195.      207.   222. percentile   26.7
+#+end_src
+
+#+REVEAL: split
+Los intervalos corregidos por sesgo y asimetría son:
+#+begin_src R :exports both :results none
+  intervalos_bca <- totales_boot |>
+    int_bca(res_boot, .fn = estimador_lote)
+#+end_src
+
+#+begin_src R :exports results :results org 
+  intervalos_bca |>
+    select(- .alpha ) |>
+    mutate_if(is.numeric, function(x) {x/1000}) |>
+    mutate(length = .upper - .lower)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 6
+  term       .lower .estimate .upper .method length
+  <chr>       <dbl>     <dbl>  <dbl> <chr>    <dbl>
+1 Valor lote   196.      207.   223. BCa       27.0
+#+end_src
+
+** Ejemplo: area habitable
+
+Recordemos nuestro ejemplo de calcular el porcentaje del area habitable en las
+viviendas. Un problema con problemas mas severos de asimetría.
+
+#+begin_src R :exports code :results none
+  estimador_razon <- function(split, ...){
+    muestra <- analysis(split)
+    muestra |>
+      summarise(estimate = sum(area_habitable_sup_m2) / sum(area_lote_m2),
+                .groups = "drop") |>
+      mutate(term = "area del lote construida")
+  }
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  razon_boot <- bootstraps(muestra_casas,  2000, apparent = TRUE) |> 
+    mutate(res_boot = map(splits, estimador_razon))
+#+End_src
+
+
+#+begin_src R :exports both :results org 
+  razon_boot |>
+    int_pctl(res_boot) |>
+    select(- .alpha ) |>
+    mutate_if(is.numeric, function(x) {x*100}) |>
+    mutate(length = .upper - .lower)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 6
+  term                     .lower .estimate .upper .method    length
+  <chr>                     <dbl>     <dbl>  <dbl> <chr>       <dbl>
+1 area del lote construida   12.0      14.2   15.8 percentile   3.85
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  intervalos_bca <- razon_boot |>
+    int_bca(res_boot, .fn = estimador_razon)
+#+end_src
+
+#+begin_src R :exports results :results org 
+  intervalos_bca |>
+    select(- .alpha ) |>
+    mutate_if(is.numeric, function(x) {x*100}) |>
+    mutate(length = .upper - .lower)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 6
+  term                     .lower .estimate .upper .method length
+  <chr>                     <dbl>     <dbl>  <dbl> <chr>    <dbl>
+1 area del lote construida   10.8      14.2   15.5 BCa       4.73
+#+end_src
+
+#+REVEAL: split
+Podemos comparar con los intervalos obtenidos de la distribución de muestreo del estimador.
+#+begin_src R :exports both :results org 
+  resample_data <- poblacion_casas |>
+    mc_cv(prop = 200/1144, 2000) |>
+    mutate(results = map(splits, estimador_razon))
+  resample_data
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# Monte Carlo cross-validation (0.17/0.83) with 5000 resamples  
+# A tibble: 5,000 × 3
+   splits            id           results         
+   <list>            <chr>        <list>          
+ 1 <split [200/944]> Resample0001 <tibble [1 × 2]>
+ 2 <split [200/944]> Resample0002 <tibble [1 × 2]>
+ 3 <split [200/944]> Resample0003 <tibble [1 × 2]>
+ 4 <split [200/944]> Resample0004 <tibble [1 × 2]>
+ 5 <split [200/944]> Resample0005 <tibble [1 × 2]>
+ 6 <split [200/944]> Resample0006 <tibble [1 × 2]>
+ 7 <split [200/944]> Resample0007 <tibble [1 × 2]>
+ 8 <split [200/944]> Resample0008 <tibble [1 × 2]>
+ 9 <split [200/944]> Resample0009 <tibble [1 × 2]>
+10 <split [200/944]> Resample0010 <tibble [1 × 2]>
+# … with 4,990 more rows
+# ℹ Use `print(n = ...)` to see more rows
+#+end_src
+
+#+begin_src R :exports both :results org 
+  resample_data |>
+    unnest(results) |>
+    summarise(inf = quantile(estimate, probs = c(0.025)) * 100,
+              sup = quantile(estimate, probs = c(0.975)) * 100) |>
+    mutate(length = sup - inf)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 3
+    inf   sup length
+  <dbl> <dbl>  <dbl>
+1  12.8  15.6   2.76
+#+end_src
+
 
 *  Conclusiones y observaciones 
 
@@ -882,6 +1139,8 @@ se escogieron al azar tickets de todos los disponibles en un periodo?
   mejores propiedades son los intervalos $\mathsf{BC}_a$, sin embargo los más
   comunes son los intervalos normales con error estándar /bootstrap/ y los
   intervalos de percentiles de la distribución /bootstrap/.
+
+#+REVEAL: split
 
 - Antes de hacer intervalos normales (o con percentiles de una $t$) vale la pena
   graficar la distribución /bootstrap/ y evaluar si el supuesto de normalidad es
