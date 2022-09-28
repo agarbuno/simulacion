@@ -1537,6 +1537,7 @@ Nuestra muestra original es:
 El estimador de interés es:
 
 #+begin_src R :exports code :results none 
+  ## paso 1: define el estimador
   estimador_razon <- function(split, ...){
     muestra <- analysis(split)
     muestra |>
@@ -1566,12 +1567,16 @@ Y nuestra estimación puntual es
 Es decir que en promedio, un poco menos del $15\%$ del lote total es ocupado por área habitable. 
 Ahora hacemos bootstrap para construir un intervalo:
 
+#+begin_src R :exports code :results none 
+  library(rsample)
+  dist_boot <- bootstraps(casas_muestra,  2000) |>   ## paso 2 y 3
+    mutate(res_boot = map(splits, estimador_razon))  ## paso 4
+#+end_src
+
+
 #+REVEAL: split
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/casas-bootstrap-razon.jpeg :exports results :results output graphics file
-  library(rsample)
-  dist_boot <- bootstraps(casas_muestra,  2000) |>
-    mutate(res_boot = map(splits, estimador_razon)) 
   g_1 <- ggplot(dist_boot %>% unnest(res_boot), aes(x = estimate)) +
     geom_histogram(bins = 20) + sin_lineas
   g_2 <- ggplot(dist_boot %>% unnest(res_boot), aes(sample = estimate)) +
