@@ -1,0 +1,82 @@
+#+TITLE: EST-24107: Simulación
+#+AUTHOR: Prof. Alfredo Garbuno Iñigo
+#+EMAIL:  agarbuno@itam.mx
+#+DATE: ~Aplicaciones de bootstrap~
+#+STARTUP: showall
+#+PROPERTY: header-args:R :session aplicaciones :exports both :results output org :tangle ../rscripts/07-aplicaciones-bootstrap.R :mkdirp yes :dir ../
+#+EXCLUDE_TAGS: toc noexport
+
+#+begin_src R :exports none :results none
+  ## Setup --------------------------------------------
+  library(tidyverse)
+  library(patchwork)
+  library(scales)
+
+  ## Cambia el default del tamaño de fuente 
+  theme_set(theme_linedraw(base_size = 25))
+
+  ## Cambia el número de decimales para mostrar
+  options(digits = 4)
+  ## Problemas con mi consola en Emacs
+  options(pillar.subtle = FALSE)
+  options(rlang_backtrace_on_error = "none")
+  options(crayon.enabled = FALSE)
+
+  ## Para el tema de ggplot
+  sin_lineas <- theme(panel.grid.major = element_blank(),
+                      panel.grid.minor = element_blank())
+  color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
+
+  sin_leyenda <- theme(legend.position = "none")
+  sin_ejes <- theme(axis.ticks = element_blank(), axis.text = element_blank())
+#+end_src
+
+
+* Contenido                                                             :toc:
+:PROPERTIES:
+:TOC:      :include all  :ignore this :depth 3
+:END:
+:CONTENTS:
+- [[#bootstrap-paramétrico][Bootstrap paramétrico]]
+- [[#estructuras-de-datos][Estructuras de datos]]
+  - [[#estratificación][Estratificación]]
+  - [[#series-temporales][Series temporales]]
+- [[#modelos-de-regresión][Modelos de regresión]]
+  - [[#observaciones][Observaciones]]
+  - [[#residuales][Residuales]]
+:END:
+
+* Bootstrap paramétrico
+
+* Estructuras de datos
+
+** Estratificación 
+
+** Series temporales
+
+Moving blocks  bootstraps
+1. origin windows con cumulative apagado
+2. Boostrap sobre los slices
+
+* Modelos de regresión 
+
+** Observaciones
+
+** Residuales
+
+* Ideas                                                            :noexport:
+
+- [[https://rsample.tidymodels.org/articles/Applications/Intervals.html][Intervalos regresión]]
+
+- [[https://juliasilge.com/blog/superbowl-conf-int/][Comerciales en televisión]]
+- [[https://juliasilge.com/blog/ceo-departures/][Renuncias de CEO's]]
+- [[https://juliasilge.com/blog/doctor-who/][Doctor Who]]
+- [[https://juliasilge.com/blog/beer-production/][Producción de cerveza]]
+
+
+- [[https://rde.inegi.org.mx/wp-content/uploads/2017/08/RDE-V8-N2-A2.pdf][Encuestas]]
+- [[http://internet.contenidos.inegi.org.mx/contenidos/Productos/prod_serv/contenidos/espanol/bvinegi/productos/nueva_estruc/702825070359.pdf][INEGI - Diseño muestral]]
+- [[https://repositoriodocumental.ine.mx/xmlui/bitstream/handle/123456789/121427/CGex202107-14-ap-5-a.pdf][INE bootstrap]]
+- [[https://tereom.github.io/est-computacional-2019/bootstrap-conteo.html][Aplicación conteo]]
+
+- [[https://asbates.rbind.io/2019/03/30/time-series-bootstrap-methods/][moving blocks]]
