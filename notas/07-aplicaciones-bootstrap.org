@@ -2,9 +2,39 @@
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Aplicaciones de bootstrap~
+:LATEX_PROPERTIES:
+#+OPTIONS: toc:nil date:nil author:nil tasks:nil
+#+LANGUAGE: sp
+#+LATEX_CLASS: handout
+#+LATEX_HEADER: \usepackage[spanish]{babel}
+#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
+#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
+#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
+#+LATEX_HEADER: \decimalpoint
+#+LATEX_HEADER:\usepackage{framed}
+#+LaTeX_HEADER: \usepackage{listings}
+#+LATEX_HEADER: \usepackage{fancyvrb}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
+#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
+#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
+#+LaTeX_HEADER: {}
+#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
+#+LaTeX_HEADER: {}
+#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
+#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
+#+EXPORT_FILE_NAME: ../docs/07-aplicaciones-bootstrap.pdf
+:END:
 #+STARTUP: showall
 #+PROPERTY: header-args:R :session aplicaciones :exports both :results output org :tangle ../rscripts/07-aplicaciones-bootstrap.R :mkdirp yes :dir ../
 #+EXCLUDE_TAGS: toc noexport
+
+#+BEGIN_NOTES
+*Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | Aplicaciones de /bootstrap/.\\
+*Objetivo*: Que veremos.\\
+*Lectura recomendada*: Referencia.
+#+END_NOTES
+
 
 #+begin_src R :exports none :results none
   ## Setup --------------------------------------------
@@ -38,6 +68,8 @@
 :END:
 :CONTENTS:
 - [[#bootstrap-paramétrico][Bootstrap paramétrico]]
+  - [[#definición-método-bootstrap-paramétrico][Definición [Método bootstrap paramétrico]:]]
+  - [[#observación][Observación:]]
 - [[#estructuras-de-datos][Estructuras de datos]]
   - [[#estratificación][Estratificación]]
   - [[#series-temporales][Series temporales]]
@@ -47,6 +79,364 @@
 :END:
 
 * Bootstrap paramétrico
+
+- Supongamos que tenemos una muestra $X_1,\ldots, X_N
+  \overset{\mathsf{iid}}{\sim} \mathbb{P}(x;\theta^\star)$.  Es decir, tenemos un
+  modelo paramétrico que da lugar a nuestros datos.
+
+- En este tipo de problemas de inferencia suponemos la familia paramétrica
+  \begin{align}
+  \mathcal{P}_\Theta = \left\{ \mathbb{P}(\cdot ; \theta) : \theta \in \Theta  \right\}\,,
+  \end{align}
+  donde $\Theta$ denota el ~espacio parametral~ (los posibles valores de los parámetros de un modelo).
+
+- En esta tarea no conocemos el valor específico de $\theta^\star$. Por lo tanto, lo tenemos que
+  estimar. Usualmente a través de resolver un problema de optimización
+  \begin{align}
+  \hat \theta_{\mathsf{MLE}} = \arg \max_{\theta \in \Theta} \prod_{i = 1}^{N} \mathbb{P}(X_i; \theta)\,.
+  \end{align} 
+  cuya solución llamamos  ~estimador de máxima verosimilitud~.
+
+- Adicional, nos encantaría poder establecer una cuantificación de la incertidumbre sobre este valor. En particular, reportar
+  \begin{align}
+  \mathsf{ee}\left(\hat \theta_{\mathsf{MLE}}\right) = \left( \mathbb{V}(\hat \theta_{\mathsf{MLE}}) \right)^{1/2}\,.
+  \end{align} 
+
+- Para algunos modelos es fácil poder estimarlo, utilizando propiedades
+  asintóticas y/o analíticas de nuestros estimadores (lo ven en el curso de
+  Estadística Matemática).
+
+- Sin embargo, ¿qué pasa si nuestro estimador no tiene fórmulas cerradas para el cálculo del error estándar? ¿O si nuestro tamaño de muestra no sugiere que los supuestos del $\mathsf{TLC}$ se cumplen?
+
+*** ~Definición~ [Método /bootstrap/ paramétrico]: 
+El error estándar estimado para $\hat{\theta}_{\mathsf{MLE}}$ por medio del
+/bootstrap/ paramétrico se calcula como sigue:
+
+1. Se calcula $\hat{\theta}_{\mathsf{MLE}}$ para la muestra observada.
+2. Se simula una muestra $\mathsf{iid}$ de tamaño $N$ de  $X^{(b)}_{1}, \ldots, X^{(b)}_{N} \overset{\mathsf{iid}}{\sim} \mathbb{P}(x; \hat{\theta}_{\mathsf{MLE}})$ (muestra /bootstrap/).
+3. Se recalcula el estimador de máxima verosimilitud para la muestra /bootstrap/ $\hat{\theta}_{\mathsf{MLE}}^{(b)} = s(X^{(b)}_{1}, \ldots, X^{(b)}_{N})$. 
+4. Se repiten los pasos 2-3 muchas veces (1,000 - 10,000).
+5. Se calcula la desviación estándar de los valores
+   $\hat{\theta}_{\mathsf{MLE}}^{(b)}$ obtenidos. Este es el error estándar
+   estimado para el estimador $\hat{\theta}_{\mathsf{MLE}}$.
+
+
+*** ~Observación~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+- Nota cómo cambiamos el mecanismo de remuestreo $\hat{\mathbb{P}}_N$ por $\mathbb{P}(x; \hat{\theta}_{\mathsf{MLE}})$.
+- En espíritu es lo mismo, pero estamos dispuestos a incorporar mayores
+  supuestos en nuestra tarea de inferencia.
+
+\newpage
+
+** Ejempo: Datos normales
+
+Como ejercicio, podemos encontrar los estimadores de máxima verosimilitud cuando
+tenemos una muestra $X_1, \ldots, X_N \overset{\mathsf{iid}}{\sim} \mathsf{N}(\mu, \sigma^2)$ (puedes
+derivar e igualar a cero para encontrar el mínimo). También podemos resolver
+numéricamente.
+
+Supongamos que tenemos la siguiente muestra:
+#+begin_src R :exports code :results none
+  set.seed(41852)
+  muestra <- rnorm(150, mean = 1, sd = 2)
+#+end_src
+
+Para la cual podemos calcular los estimadores de máxima verosimilitud de un modelo normal
+#+begin_src R :exports both :results org 
+  mle.obs <- broom::tidy(MASS::fitdistr(muestra, "normal")) |>
+    tibble::column_to_rownames("term")
+  mle.obs
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+     estimate std.error
+mean    1.136    0.1502
+sd      1.839    0.1062
+#+end_src
+
+Con esta estimación podemos definir el proceso de remuestreo.
+#+begin_src R :exports code :results none 
+  ## paso 1: define el estimador
+  estimador_mle <- function(datos, modelo = "normal"){
+    datos |>
+      MASS::fitdistr(modelo) |>
+      broom::tidy() |>
+      select(-std.error)
+  }
+#+end_src
+
+#+begin_src R :exports code :results none
+  ## paso 2: define el proceso de remuestreo
+  paramboot_sample <- function(data){
+    rnorm(length(data),
+          mean = mle.obs["mean", "estimate"],
+          sd = mle.obs["sd", "estimate"])
+  }
+#+end_src
+
+#+begin_src R :exports code :results none
+  ## paso 3: define el paso bootstrap
+  paso_bootstrap <- function(id){
+    muestra |>
+      paramboot_sample() |>
+      estimador_mle()
+  }
+#+end_src
+
+#+begin_src R :exports code :results none
+  ## paso 4: aplica bootstrap parametrico
+  boot_mle <- map_df(1:5000, paso_bootstrap)
+#+end_src
+
+#+HEADER: :width 1200 :height 800 :R-dev-args bg="transparent"
+#+begin_src R :file images/mle-bootstrap-normal.jpeg :exports results :results output graphics file
+  gqq <- boot_mle |>
+    ggplot(aes(sample = estimate)) +
+    geom_qq() + geom_qq_line(colour = "red") +
+    facet_wrap(~term, scales = "free_y") + sin_lineas
+
+  ghist <- boot_mle |>
+    ggplot(aes(x = estimate)) +
+    geom_histogram() + 
+    facet_wrap(~term, scales = "free") + sin_lineas
+
+  gqq / ghist
+#+end_src
+
+#+RESULTS:
+[[file:../images/mle-bootstrap-normal.jpeg]]
+
+Las distribuciones son aproximadamente normales. Nótese que esto no
+siempre sucede, especialmente con parámetros de dispersión como
+$\sigma$. (Examina las curvas de nivel del ejemplo de arriba).
+
+Ahora, supongamos que tenemos una muestra más chica. Repasa los
+pasos para asegurarte que entiendes el procedimiento:
+
+#+begin_src R :exports both :results org
+  set.seed(4182)
+  muestra <- rnorm(6, mean = 1, sd = 2)
+  mle.obs <- broom::tidy(MASS::fitdistr(muestra, "normal")) |>
+    tibble::column_to_rownames("term")
+  mle.obs
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+     estimate std.error
+mean   0.3979    0.9794
+sd     2.3990    0.6925
+#+end_src
+
+#+begin_src R :exports code :results none
+  ## paso 4: aplica bootstrap parametrico
+  boot_mle <- map_df(1:5000, paso_bootstrap)
+#+end_src
+
+#+HEADER: :width 1200 :height 800 :R-dev-args bg="transparent"
+#+begin_src R :file images/mle-bootstrap-normal-chica.jpeg :exports results :results output graphics file
+  gqq <- boot_mle |>
+    ggplot(aes(sample = estimate)) +
+    geom_qq() + geom_qq_line(colour = "red") +
+    facet_wrap(~term, scales = "free_y") + sin_lineas
+
+  ghist <- boot_mle |>
+    ggplot(aes(x = estimate)) +
+    geom_histogram() + 
+    facet_wrap(~term, scales = "free") + sin_lineas
+
+  gqq / ghist
+#+end_src
+
+#+RESULTS:
+[[file:../images/mle-bootstrap-normal-chica.jpeg]]
+
+Donde vemos que la distribución de $\sigma$ tienen sesgo a la derecha, pues en
+algunos casos obtenemos estimaciones muy cercanas a cero.  Podemos usar
+intervalos de percentiles.
+
+** Comparación /bootstrap/ paramétrico y no paramétrico
+
+#+begin_src R :exports code :results none 
+  propinas <- read_csv("data/propinas.csv",
+                       progress = FALSE,
+                       show_col_types = FALSE) |>
+    mutate(id = 1:244)
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none 
+  ## paso 1: define el estimador
+  estimador <- function(split, ...){
+    muestra <- analysis(split) |> group_by(momento)
+    muestra |>
+      summarise(estimate = mean(cuenta_total), .groups = 'drop') |>
+      mutate(term = momento)
+  }
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports both :results org 
+  ## paso 2 y 3: remuestrea y calcula estimador
+  boot_samples <- bootstraps(propinas, strata = momento, 500) |>
+    mutate(res_boot = map(splits, estimador))
+  ## paso 4: construye intervalos de confianza
+  intervalos_noparam <- boot_samples |>
+    int_pctl(res_boot, alpha = 0.05) |> 
+    mutate(across(where(is.numeric), round, 2))
+  intervalos_noparam
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 2 × 6
+  term   .lower .estimate .upper .alpha .method   
+  <chr>   <dbl>     <dbl>  <dbl>  <dbl> <chr>     
+1 Cena     19.7      20.8   22.0    0.1 percentile
+2 Comida   15.7      17.2   18.7    0.1 percentile
+#+end_src
+
+#+begin_src R :exports code :results none
+  ## paso 1: define estimador
+  estimador_mle_grupos <- function(muestra, modelo = "normal") {
+    muestra |>
+      select(momento, cuenta_total) |>
+      group_by(momento) |>
+      nest(data = cuenta_total) |>
+      summarise(mle = map(data, function(x) {
+        nobs <- nrow(x)
+        unlist(x) |>
+          estimador_mle(modelo = modelo) |>
+          mutate(n = nobs)
+      }))
+  }
+#+end_src
+
+#+begin_src R :exports both :results org 
+  mle.obs <- estimador_mle_grupos(propinas, "normal")
+  mle.obs |> unnest(mle)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 4 × 4
+  momento term  estimate     n
+  <chr>   <chr>    <dbl> <int>
+1 Cena    mean     20.8    176
+2 Cena    sd        9.12   176
+3 Comida  mean     17.2     68
+4 Comida  sd        7.66    68
+#+end_src
+
+#+begin_src R :exports code :results none
+  ## paso 2: define proceso de remuestreo
+  param_boot_grupos <- function(estimadores){
+    estimadores |>
+      group_by(momento) |>
+      mutate(simulaciones = map(mle, function(m){
+        tibble(cuenta_total = rnorm(m$n[1], m$estimate[1], sd = m$estimate[2]))
+      })) |>
+      unnest(simulaciones) |>
+      select(-mle) |>
+      ungroup()
+  }
+#+end_src
+
+#+begin_src R :exports code :results org 
+  ## paso 3: paso bootstrap
+  paso_bootstrap_grupos <- function(id){
+    param_boot_grupos(mle.obs) |>
+      estimador_mle_grupos()
+  }
+#+end_src
+
+
+#+begin_src R :exports both :results org 
+  ## paso 4: aplica bootstrap y presenta intervalos 
+  intervalos_param <- tibble(id = 1:500)|>
+    mutate(estimadores = map(id, paso_bootstrap_grupos)) |>
+    unnest(estimadores) |>
+    unnest(mle) |>
+    group_by(momento, term) |>
+    summarise(.lower = quantile(estimate, 0.025),
+              .estimate = mean(estimate),
+              .upper = quantile(estimate, 0.975),
+              .alpha = .1,
+              .method = "percentile (normal)", .groups = "drop") |>
+    filter(term == "mean") |> select(-term)
+  intervalos_param
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 2 × 6
+  momento .lower .estimate .upper .alpha .method            
+  <chr>    <dbl>     <dbl>  <dbl>  <dbl> <chr>              
+1 Cena      19.6      20.8   22.1    0.1 percentile (normal)
+2 Comida    15.3      17.1   18.8    0.1 percentile (normal)
+#+end_src
+
+#+begin_src R :exports results :results org 
+  intervalos_noparam
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 2 × 6
+  term   .lower .estimate .upper .alpha .method   
+  <chr>   <dbl>     <dbl>  <dbl>  <dbl> <chr>     
+1 Cena     19.7      20.8   22.0    0.1 percentile
+2 Comida   15.7      17.2   18.7    0.1 percentile
+#+end_src
+
+#+begin_src R :exports results :results org :tangle no
+  intervalos_exp <- tibble(term = "Comida", id = 1:1000) |>
+    mutate(estimate = map_dbl(id, function(x){rexp(176, rate = 0.0481) |> mean()})) |>
+    group_by(term) |>
+    summarise(.lower = quantile(estimate, 0.025),
+              .estimate = mean(estimate),
+              .upper = quantile(estimate, 0.975),
+              .alpha = .1,
+              .method = "percentile (exponential)", .groups = "drop") 
+  intervalos_exp
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 6
+  term  .lower .estimate .upper .alpha .method                 
+  <chr>  <dbl>     <dbl>  <dbl>  <dbl> <chr>                   
+1 Cena    17.8      20.8   23.9    0.1 percentile (exponential)
+#+end_src
+
+** Ventajas y desventajas de /bootstrap/ paramétrico
+:PROPERTIES:
+:CUSTOM_ID: ventajas-y-desventajas-de-bootstrap-paramétrico
+:CLASS: unnumbered
+:END:
+- Ventaja: el /bootstrap/ paramétrico puede dar estimadores más precisos
+  e intervalos más angostos y bien calibrados que el no paramétrico,
+  *siempre y cuando el modelo teórico sea razonable.*
+
+- Desventaja: Es necesario decidir el modelo teórico, que tendrá cierto
+  grado de desajuste vs. el proceso generador real de los datos. Si el
+  ajuste es muy malo, los resultados tienen poca utilidad. Para el no
+  paramétrico no es necesario hacer supuestos teóricos.
+
+- Ventaja: el /bootstrap/ paramétrico puede ser más escalable que el no
+  paramétrico, pues no es necesario cargar y remuestrear los datos
+  originales, y tenemos mejoras adicionales cuando tenemos expresiones
+  explícitas para los estimadores de máxima verosimilitud (como en el
+  caso normal, donde es innecesario hacer optimización numérica).
+
+- Desventaja: el /bootstrap/ paramétrico es conceptualmente más
+  complicado que el no paramétrico, y como vimos arriba, sus supuestos
+  pueden ser más frágiles que los del no paramétrico.
+
 
 * Estructuras de datos
 
