@@ -26,7 +26,7 @@
 #+EXPORT_FILE_NAME: ../docs/07-aplicaciones-bootstrap.pdf
 :END:
 #+STARTUP: showall
-#+PROPERTY: header-args:R :session aplicaciones :exports both :results output org :tangle ../rscripts/07-aplicaciones-bootstrap.R :mkdirp yes :dir ../
+#+PROPERTY: header-args:R :session aplicaciones :exports both :results output org :tangle ../rscripts/07-aplicaciones-bootstrap.R :mkdirp yes :dir ../ 
 #+EXCLUDE_TAGS: toc noexport
 
 #+BEGIN_NOTES
@@ -41,6 +41,7 @@
   library(tidyverse)
   library(patchwork)
   library(scales)
+  library(rsample)
 
   ## Cambia el default del tamaño de fuente 
   theme_set(theme_linedraw(base_size = 25))
@@ -71,7 +72,9 @@
   - [[#definición-método-bootstrap-paramétrico][Definición [Método bootstrap paramétrico]:]]
   - [[#observación][Observación:]]
 - [[#estructuras-de-datos][Estructuras de datos]]
-  - [[#estratificación][Estratificación]]
+  - [[#datos-agrupados][Datos agrupados]]
+  - [[#muestras-independientes][Muestras independientes]]
+  - [[#datos-pareados][Datos pareados]]
   - [[#series-temporales][Series temporales]]
 - [[#modelos-de-regresión][Modelos de regresión]]
   - [[#observaciones][Observaciones]]
@@ -114,8 +117,8 @@ El error estándar estimado para $\hat{\theta}_{\mathsf{MLE}}$ por medio del
 
 1. Se calcula $\hat{\theta}_{\mathsf{MLE}}$ para la muestra observada.
 2. Se simula una muestra $\mathsf{iid}$ de tamaño $N$ de  $X^{(b)}_{1}, \ldots, X^{(b)}_{N} \overset{\mathsf{iid}}{\sim} \mathbb{P}(x; \hat{\theta}_{\mathsf{MLE}})$ (muestra /bootstrap/).
-3. Se recalcula el estimador de máxima verosimilitud para la muestra /bootstrap/ $\hat{\theta}_{\mathsf{MLE}}^{(b)} = s(X^{(b)}_{1}, \ldots, X^{(b)}_{N})$. 
-4. Se repiten los pasos 2-3 muchas veces (1,000 - 10,000).
+3. Se recalcula el estimador de máxima verosimilitud para la muestra /bootstrap/, lo cual denotamos por $\hat{\theta}_{\mathsf{MLE}}^{(b)} = s(X^{(b)}_{1}, \ldots, X^{(b)}_{N})$. 
+4. Se repiten los pasos 2--3 muchas veces ($B =$ 1,000 -- 10,000).
 5. Se calcula la desviación estándar de los valores
    $\hat{\theta}_{\mathsf{MLE}}^{(b)}$ obtenidos. Este es el error estándar
    estimado para el estimador $\hat{\theta}_{\mathsf{MLE}}$.
@@ -365,7 +368,7 @@ intervalos de percentiles.
     summarise(.lower = quantile(estimate, 0.025),
               .estimate = mean(estimate),
               .upper = quantile(estimate, 0.975),
-              .alpha = .1,
+              .alpha = .05,
               .method = "percentile (normal)", .groups = "drop") |>
     filter(term == "mean") |> select(-term)
   intervalos_param
@@ -400,7 +403,7 @@ intervalos de percentiles.
     summarise(.lower = quantile(estimate, 0.025),
               .estimate = mean(estimate),
               .upper = quantile(estimate, 0.975),
-              .alpha = .1,
+              .alpha = .05,
               .method = "percentile (exponential)", .groups = "drop") 
   intervalos_exp
 #+end_src
@@ -440,7 +443,208 @@ intervalos de percentiles.
 
 * Estructuras de datos
 
-** Estratificación 
+** Datos agrupados
+
+#+begin_src R :exports code :results org 
+  departures_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-04-27/departures.csv", show_col_types = FALSE, progress = FALSE)
+#+end_src
+
+#+begin_src R :exports code :results org
+  departures <- departures_raw %>%
+    filter(departure_code < 9) %>%
+    mutate(involuntary = if_else(departure_code %in% 3:4, "involuntary", "other")) %>%
+    filter(fyear > 1995, fyear < 2019)
+
+  departures
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 6,942 × 20
+   dismissa…¹ coname gvkey fyear co_pe…² exec_…³ depar…⁴ ceo_d…⁵ inter…⁶ tenur…⁷
+        <dbl> <chr>  <dbl> <dbl>   <dbl> <chr>     <dbl>   <dbl> <chr>     <dbl>
+ 1     559043 SONIC… 27903  2002      -1 L. Gre…       7       0 <NA>          1
+ 2         12 AMERI…  1045  1997       1 Robert…       5       0 <NA>          1
+ 3         13 AMERI…  1045  2002       3 Donald…       3       1 <NA>          1
+ 4         31 ABBOT…  1078  1998       6 Duane …       5       0 <NA>          1
+ 5         43 ADVAN…  1161  2001      11 Walter…       5       0 <NA>          1
+ 6         51 AETNA…  1177  1997      16 Ronald…       5       0 <NA>          1
+ 7         63 AHMAN…  1194  1997      22 Charle…       7       0 <NA>          1
+ 8         65 AIR P…  1209  2000      28 Harold…       5       0 <NA>          1
+ 9         76 ALBER…  1239  2007      34 Howard…       5       0 <NA>          1
+10         78 ALBER…  1240  2000      38 Gary G…       3       1 <NA>          1
+# … with 6,932 more rows, 10 more variables: max_tenure_ceodb <dbl>,
+#   fyear_gone <dbl>, leftofc <dttm>, still_there <chr>, notes <chr>,
+#   sources <chr>, eight_ks <chr>, cik <dbl>, `_merge` <chr>,
+#   involuntary <chr>, and abbreviated variable names ¹​dismissal_dataset_id,
+#   ²​co_per_rol, ³​exec_fullname, ⁴​departure_code, ⁵​ceo_dismissal,
+#   ⁶​interim_coceo, ⁷​tenure_no_ceodb
+# ℹ Use `print(n = ...)` to see more rows, and `colnames()` to see all variable names
+#+end_src
+
+
+#+begin_src R :exports code :results org 
+  df <- departures %>%
+    count(fyear, involuntary) %>%
+    pivot_wider(names_from = involuntary, values_from = n)
+  df
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 23 × 3
+   fyear involuntary other
+   <dbl>       <int> <int>
+ 1  1996          42   273
+ 2  1997          52   274
+ 3  1998          42   305
+ 4  1999          58   332
+ 5  2000          78   286
+ 6  2001          64   165
+ 7  2002          73   184
+ 8  2003          45   218
+ 9  2004          59   264
+10  2005          61   213
+# … with 13 more rows
+# ℹ Use `print(n = ...)` to see more rows
+#+end_src
+
+#+begin_src R :exports code :results none
+  ## paso 1: define estimador
+  estimador_razon <- function(split, ...){
+    analysis(split) |>
+      count(fyear, involuntary) |>
+      pivot_wider(names_from = involuntary, values_from = n) |>
+      mutate(prop = involuntary/(involuntary + other)) |>
+      summarise(estimate = mean(prop)) |>
+      pull(estimate)
+  }
+#+end_src
+
+#+begin_src R :exports code :results none 
+  dif_boot <- bootstraps(departures, 1400, apparent = TRUE) |>
+    mutate(estimate = map_dbl(splits, estimador_razon))
+#+end_src
+
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/ceo-departures.jpeg :exports results :results output graphics file
+  gprop <- dif_boot |>
+    ggplot(aes(estimate)) +
+    geom_histogram() +
+    geom_vline(xintercept = dif_boot |> filter(id == "Apparent") |> pull(estimate),
+               lty = 2, color = "salmon", lwd = 1.5) + sin_lineas
+
+  gprop
+#+end_src
+
+#+RESULTS:
+[[file:../images/ceo-departures.jpeg]]
+
+
+** Muestras independientes
+
+#+begin_src R :exports code :results none
+  data_ej <- tibble(respuesta = c(94, 197, 16, 38,  99, 141, 23, 52, 104, 146, 10, 51, 30, 40, 27, 46),
+       tipo = c(rep("tratamiento", 7), rep("control", 9)))
+#+end_src
+
+
+#+begin_src R :exports code :results none
+  diferencia_medias <- function(split, ...){
+  analysis(split) |>
+    group_by(tipo) |>
+    summarise(promedio = mean(respuesta)) |>
+    pivot_wider(names_from = tipo, values_from = promedio) |>
+    mutate(estimate = tratamiento - control) |>
+    pull(estimate)
+}
+#+end_src
+
+
+#+begin_src R :exports code :results none
+  dif_boot <- bootstraps(data_ej, 1400, strata = tipo, apparent = TRUE) |>
+    mutate(estimate = map_dbl(splits, diferencia_medias))
+#+end_src
+
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/diferencia-medias.jpeg :exports results :results output graphics file
+  dif_boot |>
+    ggplot(aes(estimate)) +
+    geom_histogram() +
+    geom_vline(xintercept = dif_boot |> filter(id == "Apparent") |> pull(estimate),
+               color = "salmon", lty = 2, lwd = 1.5) +
+    sin_lineas
+#+end_src
+
+#+RESULTS:
+[[file:../images/diferencia-medias.jpeg]]
+
+
+** Datos pareados
+
+#+begin_src R :exports code :results org
+  dormir <- sleep |>
+    pivot_wider(names_from = group, 
+                names_prefix = "medicina_",
+                values_from = extra)
+  dormir
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 10 × 3
+   ID    medicina_1 medicina_2
+   <fct>      <dbl>      <dbl>
+ 1 1            0.7        1.9
+ 2 2           -1.6        0.8
+ 3 3           -0.2        1.1
+ 4 4           -1.2        0.1
+ 5 5           -0.1       -0.1
+ 6 6            3.4        4.4
+ 7 7            3.7        5.5
+ 8 8            0.8        1.6
+ 9 9            0          4.6
+10 10           2          3.4
+#+end_src
+
+#+begin_src R :exports code :results none
+  estimador_dif_pareados <- function(split, ...){
+    muestra <- analysis(split)
+    muestra %>% 
+      mutate(dif_2_menos_1 = medicina_2 - medicina_1) %>% 
+      summarise(estimate = mean(dif_2_menos_1), .groups = "drop") %>% 
+      mutate(term = "diferencia 2 vs 1")
+  }
+#+end_src
+
+#+begin_src R :exports code :results none 
+  pareados_boot <- bootstraps(dormir,  2000, apparent = TRUE) %>% 
+    mutate(res_boot = map(splits, estimador_dif_pareados)) 
+#+end_src
+
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/dormir-dif-medias.jpeg :exports results :results output graphics file
+   g_1 <- ggplot(pareados_boot %>% unnest(res_boot), aes(x = estimate)) +
+     geom_histogram(bins = 20) + sin_lineas
+   g_1
+#+end_src
+
+#+RESULTS:
+[[file:../images/dormir-dif-medias.jpeg]]
+
+#+begin_src R :exports both :results org 
+  pareados_boot %>% int_pctl(res_boot, 0.05)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 6
+  term              .lower .estimate .upper .alpha .method   
+  <chr>              <dbl>     <dbl>  <dbl>  <dbl> <chr>     
+1 diferencia 2 vs 1   0.97      1.58   2.39   0.05 percentile
+#+end_src
+
 
 ** Series temporales
 
