@@ -94,7 +94,8 @@ valor poblacional $\theta$. Tenemos que
 \mathsf{Prob}\left(-2\mathsf{ee}(\hat{\theta}) < \hat{\theta} - \theta < 2\mathsf{ee}(\hat{\theta})\right) \approx 0.95\,,
 \end{align}
 por las propiedades de la distribución normal ($\mathsf{Prob}(-2\sigma < X -\mu
-< 2\sigma)\approx 0.95$ si $X$ es normal con media $\mu$ y desviación estándar
+< 2\sigma)\approx 0.95$
+si $X$ es normal con media $\mu$ y desviación estándar
 $\sigma$).
 
 #+REVEAL: split
@@ -647,7 +648,8 @@ estimaciones /bootstrap/ $\hat \theta^{(1)}, \ldots, \hat \theta^{(B)}$.
 Nota que estamos aproximando los percentiles utilizando nuestra muestra
 /bootstrap/ observada $\hat \theta^{(1)}, \ldots, \hat \theta^{(B)}$ pues en
 teoría deberíamos de utilizar la distribución /bootstrap/ ideal (aquella con $B
-\rightarrow \infty$) y que hemos denotado por $\hat \theta^*$. En este sentido,
+\rightarrow \infty$)
+y que hemos denotado por $\hat \theta^*$. En este sentido,
 seguimos utilizando el principio de /plug-in/ para construir nuestros estimadores. 
 #+END_NOTES
 
@@ -929,15 +931,21 @@ se escogieron al azar tickets de todos los disponibles en un periodo?
 #+begin_src R :exports none :results none
   ## Correccion de intervalos --------------------------------------------------
 #+end_src
-- Los intervalos basados en percentiles pueden ser mejorados con ciertos métodos de ajuste. El más popular, es el método acelerado con corrección de sesgo $\mathsf{BC}_a$ (/bias-corrected accelerated/).
+- Los intervalos basados en percentiles pueden ser mejorados con ciertos métodos
+  de ajuste. El más popular, es el método acelerado con corrección de sesgo
+  $\mathsf{BC}_a$ (/bias-corrected accelerated/).
 
-- Los intervalos $\mathsf{BC}_a$ tienen mejores propiedades teóricas y mejor desempeño en la práctica.
+- Los intervalos $\mathsf{BC}_a$ tienen mejores propiedades teóricas y mejor
+  desempeño en la práctica.
 
-- Para un intervalo de confianza los cuantiles $\alpha/2$ y $1-\alpha/2$ se ajustan por sesgo (/bias/) y por asimetría (/skewness/).
+- Para un intervalo de confianza los cuantiles $\alpha/2$ y $1-\alpha/2$ se
+  ajustan por sesgo (/bias/) y por asimetría (/skewness/).
 
-- Denotaremos por $z_0$ la corrección por sesgo y por $a$ el ajuste por asimetría.
+- Denotaremos por $z_0$ la corrección por sesgo y por $a$ el ajuste por
+  asimetría.
 
-- La aceleración se obtiene de estimar la tasa de cambio del error estándar de $\hat \theta$ con respecto a $\theta$ en una escala normalizada.
+- La aceleración se obtiene de estimar la tasa de cambio del error estándar de
+  $\hat \theta$ con respecto a $\theta$ en una escala normalizada.
 
 *** ~Definición~ [intervalos /boostrap/ corregidos]:
 El *intervalo de confianza* $\mathsf{BC}_a$ se construye como
