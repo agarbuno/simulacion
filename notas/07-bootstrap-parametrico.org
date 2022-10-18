@@ -31,7 +31,7 @@
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | /Bootstrap/ paramétrico.\\
-*Objetivo*: Que veremos.\\
+*Objetivo*: En esta sección del curso veremos cómo incorporar mayores supuestos en el modelo de inferencia. Esto con el objetivo de mejorar la estimación por intervalos /bootstrap/. Es decir, para poder reducir la amplitud de los intervalos de confianza. Estudiaremos algunos puntos a considerar que pueden ser vistas como fortalezas y debilidades del método.\\
 *Lectura recomendada*: Capítulo 6 de citet:Efron1993. Sección 13.2 de citet:Chihara2018.
 #+END_NOTES
 
@@ -85,6 +85,7 @@
   \end{align}
   donde $\Theta$ denota el ~espacio parametral~ (los posibles valores de los parámetros de un modelo).
 
+#+REVEAL: split
 - En esta tarea no conocemos el valor específico de $\theta^\star$. Por lo tanto, lo tenemos que
   estimar. Usualmente a través de resolver un problema de optimización
   \begin{align}
@@ -101,12 +102,14 @@
   asintóticas y/o analíticas de nuestros estimadores (lo ven en el curso de
   Estadística Matemática).
 
+#+REVEAL: split
 - Consideremos ejemplos:
   1. Modelo Poisson,  $X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \mathsf{Poisson}(\lambda)$.
   2. Modelo Bernoulli, $X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \mathsf{Bernoulli}(\theta)$.
   3. Modelo uniforme, $X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \mathsf{U}(0, \theta)$.
   4. Modelo normal, $X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \mathsf{N}(\mu, \sigma^2)$.
 
+#+REVEAL: split
 - Sin embargo, ¿qué pasa si nuestro estimador no tiene fórmulas cerradas para el cálculo del error estándar? ¿O si nuestro tamaño de muestra no sugiere que los supuestos del $\mathsf{TLC}$ se cumplen?
 
 \newpage
@@ -133,7 +136,7 @@ El error estándar estimado para $\hat{\theta}_{\mathsf{MLE}}$ por medio del
   supuestos en nuestra tarea de inferencia.
 
   #+DOWNLOADED: screenshot @ 2022-10-17 19:24:23
-  #+attr_html: :width 700 :align center
+  #+attr_html: :width 1200 :align center
   #+caption: Imagen tomada del material del curso de Cómputo Estadístico de Michael Eichler.
   [[file:images/20221017-192423_screenshot.png]]
 
@@ -151,6 +154,7 @@ Supongamos que tenemos la siguiente muestra:
   muestra <- rnorm(150, mean = 1, sd = 2)
 #+end_src
 
+#+REVEAL: split
 Para la cual podemos calcular los estimadores de máxima verosimilitud de un modelo normal
 #+begin_src R :exports both :results org 
   mle.obs <- broom::tidy(MASS::fitdistr(muestra, "normal")) |>
@@ -165,7 +169,8 @@ mean    1.136    0.1502
 sd      1.839    0.1062
 #+end_src
 
-Con esta estimación podemos definir el proceso de remuestreo.
+#+REVEAL: split
+Con esto podemos definir el estimador y el proceso de remuestreo.
 #+begin_src R :exports code :results none 
   ## paso 1: define el estimador
   estimador_mle <- function(datos, modelo = "normal"){
@@ -176,6 +181,7 @@ Con esta estimación podemos definir el proceso de remuestreo.
   }
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none
   ## paso 2: define el proceso de remuestreo
   paramboot_sample <- function(data){
@@ -185,6 +191,7 @@ Con esta estimación podemos definir el proceso de remuestreo.
   }
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none
   ## paso 3: define el paso bootstrap
   paso_bootstrap <- function(id){
@@ -199,6 +206,7 @@ Con esta estimación podemos definir el proceso de remuestreo.
   boot_mle <- map_df(1:5000, paso_bootstrap)
 #+end_src
 
+#+REVEAL: split
 #+HEADER: :width 1200 :height 800 :R-dev-args bg="transparent"
 #+begin_src R :file images/mle-bootstrap-normal.jpeg :exports results :results output graphics file
   gqq <- boot_mle |>
@@ -217,10 +225,12 @@ Con esta estimación podemos definir el proceso de remuestreo.
 #+RESULTS:
 [[file:../images/mle-bootstrap-normal.jpeg]]
 
+#+REVEAL: split
 Las distribuciones son aproximadamente normales. Nótese que esto no
 siempre sucede, especialmente con parámetros de dispersión como
 $\sigma$. (Examina las curvas de nivel del ejemplo de arriba).
 
+#+REVEAL: split
 Ahora, supongamos que tenemos una muestra más chica. Repasa los
 pasos para asegurarte que entiendes el procedimiento:
 
@@ -244,6 +254,7 @@ sd     2.3990    0.6925
   boot_mle <- map_df(1:5000, paso_bootstrap)
 #+end_src
 
+#+REVEAL: split
 #+HEADER: :width 1200 :height 800 :R-dev-args bg="transparent"
 #+begin_src R :file images/mle-bootstrap-normal-chica.jpeg :exports results :results output graphics file
   gqq <- boot_mle |>
@@ -262,19 +273,33 @@ sd     2.3990    0.6925
 #+RESULTS:
 [[file:../images/mle-bootstrap-normal-chica.jpeg]]
 
+#+REVEAL: split
 Donde vemos que la distribución de $\sigma$ tienen sesgo a la derecha, pues en
 algunos casos obtenemos estimaciones muy cercanas a cero.  Podemos usar
 intervalos de percentiles.
 
 
-
 ** Comparación /bootstrap/ paramétrico y no paramétrico
 
-#+begin_src R :exports code :results none 
+#+begin_src R :exports both :results org
   propinas <- read_csv("data/propinas.csv",
                        progress = FALSE,
                        show_col_types = FALSE) |>
     mutate(id = 1:244)
+  propinas |> head()
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 6 × 7
+  cuenta_total propina fumador dia   momento num_personas    id
+         <dbl>   <dbl> <chr>   <chr> <chr>          <dbl> <int>
+1         17.0    1.01 No      Dom   Cena               2     1
+2         10.3    1.66 No      Dom   Cena               3     2
+3         21.0    3.5  No      Dom   Cena               3     3
+4         23.7    3.31 No      Dom   Cena               2     4
+5         24.6    3.61 No      Dom   Cena               4     5
+6         25.3    4.71 No      Dom   Cena               4     6
 #+end_src
 
 #+REVEAL: split
@@ -309,6 +334,8 @@ intervalos de percentiles.
 2 Comida   15.7      17.2   18.7    0.1 percentile
 #+end_src
 
+#+REVEAL: split
+Ahora, implementaremos el método /bootstrap/ paramétrico. 
 #+begin_src R :exports code :results none
   ## paso 1: define estimador
   estimador_mle_grupos <- function(muestra, modelo = "normal") {
@@ -325,6 +352,7 @@ intervalos de percentiles.
   }
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports both :results org 
   mle.obs <- estimador_mle_grupos(propinas, "normal")
   mle.obs |> unnest(mle)
@@ -341,6 +369,7 @@ intervalos de percentiles.
 4 Comida  sd        7.66    68
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none
   ## paso 2: define proceso de remuestreo
   param_boot_grupos <- function(estimadores){
@@ -355,6 +384,7 @@ intervalos de percentiles.
   }
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results org 
   ## paso 3: paso bootstrap
   paso_bootstrap_grupos <- function(id){
@@ -364,6 +394,7 @@ intervalos de percentiles.
 #+end_src
 
 
+#+REVEAL: split
 #+begin_src R :exports both :results org 
   ## paso 4: aplica bootstrap y presenta intervalos 
   intervalos_param <- tibble(id = 1:500)|>
@@ -389,6 +420,7 @@ intervalos de percentiles.
 2 Comida    15.3      17.1   18.8    0.1 percentile (normal)
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports results :results org 
   intervalos_noparam
 #+end_src
@@ -423,7 +455,7 @@ intervalos de percentiles.
 #+end_src
 
 #+BEGIN_NOTES
-El modelo exponencial nos da intervalos mas anchos (maypr incertidumbre) lo cual ilustra que si el modelo paramétrico no es el adecuado, los supuestos adicionales sirven poco para mejorar la estimación de incertidumbre.
+El modelo exponencial nos da intervalos mas anchos (mayor incertidumbre) lo cual ilustra que si el modelo paramétrico no es el adecuado, los supuestos adicionales sirven poco para mejorar la estimación de incertidumbre.
 #+END_NOTES
 
 
@@ -496,15 +528,24 @@ Esperamos los problemas usuales de nuestro estimador si utilizáramos el */boots
     sin_lineas
   gnpw
 #+end_src
-
+#+caption: Histograma /bootstrap/ de percentil $10\%$. 
 #+RESULTS:
 [[file:../images/turbinas-nonparam.jpeg]]
 
 #+REVEAL: split
-Si asumimos modelo $\mathsf{Weibull}(k, \lambda)$ para los datos y estimamos los
-parámetros obtenemos lo siguiente. Revisa los pasos para asegurarte que queda
-claro el procedimiento.
+Si asumimos un modelo $\mathsf{Weibull}(k, \lambda)$ para los datos. Es decir, consideramos
+$X \sim \mathsf{Weibull}(k, \lambda)$ de tal forma que $X$ tiene función de densidad
+\begin{align}
+\pi(x; k, \lambda) =
+\begin{cases}
+\frac{k}{\lambda} \left( \frac{x}{\lambda} \right)^{k-1} e^{-(x/\lambda)^k }\,, & \text{ si } x \geq 0\,,\\
+0\,, & \text{ si } x < 0\,.\\
+\end{cases}
+\end{align}
+Estimando los parámetros obtenemos lo siguiente. Revisa los pasos para
+asegurarte que queda claro el procedimiento.
 
+#+REVEAL: split
 #+begin_src R :exports both :results org
   ## paso 1: define el estimador
   ajusta_weibull <- function(data){
@@ -528,6 +569,7 @@ shape     1.283
 scale 11795.041
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none
   ## paso 2: define el proceso de remuestreo
   paramboot_sample <- function(data){
@@ -538,6 +580,7 @@ scale 11795.041
   }
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none 
   ## paso 1.5: complementa el estimador
   extrae_cuantil <- function(params){
@@ -573,21 +616,24 @@ scale 11795.041
     sin_lineas
   gnpw + gpw
 #+end_src
-
+#+caption: Histogramas /bootstrap/ del percentil $10\%$. En la izquierda utilizando el método no paramétrico, en la derecha utilizando el método paramétrico con distribución Weibull.
 #+RESULTS:
 [[file:../images/turbinas-param.jpeg]]
 
+#+REVEAL: split
+Los intervalos de confianza son los siguientes.
 #+begin_src R :exports results :results org 
   nonparam_boot |> int_pctl("resultados") |>
-    mutate(.length = .upper - .lower)
+    mutate(.method = "percentile (noparam)",
+           .length = .upper - .lower)
 #+end_src
 
 #+RESULTS:
 #+begin_src org
 # A tibble: 1 × 7
-  term      .lower .estimate .upper .alpha .method    .length
-  <chr>      <dbl>     <dbl>  <dbl>  <dbl> <chr>        <dbl>
-1 Percentil  1261.     1898.  2715.   0.05 percentile   1454.
+  term      .lower .estimate .upper .alpha .method              .length
+  <chr>      <dbl>     <dbl>  <dbl>  <dbl> <chr>                  <dbl>
+1 Percentil  1261.     1898.  2715.   0.05 percentile (noparam)   1454.
 #+end_src
 
 
