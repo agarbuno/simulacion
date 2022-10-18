@@ -119,7 +119,7 @@ intervalos_normales
 
 intervalos_normales / 1000
 
-## Calibración de intervalos --------------------------------------
+## Cobertura de intervalos --------------------------------------
 
 ## Para usar resultados en cache:
 sims_intervalos <- read_rds("cache/sims_intervalos.rds")
@@ -257,7 +257,7 @@ intervalos_bca <- razon_boot |>
 intervalos_bca |>
   select(- .alpha ) |>
   mutate_if(is.numeric, function(x) {x*100}) |>
-  mutate(length = .upper - .lower)
+  mutate(.length = .upper - .lower)
 
 resample_data <- poblacion_casas |>
   mc_cv(prop = 200/1144, 2000) |>

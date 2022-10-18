@@ -3,30 +3,20 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Intervalos de remuestreo~
 #+STARTUP: showall
-:LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
-#+LANGUAGE: sp
-#+LATEX_CLASS: handout
-#+LATEX_HEADER: \usepackage[spanish]{babel}
-#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
-#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
-#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
-#+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
-#+LaTeX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{fancyvrb}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
-#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
-#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
-#+LaTeX_HEADER: {}
-#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
-#+LaTeX_HEADER: {}
-#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
-#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/06-intervalos-bootstrap.pdf
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
 :END:
-#+PROPERTY: header-args:R :session intervalos :exports both :results output org :tangle ../rscripts/06-intervalos-bootstrap.R :mkdirp yes :dir ../
+#+PROPERTY: header-args:R :session intervalos :exports both :results output org :tangle ../rscripts/06-intervalos-bootstrap.R :mkdirp yes :dir ../ 
 #+EXCLUDE_TAGS: toc noexport 
 
 #+BEGIN_NOTES
@@ -70,7 +60,7 @@
   - [[#definición-intervalos-boostrap-normales][Definición [Intervalos boostrap normales]:]]
 - [[#inventarios-de-casas-vendidas][Inventarios de casas vendidas]]
   - [[#nota][Nota:]]
-- [[#calibración-de-intervalos-de-confianza][Calibración de intervalos de confianza]]
+- [[#cobertura-de-intervalos-de-confianza][Cobertura de intervalos de confianza]]
   - [[#observación][Observación:]]
 - [[#interpretación-intervalos-de-confianza][Interpretación intervalos de confianza]]
 - [[#intervalos-bootstrap-de-percentiles][Intervalos bootstrap de percentiles]]
@@ -418,10 +408,10 @@ más apropiado cuando observamos asimetría. Sin embargo, primero tendremos que
 hablar de dos conceptos clave con respecto a intervalos de confianza:
 calibración e interpretación.
 
-* Calibración de intervalos de confianza 
+* Cobertura de intervalos de confianza 
 
 #+begin_src R :exports none :results none
-  ## Calibración de intervalos --------------------------------------
+  ## Cobertura de intervalos --------------------------------------
 #+end_src
 
 ¿Cómo sabemos que nuestros intervalos de confianza del $95\%$ nominal 
@@ -484,7 +474,7 @@ normales:
     geom_hline(yintercept = total, colour = "red") +
     geom_linerange(aes(ymin = inf, ymax = sup, colour = cubre)) + sin_lineas
 #+end_src
-
+#+caption: Cobertura de intervalos de confianza.
 #+RESULTS:
 [[file:../images/casas-estimacion-intervalos.jpeg]]
 
@@ -1082,7 +1072,7 @@ viviendas. Un problema con problemas mas severos de asimetría.
   intervalos_bca |>
     select(- .alpha ) |>
     mutate_if(is.numeric, function(x) {x*100}) |>
-    mutate(length = .upper - .lower)
+    mutate(.length = .upper - .lower)
 #+end_src
 
 #+RESULTS:
@@ -1122,6 +1112,7 @@ Podemos comparar con los intervalos obtenidos de la distribución de muestreo de
 # ℹ Use `print(n = ...)` to see more rows
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports both :results org 
   resample_data |>
     unnest(results) |>
