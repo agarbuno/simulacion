@@ -809,7 +809,7 @@ Es común crear nuestras propias funciones cuando usamos /bootstrap/, sin embarg
 en R también hay alternativas que pueden resultar convenientes:
 
 1. El paquete ~rsample~ (forma parte de la colección [[https://www.tidyverse.org/articles/2018/08/tidymodels-0-0-1/][tidymodels]] y tiene una
-   función para realizar el remuestreo: ~bootsrtraps()~ que regresa un arreglo
+   función para realizar el remuestreo: ~bootstraps()~ que regresa un arreglo
    cuadrangular (~tibble~, ~data.frame~) que incluye una columna con las muestras
    bootstrap y un identificador del número y tipo de muestra.
 
