@@ -342,7 +342,7 @@ la media de los precios de venta de una población de casas. Tenemos nuestra mue
 #+begin_src R :exports both :results none
   set.seed(2112)
   poblacion_casas <- read_csv("data/casas.csv")
-  muestra <- sample_n(poblacion_casas, 200, replace = TRUE) |>
+  muestra <- sample_n(poblacion_casas, 200, replace = FALSE) |>
     select(id, nombre_zona, area_habitable_sup_m2, precio_miles)
 #+end_src
 
@@ -382,7 +382,7 @@ Esta muestra nos da nuestro estimador de la distribución poblacional.
 
 #+RESULTS:
 #+begin_src org
-[1] 179.96
+[1] 181.5
 #+end_src
 
 Por ejemplo, podemos fijarnos en un gráfico con histogramas:
@@ -424,7 +424,7 @@ muestral para hacer esto. Para nuestra muestra, nuestra estimación puntual es:
 
 #+RESULTS:
 #+begin_src org
-[1] 179.96
+[1] 181.5
 #+end_src
 
 

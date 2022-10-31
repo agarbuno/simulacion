@@ -2,28 +2,18 @@
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Bootstrap paramétrico~
-:LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
-#+LANGUAGE: sp
-#+LATEX_CLASS: handout
-#+LATEX_HEADER: \usepackage[spanish]{babel}
-#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
-#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
-#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
-#+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
-#+LaTeX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{fancyvrb}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
-#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
-#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
-#+LaTeX_HEADER: {}
-#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
-#+LaTeX_HEADER: {}
-#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
-#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/07-bootstrap-parametrico.pdf
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulacion">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
 :END:
 #+STARTUP: showall
 #+PROPERTY: header-args:R :session parametric :exports both :results output org :tangle ../rscripts/07-bootstrap-parametrico.R :mkdirp yes :dir ../ :eval never
@@ -71,6 +61,12 @@
 - [[#bootstrap-paramétrico][Bootstrap paramétrico]]
   - [[#definición-método-bootstrap-paramétrico][Definición [Método bootstrap paramétrico]:]]
   - [[#observación][Observación:]]
+- [[#ejempo-datos-normales][Ejempo: Datos normales]]
+- [[#comparación-bootstrap-paramétrico-y-no-paramétrico][Comparación bootstrap paramétrico y no paramétrico]]
+- [[#ejemplo-datos-de-viento][Ejemplo: Datos de viento]]
+- [[#el-método-de-momentos][El método de momentos]]
+  - [[#definición-método-de-momentos][Definición [método de momentos]:]]
+- [[#ventajas-y-desventajas-de-bootstrap-paramétrico][Ventajas y desventajas de bootstrap paramétrico]]
 :END:
 
 * Bootstrap paramétrico
@@ -141,7 +137,7 @@ El error estándar estimado para $\hat{\theta}_{\mathsf{MLE}}$ por medio del
   [[file:images/20221017-192423_screenshot.png]]
 
 
-** Ejempo: Datos normales
+* ~Ejempo~: Datos normales
 
 Como ejercicio, podemos encontrar los estimadores de máxima verosimilitud cuando
 tenemos una muestra $X_1, \ldots, X_N \overset{\mathsf{iid}}{\sim} \mathsf{N}(\mu, \sigma^2)$ (puedes
@@ -279,7 +275,7 @@ algunos casos obtenemos estimaciones muy cercanas a cero.  Podemos usar
 intervalos de percentiles.
 
 
-** Comparación /bootstrap/ paramétrico y no paramétrico
+* Comparación /bootstrap/ paramétrico y no paramétrico
 
 #+begin_src R :exports both :results org
   propinas <- read_csv("data/propinas.csv",
@@ -459,7 +455,7 @@ El modelo exponencial nos da intervalos mas anchos (mayor incertidumbre) lo cual
 #+END_NOTES
 
 
-** Ejemplo: Datos de viento
+* ~Ejemplo~: Datos de viento
 
 Consideremos los siguientes datos que corresponden datos de producción energética por medio de una turbina de viento. En este caso nos interesa estimar el percentil $10\%$ pues es lo que esperaríamos que la turbina genere el $90\%$ de las veces. 
 
@@ -656,7 +652,7 @@ Los intervalos de confianza son los siguientes.
 1 Percentil  1699.     2155.  2687.   0.05 percentile (param)    988.
 #+end_src
 
-** El método de momentos
+* El método de momentos
 
 Utilizar máxima verosimilitud *no* es al única manera de poder realizar /bootstrap/ paramétrico. Podemos utilizar ~el método de momentos~, el cual es otra aplicación directa de la ley de los grandes números.
 
@@ -683,7 +679,7 @@ los promedios basados en la muestra. Entonces, el ~estimador de momentos~ del ve
 \end{gather*}
 
 
-*** ~Ejemplo~: 
+** ~Ejemplo~: 
 Consideremos los datos $X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim}\mathsf{Gamma}(\alpha, \beta)$ donde tenemos el siguiente sistema de ecuaciones
 \begin{gather*}
 \alpha = \frac{\mathbb{E}(X)^2}{\mathbb{V}(X)}\,, \qquad \beta = \frac{\mathbb{V}(X)}{\mathbb{E}(X)}\,.
@@ -693,7 +689,7 @@ Los cuales podemos estimar utilizando las aproximaciones
 \mathbb{E}(X^k) \approx \frac{1}{N}\sum_{n = 1}^{N} x_n^k\,.
 \end{align}
 
-** Ventajas y desventajas de /bootstrap/ paramétrico
+* Ventajas y desventajas de /bootstrap/ paramétrico
 :PROPERTIES:
 :CUSTOM_ID: ventajas-y-desventajas-de-bootstrap-paramétrico
 :CLASS: unnumbered
@@ -706,6 +702,8 @@ Los cuales podemos estimar utilizando las aproximaciones
   grado de desajuste vs. el proceso generador real de los datos. Si el
   ajuste es muy malo, los resultados tienen poca utilidad. Para el no
   paramétrico no es necesario hacer supuestos teóricos.
+
+#+REVEAL: split
 
 - Ventaja: el /bootstrap/ paramétrico puede ser más escalable que el no
   paramétrico, pues no es necesario cargar y remuestrear los datos
