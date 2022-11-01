@@ -160,7 +160,7 @@ contenida en un hiper-cubo unitario conforme aumenta la dimensión del problema.
   xlab("Número de dimensiones") +
   ylab("Volumen relativo")
 #+end_src
-
+#+caption: Evolución del volumen relativo de la hiper-esfera circunscrita dentro del hiper-cubo unitario.
 #+RESULTS:
 [[file:../images/curse-dimensionality.jpeg]]
 
@@ -178,7 +178,10 @@ Consideremos un análisis analítico. Por ejemplo, sabemos que si $X \sim \maths
 \begin{align}
 \sum_{i = 1}^{p}X_i^2 \sim \chi^2_{p}\,.
 \end{align}
-Gráfiquemos el valor central de estas variables aleatorias y sus percentiles del $2.5\%$ y $97.5\%$
+Gráfiquemos el valor central de estas variables aleatorias y sus percentiles del
+$2.5\%$ y $97.5\%$. Lo que observamos es que una ~muestra típica~ no se comporta
+como el promedio de nuestra distirbución, /aka/ el individuo promedio no es tan
+común.
 
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/typical-sets.jpeg :exports results :results output graphics file
@@ -193,7 +196,7 @@ Gráfiquemos el valor central de estas variables aleatorias y sus percentiles de
   ylab("Distancia euclideana al centro") +
   xlab("Número de dimensiones")
 #+end_src
-
+#+caption: Distancia euclideana de puntos aleatorios de una Gaussiana multivariada al centro de la distribución. Esto ilustra que aunque el centro es el comportamiento promedio, los puntos típicos de una Gaussiana se encuentran lejos. 
 #+RESULTS:
 [[file:../images/typical-sets.jpeg]]
 
@@ -224,7 +227,7 @@ puntos de más alta densidad no corresponden a los puntos de mayor volumen
       xlab("Número de dimensiones")
 
 #+end_src
-
+#+caption: En rojo la log-densidad de la moda de una Gaussiana multivariada. En negro la log-densidad de muestras aleatorias de una Gaussiana multivariada. Esto muestra que los elementos con mayor densidad no corresponden a vecindades de mayor volumen. 
 #+RESULTS:
 [[file:../images/concentracion-medida.jpeg]]
 
@@ -271,7 +274,7 @@ distribución objetivo. El rechazo se realiza lanzando una moneda. La tasa de
     sin_ejes
 
 #+end_src
-#+attr_latex: :width .65\linewidth
+#+attr_latex: :width .55\linewidth
 #+caption: Esquema de muestreo. 
 #+RESULTS:
 [[file:../images/rejection-sampling.jpeg]]
@@ -364,7 +367,7 @@ distribución objetivo.
 #+end_src
 
 #+REVEAL: split
-#+HEADER: :width 1200 :height 300 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/muestreo-aceptacion.jpeg  :exports results :results output graphics file
   modelo.muestreo  <- ModeloNormal$new(mean = 0, sd = 2)
   muestreo_rechazo <- crea_rejection_sampling(objetivo, modelo.muestreo, M)
