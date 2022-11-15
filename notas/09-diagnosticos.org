@@ -31,8 +31,12 @@
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | Diagnósticos MCMC.\\
-*Objetivo*. Estudiaremos diagnósticos típicos de métodos de simulación Markoviana (por Metropolis-Hastings o HMC) con el objetivo de poder identificar problemas y posibles soluciones para simulaciones deficientes. \\
-*Lectura recomendada*: Para una revisión de los diagnósticos de MCMC busca la sección 11.4 de citep:Gelman2014a. El Capítulo 3 de citep:Cressie2015 tiene una revisión muy bonita de series de tiempo. 
+*Objetivo*. Estudiaremos diagnósticos típicos de métodos de simulación Markoviana
+ con el objetivo de poder identificar problemas y posibles soluciones para
+ simulaciones deficientes. \\
+*Lectura recomendada*: Para una revisión de los diagnósticos de MCMC busca la
+ sección 11.4 de citep:Gelman2014a. El Capítulo 3 de citep:Cressie2015 tiene una
+ revisión muy bonita de series de tiempo que es útil para algunos términos.
 #+END_NOTES
 
 #+begin_src R :exports none :results none
