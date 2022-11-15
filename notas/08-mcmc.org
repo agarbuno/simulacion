@@ -26,7 +26,7 @@
 #+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
 #+EXPORT_FILE_NAME: ../docs/08-mcmc.pdf
 :END:
-#+PROPERTY: header-args:R :session mcmc :exports both :results output org :tangle ../rscripts/08-mcmc.R :mkdirp yes :dir ../
+#+PROPERTY: header-args:R :session mcmc :exports both :results output org :tangle ../rscripts/08-mcmc.R :mkdirp yes :dir ../ :eval never
 #+EXCLUDE_TAGS: toc latex
 
 
@@ -43,6 +43,7 @@
 :END:
 :CONTENTS:
 - [[#introduccion][Introduccion]]
+  - [[#maldición-de-la-dimensionalidad][Maldición de la dimensionalidad]]
 - [[#muestreo-por-aceptación-rechazo][Muestreo por aceptación rechazo]]
   - [[#implementación][Implementación]]
     - [[#disclaimer][Disclaimer:]]
@@ -67,11 +68,10 @@
 - [[#por-qué-funciona][¿Por qué funciona?]]
   - [[#definición-invarianza][Definición [Invarianza]:]]
   - [[#lema-comportamiento-asintótico-de-metropolis-hastings][Lema [Comportamiento asintótico de Metropolis-Hastings]:]]
-- [[#gibbs][Gibbs]]
-- [[#slice][Slice]]
 :END:
 
 * Introduccion
+
 
 #+begin_src R :exports none :results none
 
@@ -80,15 +80,16 @@
   library(patchwork)
   library(scales)
   ## Cambia el default del tamaño de fuente 
-  theme_set(theme_linedraw(base_size = 15))
+  theme_set(theme_linedraw(base_size = 25))
 
   ## Cambia el número de decimales para mostrar
-  options(digits = 2)
+  options(digits = 4)
+  ## Problemas con mi consola en Emacs
+  options(pillar.subtle = FALSE)
+  options(rlang_backtrace_on_error = "none")
+  options(crayon.enabled = FALSE)
 
-  sin_lineas <- theme(panel.grid.major = element_blank(),
-                      panel.grid.minor = element_blank())
   color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
-
   sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   sin_leyenda <- theme(legend.position = "none")
   sin_ejes <- theme(axis.ticks = element_blank(), axis.text = element_blank())
@@ -102,6 +103,139 @@ El interés es poder resolver
 \end{align}
 
 Sin embargo, ~no podemos generar~ $\theta^{(i)} \overset{\mathsf{iid}}{\sim} \pi(\theta)$ para $i = 1, \ldots, N$.
+
+#+REVEAL: split
+De lo que hemos discutido previamente nos interesa poder resolver este tipo de problemas por medio una estimación Monte Carlo
+\begin{gather*}
+\pi(f) = \mathbb{E}_\pi[f] = \int f(\theta) \pi(\theta) \text{d}\theta\,,\\
+\pi_N^{\textsf{MC}}(f) = \frac1N \sum_{n = 1}^N f( \theta^{(n)}), \qquad \text{ donde }  \theta^{(n)} \overset{\mathsf{iid}}{\sim} \pi, \qquad \text{ con } n = 1, \ldots, N \,, \\
+\pi_N^{\textsf{MC}}(f) \approx  \pi(f)\,.
+\end{gather*} 
+
+#+REVEAL: split
+Por ejemplo, hemos resuelto el problema de estimar la constante $\pi$ por medio
+de estimar el cociente del área de un círculo de radio 1 dentro de un cuadrado
+con lados de longitud igual a 2.
+
+#+caption: Integración Monte Carlo para aproximar $\pi$. 
+#+attr_html: :width 1200 :align center
+[[file:../images/dardos-montecarlo.jpeg]]
+
+#+REVEAL: split
+Para lo cual hemos discutido que el método Monte Carlo nos da un método de estimación
+con tasas de convergencia de $1/\sqrt{N}$.
+
+Aunque la dimensión del problema $\theta \in \Theta \subset \mathbb{R}^p$ no
+aparece en la expresión de la varianza de nuestros estimadores. Hemos discutido
+que si lo hace, de manerea implícita, en la expresión de $\mathbb{V}_\pi(f)$. Veamos un ejemplo
+el cual se conoce como ~maldición de la dimensionalidad~.
+
+** Maldición de la dimensionalidad
+
+Consideremos de interés estimar la proporción de volumen de la hiper-esfera
+contenida en un hiper-cubo unitario conforme aumenta la dimensión del problema.
+
+#+begin_src R :exports code :results none
+  distancia_euclideana <- function(u) sqrt(sum(u * u));
+
+  experimento <- function(ndim){
+    nsamples <- 1e5; 
+    y <- matrix(runif(nsamples * ndim, -0.5, 0.5), nsamples, ndim);
+    mean(apply(y, 1, distancia_euclideana) < 0.5)
+  }
+#+end_src
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/curse-dimensionality.jpeg :exports results :results output graphics file
+  tibble(dims = 1:10) |>
+    mutate(prob = map_dbl(dims, experimento)) |>
+    ggplot(aes(dims, prob)) +
+    geom_point() +
+    geom_line() +
+    sin_lineas +
+    scale_x_continuous(breaks=c(1, 3, 5, 7, 9)) +
+  xlab("Número de dimensiones") +
+  ylab("Volumen relativo")
+#+end_src
+#+caption: Evolución del volumen relativo de la hiper-esfera circunscrita dentro del hiper-cubo unitario.
+#+RESULTS:
+[[file:../images/curse-dimensionality.jpeg]]
+
+#+REVEAL: split
+Otro detalle interesante de altas dimensiones es la poca intuición
+probabilística que tenemos de estos espacios y de lo que es una muestra típica
+de una distribución.
+
+Por ejemplo, para $X \sim \mathsf{N}(0,1)$ estamos acostumbrados a asociar la
+moda como el valor de mas alta densidad. Lo cual es un error terrible en varias
+dimensiones.
+
+#+REVEAL: split
+Consideremos un análisis analítico. Por ejemplo, sabemos que si $X \sim \mathsf{N}(0, I_p)$, entonces tenemos que
+\begin{align}
+\sum_{i = 1}^{p}X_i^2 \sim \chi^2_{p}\,.
+\end{align}
+Gráfiquemos el valor central de estas variables aleatorias y sus percentiles del
+$2.5\%$ y $97.5\%$. Lo que observamos es que una ~muestra típica~ no se comporta
+como el promedio de nuestra distirbución, /aka/ el individuo promedio no es tan
+común.
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/typical-sets.jpeg :exports results :results output graphics file
+  tibble(dim = 2**seq(0, 8)) |>
+    mutate(.centro = sqrt(qchisq(.50, dim)),
+           .lower = sqrt(qchisq(.025, dim)),
+           .upper = sqrt(qchisq(.975, dim))) |>
+  ggplot(aes(dim, .centro)) +
+  geom_ribbon(aes(ymin = .lower, ymax = .upper), alpha = .3, fill = "gray") + 
+  geom_line() + geom_point() + sin_lineas +
+  scale_x_log10() +
+  ylab("Distancia euclideana al centro") +
+  xlab("Número de dimensiones")
+#+end_src
+#+caption: Distancia euclideana de puntos aleatorios de una Gaussiana multivariada al centro de la distribución. Esto ilustra que aunque el centro es el comportamiento promedio, los puntos típicos de una Gaussiana se encuentran lejos. 
+#+RESULTS:
+[[file:../images/typical-sets.jpeg]]
+
+#+REVEAL: split
+Lo que sucede se conoce como el fenómeno de ~concentración de medida~ donde los
+puntos de más alta densidad no corresponden a los puntos de mayor volumen
+(probabilidad).
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/concentracion-medida.jpeg :exports results :results output graphics file
+    tibble(dim = 2**seq(0, 8)) |>
+      mutate(.resultados  = map(dim, function(ndim){
+               x <- unlist(purrr::rerun(10000, sum(dnorm(rnorm(ndim),log = TRUE))))
+               tibble(x = x) |>
+                 summarise(.densidad_tip = mean(x),
+                           .lower_densidad = quantile(x, .025),
+                           .upper_densidad = quantile(x, .975),
+                           .densidad_moda = sum(dnorm(rep(0, ndim), log = TRUE)))
+             })) |>
+      unnest(.resultados) |>
+      ggplot(aes(dim, .densidad_tip)) +
+      geom_line(aes(y = .densidad_moda), col = 'red') +
+      geom_point(aes(y = .densidad_moda), col = 'red') + 
+      geom_ribbon(aes(ymin = .lower_densidad, ymax = .upper_densidad), alpha = .3, fill = "gray") + 
+      geom_line() + geom_point() + sin_lineas +
+      scale_x_log10() +
+      ylab("log-Densidad") +
+      xlab("Número de dimensiones")
+
+#+end_src
+#+caption: En rojo la log-densidad de la moda de una Gaussiana multivariada. En negro la log-densidad de muestras aleatorias de una Gaussiana multivariada. Esto muestra que los elementos con mayor densidad no corresponden a vecindades de mayor volumen. 
+#+RESULTS:
+[[file:../images/concentracion-medida.jpeg]]
+
+#+REVEAL: split
+Esto explica por qué no queremos realizar la aproximación
+\begin{align}
+\pi(f) \approx f(\theta^\star)\,, \quad \text{ donde }  \quad \theta^\star = \underset{\theta \in \Theta}{\arg \max} \, \pi(\theta)\,. 
+\end{align}
 
 * Muestreo por aceptación rechazo
 
@@ -140,7 +274,7 @@ distribución objetivo. El rechazo se realiza lanzando una moneda. La tasa de
     sin_ejes
 
 #+end_src
-#+attr_latex: :width .65\linewidth
+#+attr_latex: :width .55\linewidth
 #+caption: Esquema de muestreo. 
 #+RESULTS:
 [[file:../images/rejection-sampling.jpeg]]
@@ -179,25 +313,17 @@ Recordemos que lo que queremos son dos cosas: 1) generar números aleatorios y 2
 #+caption: Distribución de muestreo. 
 #+begin_src R :exports code :results none
   library(R6)
-  ModeloNormal <-
-    R6Class("ProbabilityModel",
-            list(
-              mean = NA,
-              sd = NA,
-              ## Inicializador
-              initialize = function(mean = 0, sd = 1){
-                self$mean = mean
-                self$sd   = sd
-              },
-              ## Muestreador
-              sample = function(n = 1){
-                rnorm(n, self$mean, sd = self$sd)              
-              },
-              ## Evaluacion de densidad
-              density = function(x, log = TRUE){
-                dnorm(x, self$mean, sd = self$sd, log = log)
-              }           
-            ))
+  ModeloNormal <- R6Class("ProbabilityModel", list(
+        mean = NA, sd = NA,
+        initialize = function(mean = 0, sd = 1){ ## Inicializador
+          self$mean = mean; self$sd   = sd
+        },
+        sample = function(n = 1){                ## Muestreador
+          rnorm(n, self$mean, sd = self$sd)              
+        },
+        density = function(x, log = TRUE){       ## Densidad
+          dnorm(x, self$mean, sd = self$sd, log = log)
+        }))
 #+end_src
 
 #+BEGIN_NOTES
@@ -233,7 +359,7 @@ distribución objetivo.
 #+end_src
 
 #+REVEAL: split
-#+HEADER: :width 1200 :height 300 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/muestreo-aceptacion.jpeg  :exports results :results output graphics file
   modelo.muestreo  <- ModeloNormal$new(mean = 0, sd = 2)
   muestreo_rechazo <- crea_rejection_sampling(objetivo, modelo.muestreo, M)
@@ -307,7 +433,7 @@ se llama una *cadena de Markov* en tiempo discreto.
 
 #+DOWNLOADED: screenshot @ 2022-02-03 12:21:07
 #+caption: Problema del café. 
-#+attr_html: :width 700 :align center
+#+attr_html: :width 1200 :align center
 [[file:images/20221031-163123_screenshot.png]]
 
 #+REVEAL: split
@@ -391,7 +517,7 @@ pues incluye los dos casos.
   caminata <- tibble(paso = 1:pasos, isla = iteraciones)
 #+end_src
 
-#+HEADER: :width 1200 :height 300 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 400 :R-dev-args bg="transparent"
 #+begin_src R :file images/caminata-cafe.jpeg :exports results :results output graphics file
   plot_caminata <- ggplot(caminata[1:500, ], aes(x = paso, y = isla)) +
     geom_point(size = 0.8) +
@@ -482,7 +608,7 @@ estrategia parecida que con el vendedor de galletas. La estrategia será:
 #+REVEAL: split
 - Vamos a decidir si nos movemos de acuerdo a los pesos relativos
   \begin{align}
-  \alpha(\mu_t, \mu_\star)  = \min \left\lbrace1 , \frac{\pi(\mu_\star|y)}{\pi(\mu_t|y)} \right\rbrace\,.
+  \alpha(\mu_t, \mu_\star)  = \min \left\lbrace1 , \frac{\pi(\mu_\star)}{\pi(\mu_t)} \right\rbrace\,.
   \end{align}
   
 ** Desentrañando
@@ -500,22 +626,17 @@ Veamos cómo implementarlo. Vamos a suponer una distribución de muestreo con un
 #+REVEAL: split
 #+caption: Modelo de muestreo uniforme. 
 #+begin_src R :exports code :results none
-  ModeloUniforme <-
-    R6Class("ProbabilityModel",
-            list(
-              a = NA,
-              b = NA, 
-              initialize = function(a = 0, b = 1){
-                self$a = a
-                self$b = b
-              }, 
-              sample = function(n = 1){
-                runif(n, self$a, self$b)              
-              },
-              density = function(x, log = TRUE){
-                dunif(x, self$a, self$b, log = log)
-              }           
-            ))
+  ModeloUniforme <- R6Class("ProbabilityModel", list(
+       a = NA, b = NA, 
+       initialize = function(a = 0, b = 1){
+         self$a = a; self$b = b
+       }, 
+       sample = function(n = 1){
+         runif(n, self$a, self$b)              
+       },
+       density = function(x, log = TRUE){
+         dunif(x, self$a, self$b, log = log)
+       }))
 #+end_src
 
 #+REVEAL: split
@@ -558,7 +679,7 @@ Veamos cómo implementarlo. Vamos a suponer una distribución de muestreo con un
   muestras <- mcmc(5000)
 #+end_src
 
-#+HEADER: :width 1200 :height 300 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 400 :R-dev-args bg="transparent"
 #+begin_src R :file images/primer-mcmc.jpeg :exports results :results output graphics file
   g1 <- muestras |>
     as.tibble() |>
@@ -711,7 +832,7 @@ $\mathsf{N}(\theta_t, \sigma^2)$.
 
 
 #+REVEAL: split
-#+HEADER: :width 700 :height 300 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 400 :R-dev-args bg="transparent"
 #+begin_src R :file images/mh-pasochico.jpeg :exports results :results output graphics file
   set.seed(108727)
   objetivo <- ModeloGamma$new(a = 20, b = 100)
@@ -738,7 +859,7 @@ $\mathsf{N}(\theta_t, \sigma^2)$.
 [[file:../images/mh-pasochico.jpeg]]
 
 #+REVEAL: split
-#+HEADER: :width 700 :height 300 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 400 :R-dev-args bg="transparent"
 #+begin_src R :file images/mh-pasogrande.jpeg :exports results :results output graphics file
   set.seed(108727)
   muestreo <- ModeloNormal$new(sd = 20)
@@ -764,7 +885,7 @@ $\mathsf{N}(\theta_t, \sigma^2)$.
 [[file:../images/mh-pasogrande.jpeg]]
 
 #+REVEAL: split
-#+HEADER: :width 700 :height 300 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 400 :R-dev-args bg="transparent"
 #+begin_src R :file images/mh-pasojusto.jpeg :exports results :results output graphics file
   set.seed(108727)
   muestreo <- ModeloNormal$new(sd = 0.1)
@@ -818,7 +939,7 @@ $\mathsf{N}(\theta_t, \sigma^2)$.
 #+end_src
 
 #+REVEAL: split
-#+HEADER: :width 700 :height 300 :R-dev-args bg="transparent"
+#+HEADER: :width 1200 :height 400 :R-dev-args bg="transparent"
 #+begin_src R :file images/mh-largoplazo.jpeg :exports results :results output graphics file :eval never
   set.seed(108727)
 
@@ -859,22 +980,18 @@ y utilicemos el modelo de muestreo
 #+caption: Modelo de muestreo multivariado.
 #+begin_src R :exports code :results none
   library(mvtnorm)
-  ModeloNormalMultivariado <-
-    R6Class("ProbabilityModel",
-            list(
-              mean = NA,
-              cov  = NA, 
-              initialize = function(mu = 0, sigma = 1){
-                self$mean = mu
-                self$cov  = sigma |> as.matrix()
-              }, 
-              sample = function(n = 1){
-                rmvnorm(n, mean = self$mean, sigma = self$cov)              
-              },
-              density = function(x, log = TRUE){
-                dmvnorm(x, self$mean, self$cov, log = log)              
-              }           
-            ))
+  ModeloNormalMultivariado <- R6Class("ProbabilityModel", list(
+        mean = NA,
+        cov  = NA, 
+        initialize = function(mu = 0, sigma = 1){
+          self$mean = mu; self$cov  = sigma |> as.matrix()
+        }, 
+        sample = function(n = 1){
+          rmvnorm(n, mean = self$mean, sigma = self$cov)              
+        },
+        density = function(x, log = TRUE){
+          dmvnorm(x, self$mean, self$cov, log = log)              
+        }))
 #+end_src
 
 #+begin_src R :exports none :results none
@@ -1103,9 +1220,3 @@ manera consistente las islas mas grandes.
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
-
-
-* TODO Gibbs
-
-* TODO Slice
-
