@@ -29,7 +29,7 @@
 #+STARTUP: showall
 #+EXCLUDE_TAGS: toc github latex
 
-[[https://mybinder.org/v2/gh/agarbuno/simulacion/binder-rocker?urlpath=rstudio][https://mybinder.org/badge_logo.svg]]
+[[https://github.com/agarbuno/autograding-r/actions/workflows/docker.yml/badge.svg]] [[https://img.shields.io/docker/pulls/agarbuno/grader.svg?logo=docker]] [[https://img.shields.io/docker/image-size/agarbuno/grader/beta.svg?logo=docker]] [[https://img.shields.io/github/languages/top/agarbuno/simulacion.svg?logo=r]] [[https://img.shields.io/github/languages/code-size/agarbuno/simulacion.svg?logo=r]] 
 
 * Contenido                                                             :toc:
 :PROPERTIES:
