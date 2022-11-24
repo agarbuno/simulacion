@@ -7,9 +7,11 @@ theme_set(theme_linedraw(base_size = 25))
 
 ## Cambia el número de decimales para mostrar
 options(digits = 2)
+## Problemas con mi consola en Emacs
+options(pillar.subtle = FALSE)
+options(rlang_backtrace_on_error = "none")
+options(crayon.enabled = FALSE)
 
-sin_lineas <- theme(panel.grid.major = element_blank(),
-                    panel.grid.minor = element_blank())
 color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
 
 sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -318,7 +320,9 @@ ggAcf(muestras.cantantes$mu) + sin_lineas +
 ggtitle("Series: mu (modelo cantantes)")
 
 library(posterior)
-c(mu    = ess_basic(muestras.cantantes$mu)/nrow(muestras.cantantes),
+tibble(Neff  = round(ess_basic(muestras.cantantes$mu)),
+  N.M   = nrow(muestras.cantantes),
+  ratio    = ess_basic(muestras.cantantes$mu)/nrow(muestras.cantantes),
   sigma = ess_basic(muestras.cantantes$sigma)/nrow(muestras.cantantes),
   accept = mean(muestras.cantantes$V1))
 
@@ -332,7 +336,9 @@ muestras.cantantes <-  mcmc(5000, c(175, 6.5)) |>
   as_tibble() |>
   mutate(mu = V2, sigma = V3, iter = 1:n())
 
-c(mu    = ess_basic(muestras.cantantes$mu)/nrow(muestras.cantantes),
+tibble(Neff  = round(ess_basic(muestras.cantantes$mu),0),
+  N.M   = nrow(muestras.cantantes),
+  ratio    = ess_basic(muestras.cantantes$mu)/nrow(muestras.cantantes),
   sigma = ess_basic(muestras.cantantes$sigma)/nrow(muestras.cantantes),
   accept = mean(muestras.cantantes$V1))
 

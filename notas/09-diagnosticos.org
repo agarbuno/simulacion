@@ -3,31 +3,21 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Diagnósticos MCMC~
 #+STARTUP: showall
-:LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
-#+LANGUAGE: sp
-#+LATEX_CLASS: handout
-#+LATEX_HEADER: \usepackage[spanish]{babel}
-#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
-#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
-#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
-#+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
-#+LaTeX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{fancyvrb}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
-#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
-#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
-#+LaTeX_HEADER: {}
-#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
-#+LaTeX_HEADER: {}
-#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
-#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/09-diagnosticos.pdf
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
 :END:
 #+EXCLUDE_TAGS: toc latex
-#+PROPERTY: header-args:R :session diagnosticos :exports both :results output org :tangle ../rscripts/09-diagnosticos.R :mkdirp yes :dir ../
+#+PROPERTY: header-args:R :session diagnosticos :exports both :results output org :tangle ../rscripts/09-diagnosticos.R :mkdirp yes :dir ../ :eval never
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | Diagnósticos MCMC.\\
@@ -49,9 +39,11 @@
 
   ## Cambia el número de decimales para mostrar
   options(digits = 2)
+  ## Problemas con mi consola en Emacs
+  options(pillar.subtle = FALSE)
+  options(rlang_backtrace_on_error = "none")
+  options(crayon.enabled = FALSE)
 
-  sin_lineas <- theme(panel.grid.major = element_blank(),
-                      panel.grid.minor = element_blank())
   color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
 
   sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -70,6 +62,7 @@
     - [[#datos-cantantes-de-ópera][Datos: Cantantes de ópera]]
   - [[#monitoreo-de-mezcla-dentro-y-entre-cadenas][Monitoreo de mezcla dentro y entre cadenas]]
   - [[#número-efectivo-de-simulaciones][Número efectivo de simulaciones]]
+- [[#el-estado-del-arte][El estado del arte]]
 :END:
 
 * Introducción
@@ -704,17 +697,22 @@ autocorrelación:
 
 
 #+REVEAL: split
+Podemos utilizar la función ~posterior::ess_basic~.
 #+begin_src R :exports results :results org
   library(posterior)
-  c(mu    = ess_basic(muestras.cantantes$mu)/nrow(muestras.cantantes),
+  tibble(Neff  = round(ess_basic(muestras.cantantes$mu)),
+    N.M   = nrow(muestras.cantantes),
+    ratio    = ess_basic(muestras.cantantes$mu)/nrow(muestras.cantantes),
     sigma = ess_basic(muestras.cantantes$sigma)/nrow(muestras.cantantes),
     accept = mean(muestras.cantantes$V1))
 #+end_src
 #+caption: Fracción $N_\mathsf{eff}/nm$ para la simulación de la posterior los cantantes de ópera. 
 #+RESULTS:
 #+begin_src org
-    mu  sigma accept 
-146.06 241.12   0.69
+# A tibble: 1 × 5
+   Neff   N.M  ratio sigma accept
+  <dbl> <int>  <dbl> <dbl>  <dbl>
+1   441  5000 0.0882 0.146  0.380
 #+end_src
 
 
@@ -729,15 +727,19 @@ autocorrelación:
     as_tibble() |>
     mutate(mu = V2, sigma = V3, iter = 1:n())
 
-  c(mu    = ess_basic(muestras.cantantes$mu)/nrow(muestras.cantantes),
+  tibble(Neff  = round(ess_basic(muestras.cantantes$mu),0),
+    N.M   = nrow(muestras.cantantes),
+    ratio    = ess_basic(muestras.cantantes$mu)/nrow(muestras.cantantes),
     sigma = ess_basic(muestras.cantantes$sigma)/nrow(muestras.cantantes),
     accept = mean(muestras.cantantes$V1))
 #+end_src
 #+caption: Fracción $N_\mathsf{eff}/nm$ para la simulación (calibrada) de la posterior los cantantes de ópera. 
 #+RESULTS:
 #+begin_src org
-    mu  sigma accept 
- 0.088  0.146  0.380
+# A tibble: 1 × 5
+   Neff   N.M  ratio sigma accept
+  <dbl> <int>  <dbl> <dbl>  <dbl>
+1   441  5000 0.0882 0.146  0.380
 #+end_src
 
 #+REVEAL: split
@@ -749,6 +751,77 @@ autocorrelación:
 #+caption: Perfil de correlación para la simulación calibrada. 
 #+RESULTS:
 [[file:../images/autocorrelacion-metropolishastings-rechazo.jpeg]]
+
+* El estado del arte
+
+#+REVEAL: split
+El método de Metropolis-Hastings es muy flexible y existe una colección
+numerable de versiones que pueden ser empleadas en contextos muy particulares.
+Una buena referencia que incluye métodos de simulación por medio de cadenas de
+Markov se encuentra en citep:Liu2004, donde incluso se pueden encontrar
+generalizaciones con ~transiciones Markovianas asimétricas~ y extensiones a ~problemas de
+dimensión variable~. El libro citep:Brooks2011 presenta el estado del arte al 2010.
+
+#+REVEAL: split
+El cómputo Bayesiano se popularizó con el muestreador de Gibbs. En particular,
+el avance en teoría de grafos para representar una distribución conjunta como un
+Grafo Acíclico Dirigido (DAG) que se implementó en software como ~BUGS~ o [[https://www.mrc-bsu.cam.ac.uk/software/bugs/the-bugs-project-winbugs/][WinBUGS]].
+Pueden consultar el libro de citet:Kruschke2014 para su explicación.
+
+#+REVEAL: split
+La desventaja del muestreador de Gibbs es que tiende a ser muy lento en
+problemas de tamaño grande. Ha habido estrategias que aceleran la simulación
+aunque al ~costo de utilizar aproximaciones~. Estas estrategias han sido
+materializadas en lenguajes de programación mas generales como
+[[https://dotnet.github.io/infer/][Infer.NET]].
+
+#+REVEAL: split
+[[http://mcmc-jags.sourceforge.net][JAGS]] (Just Another Gibbs Sampler), es 
+una generalización donde se implementan métodos MCMC para generar simulaciones
+de distribuciones posteriores. Los paquetes ~rjags~ y ~R2jags~ permiten ajustar
+modelos en JAGS desde ~R~ citep:Hornik2003. Es muy fácil utilizar estos
+programas pues uno simplemente debe especificar las distribuciones iniciales, la
+verosimilitud y los datos observados. Igual el libro de citet:Kruschke2014. 
+
+#+REVEAL: split
+Al depender de gradientes para construir propuestas para las cadenas de Markov
+ha sido natural el desarrollo de herramientas de muestreo basadas en
+diferenciadores automáticos. Por ejemplo, [[https://pyro.ai/][Pyro]] utiliza [[https://pytorch.org/][PyTorch]]. Tenemos también
+[[https://www.tensorflow.org/probability][Tensorflow Probability]] que utiliza ~Tensorflow~. [[https://docs.pymc.io/][Pymc]] (antes Pymc3) utiliza Theano
+(ahora llamado [[https://github.com/aesara-devs/aesara][Aesara]]). [[https://github.com/pyro-ppl/numpyro][NumPyro]] utiliza ~numpy~ y [[https://github.com/google/jax][JAX]] como /backend/. 
+
+#+REVEAL: split
+[[https://docs.pymc.io/][Pymc]] es un muestreador ~híbrido~ que permite utilizar Metropolis-Hastings, Gibbs
+y HMC para la simulación de la posterior citep:Salvatier2016. También es
+mucho más flexible y brinda muestreadores más modernos basados en particulas e
+información de primer orden (gradientes).
+
+#+REVEAL: split
+Además, hay herramientas que utilizan las librerías de muestreo para análisis
+específicos.  Por ejemplo, tenemos ~cmdstanarm~ ajusta *modelos de regresión*
+utilizando ~Stan~ como /backend/. La herramienta de Facebook, ~Prophet~, utiliza ~Stan~
+(ver [[https://statmodeling.stat.columbia.edu/2017/03/01/facebooks-prophet-uses-stan/][aqui]]) como /backend/ y se especializa en *series de tiempo*. [[https://github.com/IvanYashchuk/fenics-pymc3][fenics-pymc3]] se
+especializa en soluciones de *ecuaciones diferenciales* escritas en
+~FEniCS~. También tenemos [[https://github.com/hvasbath/beat][beat]] para *análisis probabilístico de terremotos* y
+[[https://github.com/exoplanet-dev/exoplanet][exoplanet]] para series de tiempo en *astronomía*. Por supuesto, no podía faltar una
+integración ~scikit~ que se llama [[https://www.pymc-learn.org/][Pymc-Learn]].
+
+#+REVEAL: split
+Existen otras alternativas para construir cadenas de Markov. Por ejemplo, hay
+algoritmos que buscan evolucionar una colección de muestras de $\theta$ como un
+enjambre que se comunican entre si para generar una caminata aleatoria en el
+espacio del soporte de la distribución. Ejemplos de éstos son el ~t-walk~
+citep:Christen2010 o un ensamble de cadenas linealmente relacionadas como en la
+herramienta de ~emcee~  citep:Foreman-Mackey2013, 
+
+#+REVEAL: split
+Finalmente, hay muchos mas mecanismos que tienen como objetivo aproximar la
+distribución posterior. En problemas donde la verosimilitud es
+~computacionalmente costosa~ existen alternativas para crear aproximaciones. El
+artículo citep:Garbuno-Inigo2019 provee de una alternativa utilizando una
+combinación de técnicas bien establecidas (difusiones Langevin, ensamble de
+partículas interactivas y filtros de Kalman).
+
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
