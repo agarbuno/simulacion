@@ -1,0 +1,228 @@
+#+TITLE: EST-24107: Simulación
+#+AUTHOR: Prof. Alfredo Garbuno Iñigo
+#+EMAIL:  agarbuno@itam.mx
+#+DATE: ~Software para MCMC~
+#+STARTUP: showall
+#+PROPERTY: header-args:R :session software :exports both :results output org :tangle ../rscripts/10-software.R :mkdirp yes :dir ../
+#+PROPERY: header-args:python :session pymc-soft :exports both :results output org :tangle ../pyscripts/10-software.py
+
+#+begin_src R :exports none :results none
+  ## Setup --------------------------------------------
+  library(tidyverse)
+  library(patchwork)
+  library(scales)
+
+  ## Cambia el default del tamaño de fuente 
+  theme_set(theme_linedraw(base_size = 25))
+
+  ## Cambia el número de decimales para mostrar
+  options(digits = 4)
+  ## Problemas con mi consola en Emacs
+  options(pillar.subtle = FALSE)
+  options(rlang_backtrace_on_error = "none")
+  options(crayon.enabled = FALSE)
+
+  ## Para el tema de ggplot
+  sin_lineas <- theme(panel.grid.major = element_blank(),
+                      panel.grid.minor = element_blank())
+  color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
+
+  sin_leyenda <- theme(legend.position = "none")
+  sin_ejes <- theme(axis.ticks = element_blank(), axis.text = element_blank())
+#+end_src
+
+* El paquete ~LearnBayes~
+
+Ejemplo tomado de las [[https://cran.r-project.org/web/packages/LearnBayes/vignettes/MCMCintro.pdf][viñetas de la librería]]. 
+
+#+begin_src R :exports code :results none
+  library(LearnBayes)
+  minmaxpost <- function(theta, data){
+    mu <- theta[1]
+    sigma <- exp(theta[2])
+    dnorm(data$min, mu, sigma, log = TRUE) +
+      dnorm(data$max, mu, sigma, log = TRUE) +
+      ((data$n - 2) * log(pnorm(data$max, mu, sigma) - pnorm(data$min, mu, sigma)))
+  }
+#+end_src
+
+** Aproximación Normal (de Laplace)
+
+#+begin_src R :exports both :results org
+  data <- list(n = 10, min = 52, max = 84)
+  fit  <- laplace(minmaxpost, c(70, 2), data)
+  fit
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+$mode
+[1] 68.000  2.298
+
+$var
+           [,1]       [,2]
+[1,]  1.921e+01 -1.901e-06
+[2,] -1.901e-06  6.032e-02
+
+$int
+[1] -8.02
+
+$converge
+[1] TRUE
+#+end_src
+
+** Muestreo por cadenas de Markov
+
+#+begin_src R :exports code :results none 
+  mcmc.fit <- rwmetrop(minmaxpost,
+                       list(var = fit$v, scale = 3),
+                       c(70, 2),
+                       10000,
+                       data)
+#+end_src
+
+#+begin_src R :exports both :results org
+  mcmc.fit$accept
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 0.1735
+#+end_src
+
+*** Estimación Monte Carlo
+
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/cuantil-superior.jpeg :exports results :results output graphics file
+  mu.samp <- mcmc.fit$par[, 1]
+  sigma.samp <- exp(mcmc.fit$par[, 2])
+  tibble(cuantil = mu.samp + 0.674 * sigma.samp) |>
+    ggplot(aes(cuantil)) +
+    geom_histogram() + sin_lineas
+#+end_src
+
+#+RESULTS:
+[[file:../images/cuantil-superior.jpeg]]
+
+* Usando ~Stan~ desde ~R~
+
+#+begin_src stan :tangle ../modelos/software/minmax.stan
+  data {
+    real xmin;
+    real xmax;
+    int N;
+  }
+  parameters {
+    real mu;
+    real log_sigma; 
+  }
+  transformed parameters {
+    real sigma = exp(log_sigma);
+  }
+  model {
+    target += normal_lpdf(xmin | mu, sigma); 
+    target += normal_lpdf(xmax | mu, sigma);
+    target += (N-2) * log(normal_cdf(xmax | mu, sigma) - normal_cdf(xmin | mu, sigma));
+  }
+#+end_src
+
+#+begin_src R :exports none :results none
+  library(cmdstanr)
+  modelos_files <- "modelos/compilados/software"
+  ruta <- file.path("modelos/software/minmax.stan")
+  modelo <- cmdstan_model(ruta, dir = modelos_files)
+#+end_src
+
+#+begin_src R :exports code :results none
+  muestras <- modelo$sample(data = list(N = 10, xmin = 52, xmax = 84),
+                chains = 4,
+                iter = 1500,
+                iter_warmup = 500,
+                seed = 108727,
+                refresh = 500)
+#+end_src
+
+#+begin_src R :exports both :results org 
+  muestras$cmdstan_summary()
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+Inference for Stan model: minmax_model
+4 chains: each with iter=(1500,1500,1500,1500); warmup=(0,0,0,0); thin=(1,1,1,1); 6000 iterations saved.
+
+Warmup took (0.0070, 0.0070, 0.0070, 0.0060) seconds, 0.027 seconds total
+Sampling took (0.026, 0.022, 0.024, 0.023) seconds, 0.095 seconds total
+
+                Mean     MCSE  StdDev    5%   50%   95%    N_Eff  N_Eff/s    R_hat
+
+lp__             -11  2.3e-02     1.1   -13   -11 -10.0     2131    22435      1.0
+accept_stat__   0.92  8.8e-03    0.11  0.72  0.96   1.0  1.5e+02  1.6e+03  1.0e+00
+stepsize__      0.82  6.9e-02   0.098  0.74  0.79  0.99  2.0e+00  2.1e+01  2.4e+13
+treedepth__      2.1  1.2e-01    0.64   1.0   2.0   3.0  3.0e+01  3.2e+02  1.0e+00
+n_leapfrog__     4.2  3.6e-01     2.0   1.0   3.0   7.0  3.2e+01  3.3e+02  1.0e+00
+divergent__     0.00      nan    0.00  0.00  0.00  0.00      nan      nan      nan
+energy__          12  3.1e-02     1.5    10    12    15  2.1e+03  2.3e+04  1.0e+00
+
+mu                68  7.8e-02     4.7    60    68    76     3664    38567     1.00
+log_sigma        2.4  4.6e-03    0.27   2.0   2.4   2.8     3521    37068      1.0
+sigma             11  5.9e-02     3.3   7.1    11    17     3063    32243      1.0
+
+Samples were drawn using hmc with nuts.
+For each parameter, N_Eff is a crude measure of effective sample size,
+and R_hat is the potential scale reduction factor on split chains (at 
+convergence, R_hat=1).
+#+end_src
+
+#+begin_src R :exports both :results org 
+  muestras
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+  variable   mean median   sd  mad     q5   q95 rhat ess_bulk ess_tail
+ lp__      -11.01 -10.68 1.07 0.77 -13.20 -9.99 1.00     3886     4639
+ mu         68.12  68.18 4.68 4.47  60.46 75.65 1.00     6207     5125
+ log_sigma   2.38   2.36 0.27 0.27   1.96  2.86 1.00     6525     4679
+ sigma      11.22  10.60 3.31 2.80   7.13 17.45 1.00     6525     4679
+#+end_src
+
+#+begin_src R :exports code :results org 
+  muestras$draws(format = "df") |>
+    pivot_longer(cols = 2:4, names_to = "parameter") |>
+    group_by(parameter) |>
+    summarise(media = mean(value), std.dev = sd(value), error.mc = std.dev/(n()), samples = n())
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 3 × 5
+  parameter media std.dev  error.mc samples
+  <chr>     <dbl>   <dbl>     <dbl>   <int>
+1 log_sigma  2.38   0.272 0.0000453    6000
+2 mu        68.1    4.72  0.000786     6000
+3 sigma     11.2    3.28  0.000547     6000
+Warning message:
+Dropping 'draws_df' class as required metadata was removed.
+#+end_src
+
+* Usando ~PyMC~
+
+#+begin_src python :results none
+  import aesara.tensor as at
+  import arviz as az
+  import matplotlib.pyplot as plt
+  import numpy as np
+  import pymc as pm
+#+end_src
+
+#+begin_src python :exports both :results org
+  with pm.Model() as model:
+      mu = pm.Normal("mu", mu=0, sigma=1)
+      obs = pm.Normal("obs", mu=mu, sigma=1, observed=rng.standard_normal(100))
+      idata = pm.sample(2000)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+#+end_src
