@@ -27,7 +27,8 @@ minmaxpost <- function(theta, data){
   sigma <- exp(theta[2])
   dnorm(data$min, mu, sigma, log = TRUE) +
     dnorm(data$max, mu, sigma, log = TRUE) +
-    ((data$n - 2) * log(pnorm(data$max, mu, sigma) - pnorm(data$min, mu, sigma)))
+    ((data$n - 2) * log(pnorm(data$max, mu, sigma) -
+                        pnorm(data$min, mu, sigma)))
 }
 
 data <- list(n = 10, min = 52, max = 84)
@@ -60,11 +61,16 @@ muestras <- modelo$sample(data = list(N = 10, xmin = 52, xmax = 84),
               seed = 108727,
               refresh = 500)
 
-muestras$cmdstan_summary()
-
-muestras
+muestras$summary()
 
 muestras$draws(format = "df") |>
   pivot_longer(cols = 2:4, names_to = "parameter") |>
   group_by(parameter) |>
-  summarise(media = mean(value), std.dev = sd(value), error.mc = std.dev/(n()), samples = n())
+  summarise(media = mean(value), std.dev = sd(value),
+            error.mc = std.dev/(n()), samples = n())
+
+modelo$optimize(data = list(N = 10, xmin = 52, xmax = 84),
+                refresh = 0)$mle()
+
+modelo$variational(data = list(N = 10, xmin = 52, xmax = 84),
+                   refresh = 0, seed = 108727)

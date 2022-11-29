@@ -41,6 +41,7 @@
 :TOC:      :include all  :ignore this :depth 3
 :END:
 :CONTENTS:
+- [[#el-modelo][El modelo]]
 - [[#el-paquete-learnbayes][El paquete LearnBayes]]
   - [[#aproximación-normal-de-laplace][Aproximación Normal (de Laplace)]]
   - [[#muestreo-por-cadenas-de-markov][Muestreo por cadenas de Markov]]
@@ -74,9 +75,30 @@
   sin_ejes <- theme(axis.ticks = element_blank(), axis.text = element_blank())
 #+end_src
 
-* El paquete ~LearnBayes~
+* El modelo 
 
-Ejemplo tomado de las [[https://cran.r-project.org/web/packages/LearnBayes/vignettes/MCMCintro.pdf][viñetas de la librería]]. 
+Ejemplo tomado de las [[https://cran.r-project.org/web/packages/LearnBayes/vignettes/MCMCintro.pdf][viñetas de la librería]]. El problema es poder estimar los
+parámetros de un modelo Normal condicional en que sólo observamos los
+estadisticos de orden de una muestra de tamaño $N=10$.
+
+#+REVEAL: split
+La función de verosimilitud conjunta para el mínimo y el máximo puede probarse que se escribe como
+\begin{align}
+\pi(x_{(1)}, x_{(N)} | \mu, \sigma) \propto \phi(x_{(1)}|\theta) \, \phi(x_{(N)}|\theta) \, \left[\Phi(x_{(1)}|\theta) - \Phi (x_{(N)}|\theta)\right]^{N-2}\,,
+\end{align}
+donde $\phi(\cdot|\theta)$ denota la función de densidad de una $\mathsf{N}(\mu, \sigma)$. Es decir, $\theta \in \mathbb{R}^2$. 
+
+#+REVEAL: split
+El problema asume una función de densidad impropia para los parámetros /a priori/. Es decir,
+\begin{align}
+\pi(\theta)\propto 1\,,
+\end{align}
+en cualquier punto $\theta \in \Theta \subset \mathbb{R}^2$.
+
+#+REVEAL: split
+Nota que esta elección es una mala elección desde el punto de vista bayesiano. Pero nos deja en una situación donde el máximo de la distribución posterior coincide con el $\mathsf{MLE}$. 
+
+* El paquete ~LearnBayes~
 
 #+begin_src R :exports code :results none
   library(LearnBayes)
@@ -85,9 +107,12 @@ Ejemplo tomado de las [[https://cran.r-project.org/web/packages/LearnBayes/vigne
     sigma <- exp(theta[2])
     dnorm(data$min, mu, sigma, log = TRUE) +
       dnorm(data$max, mu, sigma, log = TRUE) +
-      ((data$n - 2) * log(pnorm(data$max, mu, sigma) - pnorm(data$min, mu, sigma)))
+      ((data$n - 2) * log(pnorm(data$max, mu, sigma) -
+                          pnorm(data$min, mu, sigma)))
   }
 #+end_src
+
+\newpage
 
 ** Aproximación Normal (de Laplace)
 
@@ -113,8 +138,6 @@ $int
 $converge
 [1] TRUE
 #+end_src
-
-\newpage
 
 ** Muestreo por cadenas de Markov
 
@@ -171,6 +194,7 @@ $converge
   }
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports none :results none
   library(cmdstanr)
   modelos_files <- "modelos/compilados/software"
@@ -178,6 +202,7 @@ $converge
   modelo <- cmdstan_model(ruta, dir = modelos_files)
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports code :results none
   muestras <- modelo$sample(data = list(N = 10, xmin = 52, xmax = 84),
                 chains = 4,
@@ -187,56 +212,29 @@ $converge
                 refresh = 500)
 #+end_src
 
+#+REVEAL: split
 #+begin_src R :exports both :results org 
-  muestras$cmdstan_summary()
+  muestras$summary()
 #+end_src
 
 #+RESULTS:
 #+begin_src org
-Inference for Stan model: minmax_model
-4 chains: each with iter=(1500,1500,1500,1500); warmup=(0,0,0,0); thin=(1,1,1,1); 6000 iterations saved.
-
-Warmup took (0.0070, 0.0070, 0.0070, 0.0060) seconds, 0.027 seconds total
-Sampling took (0.026, 0.022, 0.024, 0.023) seconds, 0.095 seconds total
-
-                Mean     MCSE  StdDev    5%   50%   95%    N_Eff  N_Eff/s    R_hat
-
-lp__             -11  2.3e-02     1.1   -13   -11 -10.0     2131    22435      1.0
-accept_stat__   0.92  8.8e-03    0.11  0.72  0.96   1.0  1.5e+02  1.6e+03  1.0e+00
-stepsize__      0.82  6.9e-02   0.098  0.74  0.79  0.99  2.0e+00  2.1e+01  2.4e+13
-treedepth__      2.1  1.2e-01    0.64   1.0   2.0   3.0  3.0e+01  3.2e+02  1.0e+00
-n_leapfrog__     4.2  3.6e-01     2.0   1.0   3.0   7.0  3.2e+01  3.3e+02  1.0e+00
-divergent__     0.00      nan    0.00  0.00  0.00  0.00      nan      nan      nan
-energy__          12  3.1e-02     1.5    10    12    15  2.1e+03  2.3e+04  1.0e+00
-
-mu                68  7.8e-02     4.7    60    68    76     3664    38567     1.00
-log_sigma        2.4  4.6e-03    0.27   2.0   2.4   2.8     3521    37068      1.0
-sigma             11  5.9e-02     3.3   7.1    11    17     3063    32243      1.0
-
-Samples were drawn using hmc with nuts.
-For each parameter, N_Eff is a crude measure of effective sample size,
-and R_hat is the potential scale reduction factor on split chains (at 
-convergence, R_hat=1).
+# A tibble: 4 × 10
+  variable    mean median    sd   mad     q5   q95  rhat ess_bulk ess_tail
+  <chr>      <dbl>  <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl>    <dbl>    <dbl>
+1 lp__      -11.0  -10.7  1.07  0.776 -13.2  -9.99  1.00    2348.    2474.
+2 mu         68.1   68.1  4.72  4.51   60.3  75.6   1.00    3749.    3021.
+3 log_sigma   2.38   2.37 0.272 0.266   1.96  2.85  1.00    3795.    2446.
+4 sigma      11.2   10.7  3.28  2.79    7.09 17.3   1.00    3795.    2446.
 #+end_src
 
-#+begin_src R :exports both :results org 
-  muestras
-#+end_src
-
-#+RESULTS:
-#+begin_src org
-  variable   mean median   sd  mad     q5   q95 rhat ess_bulk ess_tail
- lp__      -11.01 -10.68 1.07 0.77 -13.20 -9.99 1.00     3886     4639
- mu         68.12  68.18 4.68 4.47  60.46 75.65 1.00     6207     5125
- log_sigma   2.38   2.36 0.27 0.27   1.96  2.86 1.00     6525     4679
- sigma      11.22  10.60 3.31 2.80   7.13 17.45 1.00     6525     4679
-#+end_src
-
+#+REVEAL: split
 #+begin_src R :exports code :results org 
   muestras$draws(format = "df") |>
     pivot_longer(cols = 2:4, names_to = "parameter") |>
     group_by(parameter) |>
-    summarise(media = mean(value), std.dev = sd(value), error.mc = std.dev/(n()), samples = n())
+    summarise(media = mean(value), std.dev = sd(value),
+              error.mc = std.dev/(n()), samples = n())
 #+end_src
 
 #+RESULTS:
@@ -251,9 +249,40 @@ Warning message:
 Dropping 'draws_df' class as required metadata was removed.
 #+end_src
 
+#+REVEAL: split
+#+begin_src R :exports both :results org 
+  modelo$optimize(data = list(N = 10, xmin = 52, xmax = 84),
+                  refresh = 0)$mle()
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+Finished in  0.1 seconds.
+       mu log_sigma     sigma 
+   68.000     2.298     9.958
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports both :results org 
+  modelo$variational(data = list(N = 10, xmin = 52, xmax = 84),
+                     refresh = 0, seed = 108727)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+Finished in  0.1 seconds.
+    variable   mean median    sd   mad     q5    q95
+ lp__        -29.11 -28.86  2.99  2.63 -34.18 -24.90
+ lp_approx__  -0.99  -0.67  0.96  0.68  -2.92  -0.06
+ mu            4.32   4.80 19.60 20.40 -27.98  35.38
+ log_sigma     4.28   4.27  0.24  0.24   3.88   4.70
+ sigma        74.59  71.76 18.47 16.96  48.43 109.69
+#+end_src
+
+
 * Usando ~PyMC~
 
-#+begin_src python :results none :tangle ../pyscripts/10-software.py :session pymc.tutorial
+#+begin_src python :results none :tangle ../pyscripts/10-software.py :session pymc.tutorial :eval never
   import aesara.tensor as at
   import arviz as az
   import matplotlib.pyplot as plt
@@ -261,19 +290,20 @@ Dropping 'draws_df' class as required metadata was removed.
   import pymc as pm
   import scipy.stats as stats
 
-  RANDOM_SEED = 108727
+x  RANDOM_SEED = 108727
   rng = np.random.default_rng(RANDOM_SEED)
 #+end_src
 
-#+begin_src python :tangle ../pyscripts/10-software.py :session pymc.tutorial :exports code :results none
+#+REVEAL: split
+#+begin_src python :tangle ../pyscripts/10-software.py :session pymc.tutorial :exports code :results none :eval never
   def minmaxpost(base, *args):
       loglik = pm.logp(base, 52) + pm.logp(base, 84) + (10 - 2) * \
                at.log(at.exp(pm.logcdf(base, 84)) - at.exp(pm.logcdf(base, 52)))
       return loglik
 #+end_src
 
-
-#+begin_src python :tangle ../pyscripts/10-software.py :session pymc.tutorial :exports both :results output org
+#+REVEAL: split
+#+begin_src python :tangle ../pyscripts/10-software.py :session pymc.tutorial :exports both :results output org :eval never
   with pm.Model() as model:
       mu=pm.Normal("mu", 0, 100);
       sigma=pm.HalfNormal("sigma", 100);
@@ -285,26 +315,32 @@ Dropping 'draws_df' class as required metadata was removed.
 
 #+RESULTS:
 #+begin_src org
-Only 100 samples in chain.
 Auto-assigning NUTS sampler...
+INFO:pymc:Auto-assigning NUTS sampler...
 Initializing NUTS using jitter+adapt_diag...
+INFO:pymc:Initializing NUTS using jitter+adapt_diag...
 Multiprocess sampling (4 chains in 4 jobs)
-NUTS: [mu, sigma, base]
-Sampling 4 chains for 1_000 tune and 100 draw iterations (4_000 + 400 draws total) took 13 seconds.
+INFO:pymc:Multiprocess sampling (4 chains in 4 jobs)
+NUTS: [mu, sigma, observations]
+INFO:pymc:NUTS: [mu, sigma, observations]
+Sampling 4 chains for 1_000 tune and 1_500 draw iterations (4_000 + 6_000 draws total) took 15 seconds.
+INFO:pymc:Sampling 4 chains for 1_000 tune and 1_500 draw iterations (4_000 + 6_000 draws total) took 15 seconds.
 #+end_src
 
-#+begin_src python :tangle ../pyscripts/10-software.py :session pymc.tutorial :exports both :results value org
+#+REVEAL: split
+#+begin_src python :tangle ../pyscripts/10-software.py :session pymc.tutorial :exports both :results value org 
   az.summary(idata)
 #+end_src
 
 #+RESULTS:
 #+begin_src org
                 mean      sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
-mu            67.863   4.962  58.700   77.389      0.081    0.058    3784.0    3820.0    1.0
-observations  67.801  13.093  42.980   92.105      0.209    0.149    4033.0    3783.0    1.0
-sigma         11.985   3.738   6.098   18.370      0.062    0.044    3784.0    3615.0    1.0
+mu            67.804   4.753  58.896   76.598      0.078    0.055    3717.0    3940.0    1.0
+observations  67.712  13.394  41.090   92.514      0.237    0.170    3269.0    3371.0    1.0
+sigma         12.021   3.701   6.551   19.093      0.071    0.051    2978.0    3534.0    1.0
 #+end_src
 
+#+REVEAL: split
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
