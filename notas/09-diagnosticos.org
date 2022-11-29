@@ -17,7 +17,7 @@
 #+REVEAL_PLUGINS: (notes)
 :END:
 #+EXCLUDE_TAGS: toc latex
-#+PROPERTY: header-args:R :session diagnosticos :exports both :results output org :tangle ../rscripts/09-diagnosticos.R :mkdirp yes :dir ../ :eval never
+#+PROPERTY: header-args:R :session diagnosticos :exports both :results output org :tangle ../rscripts/09-diagnosticos.R :mkdirp yes :dir ../
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | Diagnósticos MCMC.\\

@@ -339,3 +339,4 @@ TSWLatexianTemp*
 ltximg*
 .DS_Store
 *.html
+/modelos/compilados/

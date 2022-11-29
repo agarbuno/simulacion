@@ -1,0 +1,346 @@
+#+TITLE: EST-24107: Simulación
+#+AUTHOR: Prof. Alfredo Garbuno Iñigo
+#+EMAIL:  agarbuno@itam.mx
+#+DATE: ~Software para MCMC~
+:LATEX_PROPERTIES:
+#+OPTIONS: toc:nil date:nil author:nil tasks:nil
+#+LANGUAGE: sp
+#+LATEX_CLASS: handout
+#+LATEX_HEADER: \usepackage[spanish]{babel}
+#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
+#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
+#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
+#+LATEX_HEADER: \decimalpoint
+#+LATEX_HEADER:\usepackage{framed}
+#+LaTeX_HEADER: \usepackage{listings}
+#+LATEX_HEADER: \usepackage{fancyvrb}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
+#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
+#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
+#+LaTeX_HEADER: {}
+#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
+#+LaTeX_HEADER: {}
+#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
+#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
+#+EXPORT_FILE_NAME: ../docs/10-software.pdf
+:END:
+#+STARTUP: showall
+#+PROPERTY: header-args:R :session software :exports both :results output org :tangle ../rscripts/10-software.R :mkdirp yes :dir ../ :eval never
+#+EXCLUDE_TAGS: toc
+
+#+BEGIN_NOTES
+*Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | /Software/ de muestreo (intro).\\
+*Objetivo*: Este sesión está pensada para ver en /acción/ alguno de los paquetes de recién creación y versatilidad para realizar modelos de muestreo por cadenas de Markov para realizar estimaciones Monte Carlo.\\
+*Lectura recomendada*: Los tutoriales introductorios para los paquetes de /software/ son muy buenos; tanto el de ~Stan~ citep:Carpenter2017 como el de ~PyMC~ citep:Salvatier2016. 
+#+END_NOTES
+
+
+* Contenido                                                             :toc:
+:PROPERTIES:
+:TOC:      :include all  :ignore this :depth 3
+:END:
+:CONTENTS:
+- [[#el-modelo][El modelo]]
+- [[#el-paquete-learnbayes][El paquete LearnBayes]]
+  - [[#aproximación-normal-de-laplace][Aproximación Normal (de Laplace)]]
+  - [[#muestreo-por-cadenas-de-markov][Muestreo por cadenas de Markov]]
+    - [[#estimación-monte-carlo][Estimación Monte Carlo]]
+- [[#usando-stan-desde-r][Usando Stan desde R]]
+- [[#usando-pymc][Usando PyMC]]
+:END:
+
+#+begin_src R :exports none :results none
+  ## Setup --------------------------------------------
+  library(tidyverse)
+  library(patchwork)
+  library(scales)
+
+  ## Cambia el default del tamaño de fuente 
+  theme_set(theme_linedraw(base_size = 25))
+
+  ## Cambia el número de decimales para mostrar
+  options(digits = 4)
+  ## Problemas con mi consola en Emacs
+  options(pillar.subtle = FALSE)
+  options(rlang_backtrace_on_error = "none")
+  options(crayon.enabled = FALSE)
+
+  ## Para el tema de ggplot
+  sin_lineas <- theme(panel.grid.major = element_blank(),
+                      panel.grid.minor = element_blank())
+  color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
+
+  sin_leyenda <- theme(legend.position = "none")
+  sin_ejes <- theme(axis.ticks = element_blank(), axis.text = element_blank())
+#+end_src
+
+* El modelo 
+
+Ejemplo tomado de las [[https://cran.r-project.org/web/packages/LearnBayes/vignettes/MCMCintro.pdf][viñetas de la librería]]. El problema es poder estimar los
+parámetros de un modelo Normal condicional en que sólo observamos los
+estadisticos de orden de una muestra de tamaño $N=10$.
+
+#+REVEAL: split
+La función de verosimilitud conjunta para el mínimo y el máximo puede probarse que se escribe como
+\begin{align}
+\pi(x_{(1)}, x_{(N)} | \mu, \sigma) \propto \phi(x_{(1)}|\theta) \, \phi(x_{(N)}|\theta) \, \left[\Phi(x_{(1)}|\theta) - \Phi (x_{(N)}|\theta)\right]^{N-2}\,,
+\end{align}
+donde $\phi(\cdot|\theta)$ denota la función de densidad de una $\mathsf{N}(\mu, \sigma)$. Es decir, $\theta \in \mathbb{R}^2$. 
+
+#+REVEAL: split
+El problema asume una función de densidad impropia para los parámetros /a priori/. Es decir,
+\begin{align}
+\pi(\theta)\propto 1\,,
+\end{align}
+en cualquier punto $\theta \in \Theta \subset \mathbb{R}^2$.
+
+#+REVEAL: split
+Nota que esta elección es una mala elección desde el punto de vista bayesiano. Pero nos deja en una situación donde el máximo de la distribución posterior coincide con el $\mathsf{MLE}$. 
+
+* El paquete ~LearnBayes~
+
+#+begin_src R :exports code :results none
+  library(LearnBayes)
+  minmaxpost <- function(theta, data){
+    mu <- theta[1]
+    sigma <- exp(theta[2])
+    dnorm(data$min, mu, sigma, log = TRUE) +
+      dnorm(data$max, mu, sigma, log = TRUE) +
+      ((data$n - 2) * log(pnorm(data$max, mu, sigma) -
+                          pnorm(data$min, mu, sigma)))
+  }
+#+end_src
+
+\newpage
+
+** Aproximación Normal (de Laplace)
+
+#+begin_src R :exports both :results org
+  data <- list(n = 10, min = 52, max = 84)
+  fit  <- laplace(minmaxpost, c(70, 2), data)
+  fit
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+$mode
+[1] 68.000  2.298
+
+$var
+           [,1]       [,2]
+[1,]  1.921e+01 -1.901e-06
+[2,] -1.901e-06  6.032e-02
+
+$int
+[1] -8.02
+
+$converge
+[1] TRUE
+#+end_src
+
+** Muestreo por cadenas de Markov
+
+#+begin_src R :exports code :results none 
+  mcmc.fit <- rwmetrop(minmaxpost,
+                       list(var = fit$v, scale = 3),
+                       c(70, 2),
+                       10000,
+                       data)
+#+end_src
+
+#+begin_src R :exports both :results org
+  mcmc.fit$accept
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 0.1735
+#+end_src
+
+*** Estimación Monte Carlo
+
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/cuantil-superior.jpeg :exports results :results output graphics file
+  mu.samp <- mcmc.fit$par[, 1]
+  sigma.samp <- exp(mcmc.fit$par[, 2])
+  tibble(cuantil = mu.samp + 0.674 * sigma.samp) |>
+    ggplot(aes(cuantil)) +
+    geom_histogram() + sin_lineas
+#+end_src
+
+#+RESULTS:
+[[file:../images/cuantil-superior.jpeg]]
+
+* Usando ~Stan~ desde ~R~
+
+#+begin_src stan :tangle ../modelos/software/minmax.stan
+  data {
+    real xmin;
+    real xmax;
+    int N;
+  }
+  parameters {
+    real mu;
+    real log_sigma; 
+  }
+  transformed parameters {
+    real sigma = exp(log_sigma);
+  }
+  model {
+    target += normal_lpdf(xmin | mu, sigma); 
+    target += normal_lpdf(xmax | mu, sigma);
+    target += (N-2) * log(normal_cdf(xmax | mu, sigma) - normal_cdf(xmin | mu, sigma));
+  }
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports none :results none
+  library(cmdstanr)
+  modelos_files <- "modelos/compilados/software"
+  ruta <- file.path("modelos/software/minmax.stan")
+  modelo <- cmdstan_model(ruta, dir = modelos_files)
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  muestras <- modelo$sample(data = list(N = 10, xmin = 52, xmax = 84),
+                chains = 4,
+                iter = 1500,
+                iter_warmup = 500,
+                seed = 108727,
+                refresh = 500)
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports both :results org 
+  muestras$summary()
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 4 × 10
+  variable    mean median    sd   mad     q5   q95  rhat ess_bulk ess_tail
+  <chr>      <dbl>  <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl>    <dbl>    <dbl>
+1 lp__      -11.0  -10.7  1.07  0.776 -13.2  -9.99  1.00    2348.    2474.
+2 mu         68.1   68.1  4.72  4.51   60.3  75.6   1.00    3749.    3021.
+3 log_sigma   2.38   2.37 0.272 0.266   1.96  2.85  1.00    3795.    2446.
+4 sigma      11.2   10.7  3.28  2.79    7.09 17.3   1.00    3795.    2446.
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results org 
+  muestras$draws(format = "df") |>
+    pivot_longer(cols = 2:4, names_to = "parameter") |>
+    group_by(parameter) |>
+    summarise(media = mean(value), std.dev = sd(value),
+              error.mc = std.dev/(n()), samples = n())
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 3 × 5
+  parameter media std.dev  error.mc samples
+  <chr>     <dbl>   <dbl>     <dbl>   <int>
+1 log_sigma  2.38   0.272 0.0000453    6000
+2 mu        68.1    4.72  0.000786     6000
+3 sigma     11.2    3.28  0.000547     6000
+Warning message:
+Dropping 'draws_df' class as required metadata was removed.
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports both :results org 
+  modelo$optimize(data = list(N = 10, xmin = 52, xmax = 84),
+                  refresh = 0)$mle()
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+Finished in  0.1 seconds.
+       mu log_sigma     sigma 
+   68.000     2.298     9.958
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports both :results org 
+  modelo$variational(data = list(N = 10, xmin = 52, xmax = 84),
+                     refresh = 0, seed = 108727)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+Finished in  0.1 seconds.
+    variable   mean median    sd   mad     q5    q95
+ lp__        -29.11 -28.86  2.99  2.63 -34.18 -24.90
+ lp_approx__  -0.99  -0.67  0.96  0.68  -2.92  -0.06
+ mu            4.32   4.80 19.60 20.40 -27.98  35.38
+ log_sigma     4.28   4.27  0.24  0.24   3.88   4.70
+ sigma        74.59  71.76 18.47 16.96  48.43 109.69
+#+end_src
+
+
+* Usando ~PyMC~
+
+#+begin_src python :results none :tangle ../pyscripts/10-software.py :session pymc.tutorial :eval never
+  import aesara.tensor as at
+  import arviz as az
+  import matplotlib.pyplot as plt
+  import numpy as np
+  import pymc as pm
+  import scipy.stats as stats
+
+x  RANDOM_SEED = 108727
+  rng = np.random.default_rng(RANDOM_SEED)
+#+end_src
+
+#+REVEAL: split
+#+begin_src python :tangle ../pyscripts/10-software.py :session pymc.tutorial :exports code :results none :eval never
+  def minmaxpost(base, *args):
+      loglik = pm.logp(base, 52) + pm.logp(base, 84) + (10 - 2) * \
+               at.log(at.exp(pm.logcdf(base, 84)) - at.exp(pm.logcdf(base, 52)))
+      return loglik
+#+end_src
+
+#+REVEAL: split
+#+begin_src python :tangle ../pyscripts/10-software.py :session pymc.tutorial :exports both :results output org :eval never
+  with pm.Model() as model:
+      mu=pm.Normal("mu", 0, 100);
+      sigma=pm.HalfNormal("sigma", 100);
+      base=pm.Normal("observations", mu, sigma)
+      like=pm.Potential("likelihood", minmaxpost(base))
+
+      idata=pm.sample(1500, progressbar = False)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+Auto-assigning NUTS sampler...
+INFO:pymc:Auto-assigning NUTS sampler...
+Initializing NUTS using jitter+adapt_diag...
+INFO:pymc:Initializing NUTS using jitter+adapt_diag...
+Multiprocess sampling (4 chains in 4 jobs)
+INFO:pymc:Multiprocess sampling (4 chains in 4 jobs)
+NUTS: [mu, sigma, observations]
+INFO:pymc:NUTS: [mu, sigma, observations]
+Sampling 4 chains for 1_000 tune and 1_500 draw iterations (4_000 + 6_000 draws total) took 15 seconds.
+INFO:pymc:Sampling 4 chains for 1_000 tune and 1_500 draw iterations (4_000 + 6_000 draws total) took 15 seconds.
+#+end_src
+
+#+REVEAL: split
+#+begin_src python :tangle ../pyscripts/10-software.py :session pymc.tutorial :exports both :results value org 
+  az.summary(idata)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+                mean      sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+mu            67.804   4.753  58.896   76.598      0.078    0.055    3717.0    3940.0    1.0
+observations  67.712  13.394  41.090   92.514      0.237    0.170    3269.0    3371.0    1.0
+sigma         12.021   3.701   6.551   19.093      0.071    0.051    2978.0    3534.0    1.0
+#+end_src
+
+#+REVEAL: split
+
+bibliographystyle:abbrvnat
+bibliography:references.bib
