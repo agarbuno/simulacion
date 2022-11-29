@@ -2,9 +2,52 @@
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Software para MCMC~
+:LATEX_PROPERTIES:
+#+OPTIONS: toc:nil date:nil author:nil tasks:nil
+#+LANGUAGE: sp
+#+LATEX_CLASS: handout
+#+LATEX_HEADER: \usepackage[spanish]{babel}
+#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
+#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
+#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
+#+LATEX_HEADER: \decimalpoint
+#+LATEX_HEADER:\usepackage{framed}
+#+LaTeX_HEADER: \usepackage{listings}
+#+LATEX_HEADER: \usepackage{fancyvrb}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
+#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
+#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
+#+LaTeX_HEADER: {}
+#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
+#+LaTeX_HEADER: {}
+#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
+#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
+#+EXPORT_FILE_NAME: ../docs/10-software.pdf
+:END:
 #+STARTUP: showall
-#+PROPERTY: header-args:R :session software :exports both :results output org :tangle ../rscripts/10-software.R :mkdirp yes :dir ../
-#+PROPERY: header-args:python :session pymc-soft :exports both :results output org :tangle ../pyscripts/10-software.py
+#+PROPERTY: header-args:R :session software :exports both :results output org :tangle ../rscripts/10-software.R :mkdirp yes :dir ../ :eval never
+#+EXCLUDE_TAGS: toc
+
+#+BEGIN_NOTES
+*Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | /Software/ de muestreo (intro).\\
+*Objetivo*: Este sesión está pensada para ver en /acción/ alguno de los paquetes de recién creación y versatilidad para realizar modelos de muestreo por cadenas de Markov para realizar estimaciones Monte Carlo.\\
+*Lectura recomendada*: Los tutoriales introductorios para los paquetes de /software/ son muy buenos; tanto el de ~Stan~ citep:Carpenter2017 como el de ~PyMC~ citep:Salvatier2016. 
+#+END_NOTES
+
+
+* Contenido                                                             :toc:
+:PROPERTIES:
+:TOC:      :include all  :ignore this :depth 3
+:END:
+:CONTENTS:
+- [[#el-paquete-learnbayes][El paquete LearnBayes]]
+  - [[#aproximación-normal-de-laplace][Aproximación Normal (de Laplace)]]
+  - [[#muestreo-por-cadenas-de-markov][Muestreo por cadenas de Markov]]
+    - [[#estimación-monte-carlo][Estimación Monte Carlo]]
+- [[#usando-stan-desde-r][Usando Stan desde R]]
+- [[#usando-pymc][Usando PyMC]]
+:END:
 
 #+begin_src R :exports none :results none
   ## Setup --------------------------------------------
@@ -70,6 +113,8 @@ $int
 $converge
 [1] TRUE
 #+end_src
+
+\newpage
 
 ** Muestreo por cadenas de Markov
 
@@ -208,21 +253,58 @@ Dropping 'draws_df' class as required metadata was removed.
 
 * Usando ~PyMC~
 
-#+begin_src python :results none
+#+begin_src python :results none :tangle ../pyscripts/10-software.py :session pymc.tutorial
   import aesara.tensor as at
   import arviz as az
   import matplotlib.pyplot as plt
   import numpy as np
   import pymc as pm
+  import scipy.stats as stats
+
+  RANDOM_SEED = 108727
+  rng = np.random.default_rng(RANDOM_SEED)
 #+end_src
 
-#+begin_src python :exports both :results org
+#+begin_src python :tangle ../pyscripts/10-software.py :session pymc.tutorial :exports code :results none
+  def minmaxpost(base, *args):
+      loglik = pm.logp(base, 52) + pm.logp(base, 84) + (10 - 2) * \
+               at.log(at.exp(pm.logcdf(base, 84)) - at.exp(pm.logcdf(base, 52)))
+      return loglik
+#+end_src
+
+
+#+begin_src python :tangle ../pyscripts/10-software.py :session pymc.tutorial :exports both :results output org
   with pm.Model() as model:
-      mu = pm.Normal("mu", mu=0, sigma=1)
-      obs = pm.Normal("obs", mu=mu, sigma=1, observed=rng.standard_normal(100))
-      idata = pm.sample(2000)
+      mu=pm.Normal("mu", 0, 100);
+      sigma=pm.HalfNormal("sigma", 100);
+      base=pm.Normal("observations", mu, sigma)
+      like=pm.Potential("likelihood", minmaxpost(base))
+
+      idata=pm.sample(1500, progressbar = False)
 #+end_src
 
 #+RESULTS:
 #+begin_src org
+Only 100 samples in chain.
+Auto-assigning NUTS sampler...
+Initializing NUTS using jitter+adapt_diag...
+Multiprocess sampling (4 chains in 4 jobs)
+NUTS: [mu, sigma, base]
+Sampling 4 chains for 1_000 tune and 100 draw iterations (4_000 + 400 draws total) took 13 seconds.
 #+end_src
+
+#+begin_src python :tangle ../pyscripts/10-software.py :session pymc.tutorial :exports both :results value org
+  az.summary(idata)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+                mean      sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+mu            67.863   4.962  58.700   77.389      0.081    0.058    3784.0    3820.0    1.0
+observations  67.801  13.093  42.980   92.105      0.209    0.149    4033.0    3783.0    1.0
+sigma         11.985   3.738   6.098   18.370      0.062    0.044    3784.0    3615.0    1.0
+#+end_src
+
+
+bibliographystyle:abbrvnat
+bibliography:references.bib
