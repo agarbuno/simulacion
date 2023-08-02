@@ -1,6 +1,7 @@
 {
     "files.associations": {
-        "*.Rmd": "rmd"
+        "*.Rmd": "rmd",
+        "*.rmd": "rmd"
     },
     "terminal.integrated.defaultProfile.linux": "zsh",
     "editor.fontFamily": "'FiraCodeNerdFontCompleteM-Retina', 'Fira Code', Menlo, Monaco, 'Courier New', monospace",
@@ -10,6 +11,10 @@
     "r.bracketedPaste": false,
     "editor.renderWhitespace": "none",
     "diffEditor.ignoreTrimWhitespace": false,
-    "editor.minimap.enabled": false, 
-    "r.plot.useHttpgd": true
+    "editor.minimap.enabled": false,
+    "r.plot.useHttpgd": true,
+    "editor.renderLineHighlight": "all",
+    // "workbench.colorCustomizations": {
+        // "editor.lineHighlightBackground": "#E8E8E8",
+    // }
 }
