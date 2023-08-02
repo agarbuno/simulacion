@@ -44,7 +44,7 @@ RUN mkdir -p  $RENV_PATHS_ROOT
 COPY renv.lock renv.lock
 COPY .Rprofile .Rprofile
 COPY renv/activate.R renv/activate.R
-COPY renv/settings.dcf renv/settings.dcf
+COPY renv/settings.json renv/settings.json
 RUN install2.r --error rmarkdown languageserver
 
 RUN R -e "renv::restore()"
