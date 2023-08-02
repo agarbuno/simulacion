@@ -5,6 +5,7 @@ MAINTAINER Alfredo Garbuno Iñigo "alfredo.garbuno@itam.mx"
 ENV RSTUDIO_USER rstudio
 ENV TARGET_DIR ""
 ENV RUNNING_IN_DOCKER true
+ENV RENV_CONFIG_SANDBOX_ENABLED false
 ENV CMDSTAN /root/.cmdstan
 
 # Lets declare the work directory ==============================================
