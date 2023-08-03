@@ -1,31 +1,7 @@
-#+TITLE: EST-24107: Simulación 
+#+TITLE: EST-24107: Simulacion 
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Introducción~ 
-:REVEAL_PROPERTIES:
-# Template uses citeproc export with export option <v b>
-#+LANGUAGE: es
-#+OPTIONS: num:nil toc:nil 
-#+OPTIONS: reveal_slide_number:nil 
-#+OPTIONS: reveal_history:t reveal_fragmentinurl:t
-#+OPTIONS: reveal_mousewheel:t reveal_inter_presentation_links:t
-#+OPTIONS: reveal_width:1600 reveal_height:900
-#+OPTIONS: timestamp:nil
-
-#+REVEAL_THEME: night
-#+REVEAL_MARGIN: .2
-#+REVEAL_TRANS: slide
-#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulacion">
-#+REVEAL_ROOT: https://cdn.jsdelivr.net/npm/reveal.js
-#+REVEAL_VERSION: 4
-
-#+REVEAL_SLIDE_NUMBER: t
-#+REVEAL_PLUGINS: (notes)
-#+REVEAL_EXTRA_CSS: mods-citeproc.css
-
-#+bibliography: ./references.bib
-#+cite_export: csl
-:END:
 :LATEX_PROPERTIES:
 #+OPTIONS: toc:nil date:nil author:nil tasks:nil
 #+LANGUAGE: sp
@@ -35,7 +11,7 @@
 #+LATEX_HEADER: \usepackage[utf8]{inputenc} 
 #+LATEX_HEADER: \usepackage[capitalize]{cleveref}
 #+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
+#+LATEX_HEADER: \usepackage{framed}
 #+LaTeX_HEADER: \usepackage{listings}
 #+LATEX_HEADER: \usepackage{fancyvrb}
 #+LATEX_HEADER: \usepackage{xcolor}
@@ -47,14 +23,14 @@
 #+LaTeX_HEADER: {}
 #+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
 #+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
-#+EXPORT_FILE_NAME: ../docs/00-introduccion.pdf
+#+EXPORT_FILE_NAME: ../docs/00-introduction.pdf
 :END:
 #+STARTUP: showall
-#+PROPERTY: header-args:R :session introduccion :exports both :results output org :tangle ../rscripts/00-introduccion.R :mkdirp yes :dir ../
+#+PROPERTY: header-args:R :session introduccion :exports both :results output org :tangle ../rscripts/00-introduccion.R :mkdirp yes :dir ../ :eval never
 #+EXCLUDE_TAGS: toc latex
 
 #+BEGIN_NOTES
-*Profesor*: Alfredo Garbuno Iñigo | Otoño, 2022 | Introducción.\\
+*Profesor*: Alfredo Garbuno Iñigo | Otoño, 2023 | Introducción.\\
 *Objetivo*: Estableceremos una idea general del alcance del curso. Esto nos llevará a encuadrar ciertos conceptos de simulación con el objetivo de cuantificar incertidumbre.\\
 *Lectura recomendada*: El capítulo 1 de citet:Sullivan2015 brinda una introducción al área de cuantificación de incertidumbre (UQ). Los capítulos 1--4 de citet:Smith2013 tienen una bonita discusión (y un repaso) que sintoniza muy bien con lo expuesto en estas notas. El capítulo 1 de [[citet:&Hennig2022]] tiene una discusión interesante sobre el uso de simulación estocástica como proceso de cómputo numérico.
 #+END_NOTES
@@ -100,7 +76,6 @@
   - [[#teorema-ley-de-los-grandes-números][~Teorema~ [Ley de los Grandes Números]:]]
   - [[#teorema-límite-central][~Teorema~ [Límite Central]:]]
 - [[#conclusiones][Conclusiones]]
-- [[#referencias][Referencias]]
 :END:
 
 * Motivación 
@@ -122,10 +97,10 @@ medio de ecuaciones diferenciales. Estas ecuaciones son un modelo matemático y
 la única manera que tenemos de resolverlas es por medio de métodos numéricos (ver [[fig:gcm]]).
 
 #+DOWNLOADED: screenshot @ 2022-06-25 22:24:50
-#+name: fig:gcm
 #+caption: Imagen tomada de citep:Smith2013. 
 #+attr_html: :width 700 :align center
 #+attr_latex: :width .65\linewidth
+#+name: fig:gcm
 [[file:../images/20220625-222450_screenshot.png]]
 
 #+BEGIN_NOTES
@@ -152,7 +127,6 @@ Por medio de herramientas computacionales podemos generar una colección de
 y conocer la ~dispersión~ alrededor de este promedio. 
 
 #+DOWNLOADED: screenshot @ 2022-06-27 10:57:29
-#+name: fig:mean-trajectory 
 #+caption: Imagen tomada de citep:Smith2013. 
 #+attr_html: :width 700 :align center
 #+attr_latex: :width .45\linewidth
@@ -180,6 +154,7 @@ En resumen, los métodos que veremos en el curso serán su primera aproximación
 para resolver estos problemas con ~énfasis en los algoritmos~ y la ~formulación
 basada en probabilidad~.
 
+
 * Formulación 
 
 Abordaremos el tipo de problemas descrito anteriormente con un poco de notación
@@ -187,7 +162,7 @@ general.  Denotaremos por $z$ al resultado del fenómeno que nos interesa
 modelar. Nuestro conocimiento científico nos permite modelar dicho fenómeno a
 través de una abstracción la cual denotaremos por $f: X \rightarrow Z$ de tal forma que
 \begin{align}
-f(x) \approx z\,.
+z \approx f(x) \,.
 \end{align}
 Esto nos permite hacer énfasis en que nuestro modelo matemático empata a la
 realidad hasta ~cierto nivel de precisión~. Por otro lado, utilizamos el supuesto
@@ -218,35 +193,12 @@ Estos parámetros usualmente se ajustan de
 acuerdo a algún criterio o procedimiento de inferencia. En este sentido nuestro
 modelo lo podemos abstraer como
 \begin{align}
-f(x ; \theta) \approx z\,,
+z \approx f(x ; \theta) \,,
 \end{align}
 donde $f: X \times \Theta \rightarrow Z$ y pensamos que existe una configuración
 de $\theta$ --- que muchas veces le llamamos $\theta^\star$ --- que acerca
-nuestra $f$ lo mas posible$^\dagger$ al fenómeno que nos interesa. Por ejemplo,
-distintas configuraciones de $\theta$ generan distintas trayectorias planetarias
-como se muestra en la [[fig:planets]].
-
-#+REVEAL: split
-Por último, consideremos que los registros de las posiciones de los planetas no
-son exactas. Esto se debe a que nuestras mediciones están sujetas al error de
-nuestros instrumentos de medición o registro.
-
-#+DOWNLOADED: screenshot @ 2022-06-27 17:25:22
-#+name: fig:planets
-#+caption: Configuraciones distintas del sistema de movimiento planetario. Ejemplo tomado de una formulación estadística en la [[https://mc-stan.org/users/documentation/case-studies/planetary_motion/planetary_motion.html][documentación de Stan]]. 
-#+attr_html: :width 700 :align center
-[[file:../images/20220627-172522_screenshot.png]]
-
-#+REVEAL: split
-Entonces, la precisión con la que nuestro modelo puede aproximar la realidad,
-esto es la diferencia o ~la discrepancia~ entre modelo y realidad, se debe a la
-~incertidumbre~ inherente en nuestro proceso de modelado. Dicha incertidumbre la
-podemos considerar como consecuencia de dos tipos:
-
-#+REVEAL: split
-1. ~Incertidumbre aleatoria~: también conocida como incertidumbre estadística,
-   estocástica o irreducible. Se refiere a la incertidumbre que es natural para nuestro
-   proceso y que no podemos reducir por medio de un mejor modelo.
+proceso y que no podemos reducir por medio de un mejor modelo.
+   
 2. ~Incertidumbre epistémica~: se refiere a la incertidumbre derivada de nuestra
    simplificación del problema, nuestro estado de conocimiento o supuestos. En
    algunas ocasiones está asociada a los métodos numéricos con los que
@@ -293,6 +245,7 @@ permitirá cuantificar la incertidumbre epistémica. Sin embargo, también verem
 en este curso que con herramientas probabilísticas podemos cuantificar ciertas
 nociones de incertidumbre de ambos tipos.
 
+
 * Notación
 
 Denotamos por $x$ una ~variable aleatoria~ y por $\mathbb{P}(\cdot)$ una ~función
@@ -310,7 +263,6 @@ o bien, haremos énfasis en la distribución por medio de lo siguiente
 \end{align}
 de acuerdo al contexto. 
 
-# \medskip
 
 #+BEGIN_NOTES
 Nota que en las ecuaciones anteriores estamos considerando el término
@@ -437,12 +389,3 @@ Las ventajas de esta metodología (simulación estocástica) son:
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
-
-
-* Referencias                                                    :latex:
-:PROPERTIES:
-:CUSTOM_ID: bibliography
-:END:
-
-#+print_bibliography:
-
