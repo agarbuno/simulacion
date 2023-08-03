@@ -15,7 +15,7 @@
 *Objetivo*: Estableceremos una idea general del alcance del curso. Esto nos llevará a encuadrar ciertos conceptos de simulación con el objetivo de cuantificar incertidumbre.\\
 *Lectura recomendada*: El capítulo 1 de citet:Sullivan2015 brinda una introducción al área de cuantificación de incertidumbre (UQ). Los capítulos 1--4 de citet:Smith2013 tienen una bonita discusión (y un repaso) que sintoniza muy bien con lo expuesto en estas notas. El capítulo 1 de [[citet:&Hennig2022]] tiene una discusión interesante sobre el uso de simulación estocástica como proceso de cómputo numérico.
 #+END_NOTES
- 
+
 #+begin_src R :exports none :results none
   ## Setup --------------------------------------------
   library(tibble)
@@ -29,12 +29,14 @@
   theme_set(theme_linedraw(base_size = 25))
 
   ## Cambia el número de decimales para mostrar
-  options(digits = 2)
+  options(digits = 4)
+  ## Problemas con mi consola en Emacs
+  options(pillar.subtle = FALSE)
+  options(rlang_backtrace_on_error = "none")
+  options(crayon.enabled = FALSE)
 
-  sin_lineas <- theme(panel.grid.major = element_blank(),
-                      panel.grid.minor = element_blank())
+  ## Auxiliares para graficos
   color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
-
   sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   sin_leyenda <- theme(legend.position = "none")
   sin_ejes <- theme(axis.ticks = element_blank(), axis.text = element_blank())
@@ -50,12 +52,6 @@
 - [[#formulación][Formulación]]
 - [[#notación][Notación]]
 - [[#repaso-de-probabilidad][Repaso de probabilidad]]
-  - [[#definición-espacio-de-probabilidad][~Definición~ [Espacio de Probabilidad]:]]
-  - [[#definición-variable-aleatoria][~Definición~ [Variable aleatoria]:]]
-  - [[#definición-función-de-acumulación][~Definición~ [Función de acumulación]:]]
-  - [[#definición-función-de-densidad][~Definición~ [Función de densidad]:]]
-  - [[#teorema-ley-de-los-grandes-números][~Teorema~ [Ley de los Grandes Números]:]]
-  - [[#teorema-límite-central][~Teorema~ [Límite Central]:]]
 - [[#conclusiones][Conclusiones]]
 :END:
 
@@ -80,7 +76,7 @@ la única manera que tenemos de resolverlas es por medio de métodos numéricos 
 #+DOWNLOADED: screenshot @ 2022-06-25 22:24:50
 #+caption: Imagen tomada de citep:Smith2013. 
 #+attr_html: :width 700 :align center
-#+attr_latex: :width .65\linewidth
+#+attr_latex: :width .65\linewidth :placement [!htp]
 #+name: fig:gcm
 [[file:../images/20220625-222450_screenshot.png]]
 
@@ -99,6 +95,7 @@ huracanes (ver [[fig:forecast]]).
 #+name: fig:forecast
 #+caption: Imagen tomada de citep:Smith2013. 
 #+attr_html: :width 1200 :align center
+#+attr_latex: :width .65\linewidth :placement [!htp]
 [[file:../images/20220627-102953_screenshot.png]]
 
 #+REVEAL: split
@@ -110,7 +107,7 @@ y conocer la ~dispersión~ alrededor de este promedio.
 #+DOWNLOADED: screenshot @ 2022-06-27 10:57:29
 #+caption: Imagen tomada de citep:Smith2013. 
 #+attr_html: :width 700 :align center
-#+attr_latex: :width .45\linewidth
+#+attr_latex: :width .45\linewidth :placement [!htp]
 [[file:../images/20220627-105729_screenshot.png]]
 
 #+REVEAL: split
@@ -123,6 +120,7 @@ escenarios (ver [[fig:rendering-eq]]).
 #+name: fig:rendering-eq
 #+caption: Imagen tomada del material del curso [[http://15462.courses.cs.cmu.edu/fall2020/courseinfo][Gráficos por Computadora]] impartido en Carnegie Mellon. 
 #+attr_html: :width 1200 :align center
+#+attr_latex: :width .65\linewidth :placement [!htp]
 [[file:../images/20220627-110455_screenshot.png]]
 
 #+REVEAL: split
@@ -202,7 +200,8 @@ proceso y que no podemos reducir por medio de un mejor modelo.
     coord_equal() + xlab(expression(x[1])) + ylab(expression(x[2])) + 
     sin_lineas + sin_leyenda + sin_ejes
 #+end_src
-#+caption: Aproximación a un circulo mediante una trayectoria discretizada. 
+#+caption: Aproximación a un circulo mediante una trayectoria discretizada.
+#+attr_latex: :width .65\linewidth :placement [!htp]
 #+RESULTS:
 [[file:../images/numerics-epistemic.jpeg]]
 
@@ -286,29 +285,36 @@ En general, nos interesa, y esperamos que, podamos:
 Consideraremos como requisitos el contenido de ~Cálculo de Probabilidades II~ y
 ~Álgebra Lineal~ (o equivalentes). En particular lo que requerimos como base es lo siguiente.
 
-*** *~Definición~ [Espacio de Probabilidad]*:
+#+attr_latex: :options [Espacio de probabilidad]
+#+begin_definition
 Un espacio de probabilidad está definido por la terna $(\Omega, \mathcal{X}, \mathbb{P})$:
 1. El espacio muestral, $\Omega$ (elementos). 
 2. El espacio de eventos medibles, $\mathcal{X}$ (subconjuntos). 
 3. La medida de probabilidad, $\mathbb{P}: \mathcal{X} \rightarrow [0, 1]$. 
+#+end_definition
 
-*** *~Definición~ [Variable aleatoria]*:
+#+attr_latex: :options [Variable aleatoria]
+#+begin_definition
 Una variable aleatoria es una función $X:
 \mathcal{X} \rightarrow \mathbb{R}$ con la propiedad de que las pre-imágenes
 bajo $X$ son eventos medibles. Es decir,
 \begin{align}
 \{w \in \mathcal{X} : X(w) \leq x \} \in \mathcal{X} \qquad \forall x \in \mathbb{R}. 
-\end{align}
-   
-*** *~Definición~ [Función de acumulación]*:
+\end{align}   
+#+end_definition
+
+#+attr_latex: :options [Función de acumulación de probabilidad]
+#+begin_definition 
 Para toda variable aleatoria $X$ tenemos una función de acumulación
 $\mathbb{P}_{_X}: \mathbb{R} \rightarrow [0, 1]$ dada por
 \begin{align}
 \mathbb{P}_{_X}(x) = \mathbb{P} \big( \{w \in \mathcal{X} : X(w) \leq x\} \big)\,.
 \end{align}
 Esto usualmente lo escribimos como $\mathbb{P}_{_X}(x) = \mathbb{P}\{X \leq x\}$. 
+#+end_definition
 
-*** *~Definición~ [Función de densidad]*:
+#+attr_latex: :options [Función de densidad]
+#+begin_definition
 Una variable aleatoria es continua si su función de acumulación es ~absolutamente
 continua~ y puede ser expresada por medio de
 \begin{align}
@@ -316,6 +322,7 @@ continua~ y puede ser expresada por medio de
 \end{align}
 donde la anti-derivada $\pi:\mathbb{R} \rightarrow [0, \infty)$ se llama la ~función de
 densidad~ de la variable aleatoria $X$. 
+#+end_definition
 
 #+REVEAL: split
 Las propiedades generales de las distribuciones de probabilidad se pueden
@@ -333,7 +340,8 @@ o los momentos centrales. Por ejemplo: media y varianza.
 Uno de los resultados que espero recuerden bien de sus cursos anteriores es el
 de la ~Ley de los Grandes Números~. La cual podemos enunciar como:
 
-*** *~Teorema~ [Ley de los Grandes Números]*:
+#+attr_latex: :options [Ley de los grandes números]
+#+begin_theorem
 Sea $X_1, X_2, \ldots$ una colección de variables aleatorias independientes e
 idénticamente distribuidas ($\mathsf{iid}$) y sea $\bar X_n$ el promedio de un
 subconjunto de $n$.  Si denotamos por $\mu$ el valor promedio de $X_i$
@@ -341,8 +349,11 @@ dentro de esa colección, entonces tenemos que
 \begin{align}
 \bar X_n  \rightarrow \mu \quad (\text{casi seguramente})\,.
 \end{align}
+#+end_theorem
 
-*** *~Teorema~ [Límite Central]*:
+
+#+ATTR_LATEX: :options [Límite Central]
+#+begin_theorem 
 Sea $X_1, \ldots, X_n$ una colección de $n$ variables aleatorias $\mathsf{iid}$
 con $\mathbb{E}[X_i] = \mu$ y $\mathbb{V}[X_i] = \sigma^2 < \infty$. Entonces
 tenemos que el comportamiento del promedio sigue la siguiente distribución
@@ -350,6 +361,7 @@ tenemos que el comportamiento del promedio sigue la siguiente distribución
 \bar X_n \sim \mathsf{N}\left( \mu, \frac{\sigma^2}{n} \right)\,,
 \end{align}
 para $n$ suficientemente grande. 
+#+end_theorem
 
 * Conclusiones
 
