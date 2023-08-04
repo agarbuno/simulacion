@@ -257,7 +257,13 @@ Nos será útil la siguiente notación para evaluar valores esperados
 \end{align}
 pues será el ~objetivo general~ para los métodos que estudiaremos en el curso. 
 
-#+REVEAL: split
+
+#+BEGIN_NOTES
+Seremos cuidadosos cuando usemos $\pi(x)$ cuando hablemos de la función de densidad, o cuando usemos $\pi(f)$ cuando hablemos de la integral de $f(\cdot)$  ponderada por la densidad $\pi(\cdot)$. Nota que estamos utilizando la convención usual para denotar por las últimas letras del alfabeto---$x, y, z$ por ejemplo---una variable aleatoria. Mientras que utilizamos las letras $f,g$ ó $h$ para denotar una función. El contexto indicará cual uso le daremos a $\pi(\cdot)$; ya sea como densidad o como un funcional.
+#+END_NOTES
+
+
+#+Reveal: split
 Por ejemplo, utilizaremos la noción de ~aproximar integrales~ por medio de algún
 procedimiento de muestreo de tal forma que esperaremos construir un estimación
 $\hat \pi (f)$ con cierto grado de refinamiento. Por ejemplo, veremos el ~método
@@ -269,7 +275,7 @@ integral anterior. Esto lo denotaremos por
 
 
 #+REVEAL: split
-En general, nos interesa, y esperamos que, podamos: 
+En general, nos interesa, y esperamos, que podamos: 
 1. Mejorar nuestra estimación con mas muestras (simulaciones)
    \begin{align}
    \lim_{N \rightarrow \infty} \hat \pi_{N}^{\mathsf{MC}} (f) = \pi(f)\,
@@ -384,3 +390,4 @@ Las ventajas de esta metodología (simulación estocástica) son:
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
+
