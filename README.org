@@ -57,7 +57,6 @@
 - [[#tareas][Tareas]]
   - [[#primera-tarea][Primera tarea]]
   - [[#segunda-tarea][Segunda tarea]]
-- [[#pregunta-incómoda][Pregunta incómoda]]
 - [[#referencias][Referencias]]
 :END:
 
@@ -274,9 +273,6 @@ correo del ITAM para que tengan acceso al ambiente de desarrollo educativo de
 Las primeras tareas del semestre son básicamente configuración y es recomendable
 hacerlas si no cuentan con experiencia en: ~Git~, ~Github~, y ~R~ base.
 
-* Pregunta incómoda
-
-¿Espero que sepan programar?
 
 * Referencias
 :PROPERTIES:
