@@ -1,9 +1,12 @@
-#+TITLE: [[file:./images/logo-ITAM-blanco.png]] EST-24107: Simulación
+#+TITLE: EST-24107: Simulación
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Otoño, 2022~
 :REVEAL_PROPERTIES:
-# Template uses citeproc export with export option <v b>
+# ============================================================
+# Template uses citeproc export with export option <v b> 
+# IMPORTANTE: Considera la bibliografía al final del documento
+# ============================================================
 #+LANGUAGE: es
 #+OPTIONS: num:nil toc:nil 
 #+OPTIONS: reveal_slide_number:nil 
@@ -21,13 +24,15 @@
 
 #+REVEAL_SLIDE_NUMBER: t
 #+REVEAL_PLUGINS: (notes search)
-#+REVEAL_EXTRA_CSS: ./notas/mods.css
+#+REVEAL_EXTRA_CSS: ./notas/mods-citeproc.css
 
 #+bibliography: references.bib
 #+cite_export: csl
 :END:
-#+STARTUP: showall
+#+STARTUP: showall inlineimages
 #+EXCLUDE_TAGS: toc github latex
+
+*                                                                    :github:
 
 [[https://github.com/agarbuno/simulacion/actions/workflows/docker.yml/badge.svg]] [[https://img.shields.io/docker/pulls/agarbuno/simulacion.svg?logo=docker]] [[https://img.shields.io/docker/image-size/agarbuno/simulacion/notas.svg?logo=docker]] [[https://img.shields.io/github/languages/top/agarbuno/simulacion.svg?logo=r]] [[https://img.shields.io/github/languages/code-size/agarbuno/simulacion.svg?logo=r]] 
 
@@ -36,6 +41,7 @@
 :TOC:      :include all  :ignore this :depth 3
 :END:
 :CONTENTS:
+- [[#][::]]
 - [[#introducción][Introducción]]
 - [[#contexto][Contexto]]
 - [[#objetivo][Objetivo]]
@@ -69,7 +75,6 @@ licenciatura en Actuaría del ITAM impartido por el Prof. Alfredo Garbuno.
 
 Este el curso de ~EST-24107: Simulación~. Lo conoceremos como ~simulación
 estocástica~ o ~cuantificación de incertidumbre~.
-
 
 #+REVEAL: split
 El curso se imparte en el plan de estudios de Actuaría (~sexto semestre~).
@@ -126,10 +131,23 @@ El enfoque del curso es poder utilizar lo que sabemos de modelado probabilístic
 y utilizarlo en tareas donde es necesario /cuantificar/ la /incertidumbre/ expresada
 en dicho modelo. Además de [[cref:fig-uq]] 
 
+#+REVEAL: split
 #+DOWNLOADED: screenshot @ 2022-06-24 17:44:20
 #+name: fig-uq
 #+attr_html: :width 1200 :align center
 [[file:images/20220624-174420_screenshot.png]]
+
+#+REVEAL: split
+#+DOWNLOADED: screenshot @ 2023-08-07 14:13:40
+#+attr_html: :width 1200 :align center
+[[file:./images/oscar-wilde.png]]
+
+
+#+REVEAL: split
+#+DOWNLOADED: screenshot @ 2023-08-07 14:13:59
+#+attr_html: :width 1200 :align center
+[[file:./images/vader.jpg]]
+
 
 ** ¿Tenemos un libro de texto?
 
@@ -140,6 +158,37 @@ curso, pero secciones se tomarán de [cite:@Glasserman2013;@Robert2013a;@Efron19
 #+attr_html: :width 900 :align center
 [[file:images/20220624-183051_screenshot.png]]
 
+* Horarios
+
+Las clases serán Martes y Jueves en un horario de 12:00pm a 1:30pm. 
+
+** Formato
+
+El curso será impartido de manera ~completamente presencial~. Las evaluaciones del
+curso también serán completamente presenciales (salvo que se indique lo
+contrario).
+
+** Canvas
+
+Utilizaremos este LMS para gestionar la comunicación fuera de los horarios de clase. 
+
+** Fechas importantes
+
+- Jueves 14 de septiembre, ~no hay clase~.
+- Jueves 2 de noviembre, ~no hay clase~.
+- Miércoles 15 de noviembre, ~último día de bajas~.
+- Miércoles 29 de noviembre, ~último día de clases~.
+
+** Atención de alumnos
+
+El horario de atención a alumnos será Lunes y Miércoles en un horario de 11:00am
+a 1:00pm. Recomiendo utilizar el sitio de ~calendly~:
+[[https://calendly.com/alfredo-garbuno/entrevistas][https:calendly.com/alfredo-garbuno/entrevistas]]. Por supuesto, si no les queda
+algún horario podemos agendar por correo electrónico.
+
+#+DOWNLOADED: screenshot @ 2022-08-09 10:19:38
+#+attr_html: :width 700 :align center
+[[file:images/20220809-101938_screenshot.png]]
 
 * Recursos
 
@@ -164,43 +213,11 @@ tree -L 1 -d
 5 directories
 #+end_src
 
-* Horarios
-
-Las clases serán Martes y Jueves en un horario de 11:30am a 1:00pm. 
-
-** Formato
-
-El curso será impartido de manera ~completamente presencial~. Las evaluaciones del
-curso también serán completamente presenciales (salvo que se indique lo
-contrario).
-
-** Canvas
-
-Utilizaremos este LMS para gestionar la comunicación fuera de los horarios de clase. 
-
-** Fechas importantes
-
-- La sesión del ~Jueves 15 de Septiembre~ no habrá clases.
-- La sesión del ~Martes 22 de Noviembre~ posiblemente se cancele.  
-
-
-** Atención de alumnos
-
-El horario de atención a alumnos será Lunes y Miércoles en un horario de 11:00am
-a 1:00pm. Recomiendo utilizar el sitio de ~calendly~:
-[[https://calendly.com/alfredo-garbuno/entrevistas][https:calendly.com/alfredo-garbuno/entrevistas]]. Por supuesto, si no les queda
-algún horario podemos agendar por correo electrónico.
-
-#+DOWNLOADED: screenshot @ 2022-08-09 10:19:38
-#+attr_html: :width 700 :align center
-[[file:images/20220809-101938_screenshot.png]]
-
-
 * Evaluación
 
 La evaluación del curso será por medio de:
-- Tareas y participación ($30\%$).
-- Evaluaciones parciales ($30\%$).
+- Tareas y participación ($20\%$).
+- Evaluaciones parciales ($40\%$).
 - Evaluación final ($40\%$). 
 
 * Ambiente de trabajo
@@ -222,13 +239,14 @@ En particular utilizaremos:
 
 ** Ambiente de desarrollo gráfico integrado (IDE)
 
-Se sugiere utilizar [[https://www.rstudio.com/products/rstudio/download/][Rstudio]] para poder trabajar en sus proyectos y sus
-tareas. En particular, el material de clase será editado en [[https://www.gnu.org/software/emacs/][GNU Emacs]] a través
-de =orgfiles= (archivos con sufijo ~.org~) pero pueden ser visualizados en ~Github~.
+Como herramienta de trabajo se sugiere utilizar +[[https://www.rstudio.com/products/rstudio/download/][Rstudio]]+ [[https://code.visualstudio.com/][Visual Studio Code]] para
+poder trabajar en sus proyectos y sus tareas. En particular, el material de
+clase es editado en [[https://www.gnu.org/software/emacs/][GNU Emacs]] a través de =orgfiles= (archivos de texto plano con
+sufijo ~.org~) pero pueden ser visualizados en ~Github~.
 
 ** Versión de ~R~
 
-*Importante*: Es necesario tener instalada la versión ~4.2.1~ de ~R~ para tener la mejor
+*Importante*: Es necesario tener instalada la versión ~4.3.1~ de ~R~ para tener la mejor
 compatibilidad con el código del curso.
 
 ** Todos trabajando igual
@@ -239,7 +257,7 @@ contenido del curso. En la carpeta se encuentran los archivos de requerimientos
 carpeta =rscripts=. Aún asi, la configuración se irá construyendo en los
 ejercicios de tarea que vayamos utilizando en el curso.
 
-** Configuración ~renv~
+** Gestión de librerías: ~renv~
 
 Si utilizas ~MacOS~ o alguna distribución ~Linux~ se recomienda escribir en el
 archivo ~~/.Renviron~ la siguiente línea lo cual mantendrá el cache de ~renv~ en un
@@ -248,6 +266,31 @@ lugar centralizado
 #+begin_src conf :tangle ~/.Renviron :mkdirp yes
   RENV_PATHS_ROOT=~/.renv
 #+end_src
+
+
+** Trabajando con ambiente ~Dockerizado~
+
+Mi idea de ambiente computacional es el que se puede reproducir en cualquier
+sistema operativo. Para esto ~Docker~ es la herramienta ideal y el uso de los
+~Codespaces~ de GitHub ha resultado increíble para una solución dentro de un
+ámbito educativo.
+
+#+REVEAL: split
+Para la imagen ~agarbuno/simulacion~ consideren que: 
+1) El /tag/ ~notas~ basado en una distribución linux en una emulación con un
+   procesador ~Intel~, tiene la configuración mínima necesaria para poder
+   reproducir el ambiente de cómputo para poder ejecutar el material del curso
+
+#+REVEAL: split
+Esto no les puede decir mucho, pero básicamente con el combo 
+~Docker~ + ~Visual Code Studio~, ¡tod@s tenemos la misma computadora para trabajar! 🥲.  
+Y si lo quieren correr en la nube entonces: ~Docker~ + ~Visual Code Studio~ + ~Github Codespaces~ 🥲 $\times 10^{78}$.
+
+#+REVEAL: split
+~Importante~: No espero que sepan reproducir ustedes la configuración del ambiente de 
+trabajo. Si les interesa podemos organizar una sesión para discutir esto a profundidad.
+Lo importante es que lo sepan utilizar en su computadora o en un explorador de internet.
+Esto es, que pueden utilizarlo para las prácticas del curso. 
 
 * Tareas
 
@@ -272,7 +315,6 @@ correo del ITAM para que tengan acceso al ambiente de desarrollo educativo de
 ** Segunda tarea
 Las primeras tareas del semestre son básicamente configuración y es recomendable
 hacerlas si no cuentan con experiencia en: ~Git~, ~Github~, y ~R~ base.
-
 
 * Referencias
 :PROPERTIES:
