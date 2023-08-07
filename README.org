@@ -193,7 +193,7 @@ algún horario podemos agendar por correo electrónico.
 * Recursos
 
 La comunicación del curso se gestionará en ~Canvas LMS~ y los recursos de la
-materia de esta iteración (Otoño 2022) se encontrarán en la rama [[https://github.com/agarbuno/simulacion][fall-2022]] del
+materia de esta iteración (Otoño 2023) se encontrarán en la rama [[https://github.com/agarbuno/simulacion][fall-2023]] del
 repositorio de ~GitHub~ en mi usuario. Es decir, en =agarbuno/simulacion=.
 
 El repositorio tiene la siguiente estructura:
