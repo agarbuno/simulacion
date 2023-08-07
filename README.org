@@ -1,4 +1,4 @@
-#+TITLE: EST-24107: Simulación
+#+TITLE: [[file:./images/logo-ITAM-blanco.png]] EST-24107: Simulación
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Otoño, 2022~
