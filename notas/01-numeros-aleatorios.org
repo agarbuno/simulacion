@@ -2,59 +2,41 @@
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Generación de números aleatorios~
-#+STARTUP: showall
+#+STARTUP: showall inlineimages
 :LATEX_PROPERTIES:
-#+OPTIONS: toc:nil date:nil author:nil tasks:nil
-#+LANGUAGE: sp
-#+LATEX_CLASS: handout
-#+LATEX_HEADER: \usepackage[spanish]{babel}
-#+LATEX_HEADER: \usepackage[sort,numbers]{natbib}
-#+LATEX_HEADER: \usepackage[utf8]{inputenc} 
-#+LATEX_HEADER: \usepackage[capitalize]{cleveref}
-#+LATEX_HEADER: \decimalpoint
-#+LATEX_HEADER:\usepackage{framed}
-#+LaTeX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{fancyvrb}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LaTeX_HEADER: \definecolor{backcolour}{rgb}{.95,0.95,0.92}
-#+LaTeX_HEADER: \definecolor{codegray}{rgb}{0.5,0.5,0.5}
-#+LaTeX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} 
-#+LaTeX_HEADER: {}
-#+LaTeX_HEADER: {\lstset{language={R},basicstyle={\ttfamily\footnotesize},frame=single,breaklines=true,fancyvrb=true,literate={"}{{\texttt{"}}}1{<-}{{$\bm\leftarrow$}}1{<<-}{{$\bm\twoheadleftarrow$}}1{~}{{$\bm\sim$}}1{<=}{{$\bm\le$}}1{>=}{{$\bm\ge$}}1{!=}{{$\bm\neq$}}1{^}{{$^{\bm\wedge}$}}1{|>}{{$\rhd$}}1,otherkeywords={!=, ~, $, \&, \%/\%, \%*\%, \%\%, <-, <<-, ::, /},extendedchars=false,commentstyle={\ttfamily \itshape\color{codegreen}},stringstyle={\color{red}}}
-#+LaTeX_HEADER: {}
-#+LATEX_HEADER_EXTRA: \definecolor{shadecolor}{gray}{.95}
-#+LATEX_HEADER_EXTRA: \newenvironment{NOTES}{\begin{lrbox}{\mybox}\begin{minipage}{0.95\textwidth}\begin{shaded}}{\end{shaded}\end{minipage}\end{lrbox}\fbox{\usebox{\mybox}}}
+#+SETUPFILE: ~/.emacs.d/templates/latex/handout.org
 #+EXPORT_FILE_NAME: ../docs/01-numeros-aleatorios.pdf
 :END:
 #+EXCLUDE_TAGS: toc noexport
-#+PROPERTY: header-args:R :session random :exports both :results output org :tangle ../rscripts/01-numeros-aleatorios.R :mkdirp yes :dir ../
+#+PROPERTY: header-args:R :session random :exports both :results output org :tangle ../rscripts/01-numeros-aleatorios.R :mkdirp yes :dir ../ :eval never
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | Números aleatorios.\\
 *Objetivo*: En esta sección veremos conceptos básicos del curso. Tanto para el trabajo computacional que realizaremos y la entrega de tareas, como las nociones básicas de generación de números aleatorios en una computadora. \\
-*Lectura recomendada*: Capítulo 3 de citep:Ross2013a. Capítulo 2 de citep:Robert2010a.
+*Lectura recomendada*: Capítulo 3 de citep:Ross2013. Capítulo 2 de [[citep:&Robert2013a]].
 #+END_NOTES
 
-
 #+begin_src R :exports none :results none
-  ## Setup --------------------------------------------
+  ## Setup ---------------------------------------------------------------------
   library(tidyverse)
-  library(ggplot2)
   library(patchwork)
   library(scales)
+
   ## Cambia el default del tamaño de fuente 
   theme_set(theme_linedraw(base_size = 25))
 
   ## Cambia el número de decimales para mostrar
   options(digits = 4)
+  ## Problemas con mi consola en Emacs
+  options(pillar.subtle = FALSE)
+  options(rlang_backtrace_on_error = "none")
+  options(crayon.enabled = FALSE)
 
-  sin_lineas <- theme(panel.grid.major = element_blank(),
-                      panel.grid.minor = element_blank())
+  ## Para el tema de ggplot
   color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
-
-  sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   sin_leyenda <- theme(legend.position = "none")
   sin_ejes <- theme(axis.ticks = element_blank(), axis.text = element_blank())
+  sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 #+end_src
 
 
@@ -69,20 +51,12 @@
 - [[#números-aleatorios][Números aleatorios]]
   - [[#aleatorios-en-lenguajes-de-programación][Aleatorios en lenguajes de programación]]
   - [[#transformación-de-uniformes][Transformación de uniformes]]
-    - [[#pregunta][Pregunta:]]
   - [[#reproducibilidad][Reproducibilidad]]
   - [[#aleatoriedad-o-pseudo-aleatoriedad][Aleatoriedad o pseudo-aleatoriedad]]
-    - [[#definición-generador-pseudo-aleatorio][Definición [Generador pseudo-aleatorio]:]]
   - [[#comportamiento-uniforme][Comportamiento uniforme]]
   - [[#ideas][Ideas]]
 - [[#prueba-de-kolmogorov-smirnov][Prueba de Kolmogorov-Smirnov]]
-  - [[#definición-función-de-acumulación-de-una-variable-uniforme][Definición [Función de acumulación de una variable uniforme]:]]
-  - [[#definición-función-de-acumulación-empírica][Definición [Función de acumulación empírica]:]]
-  - [[#nota][Nota:]]
-  - [[#definición-estadísticos-de-orden][Definición [Estadísticos de orden]:]]
-  - [[#teorema][Teorema:]]
-  - [[#propiedades][Propiedades:]]
-  - [[#teorema-glivenko-cantelli][Teorema [Glivenko-Cantelli]:]]
+  - [[#comparación][Comparación]]
 - [[#documentación][Documentación]]
 :END:
 
@@ -96,9 +70,6 @@ Veremos un poco sobre el ambiente de trabajo. Veremos :
 1. nociones básicas ~Git~ y ~GitHub~;
 2. familiaridad con ~R~.
 3. generación de variables aleatorias. 
-
-
-#+REVEAL: split
 
 * Control de versiones
 
@@ -117,15 +88,13 @@ principios mas básicos.
 # #+REVEAL: split
 # #+DOWNLOADED: screenshot @ 2022-08-15 19:40:19
 # #+attr_html: :width 700 :align center
-# #+attr_latex: :width .33 \linewidth
 # [[file:images/20220815-194019_screenshot.png]]
 
 # #+REVEAL: split
 # #+DOWNLOADED: screenshot @ 2022-08-15 19:37:37
 # #+attr_html: :width 200 :align center
-# #+attr_latex: :width .33 \linewidth
 # [[file:images/20220815-193737_screenshot.png]]
-
+# 
 
 * ~R~ statistical programming language
 
@@ -143,7 +112,7 @@ gráficos estadísticos. Está escrito para interactuar por medio de ejecución 
 #+REVEAL: split
 Es usual utilizar un ambiente de desarrollo para programar e interactuar con el
 lenguaje. Para ~R~ el mas común es ~Rstudio~ el cual tiene además algunas
-extensiones útiles para el desarrollo de análisis estadístico.  Ver [[fig-ide]]. 
+extensiones útiles para el desarrollo de análisis estadístico. Ver [[fig-ide]]. 
 
 #+DOWNLOADED: screenshot @ 2022-08-15 19:56:38
 #+attr_html: :width 1200 :align center
@@ -183,7 +152,7 @@ lanzar una moneda, un dado, una baraja o una rueda giratoria estilo /Jeopardy!/.
 
 #+REVEAL: split
 En nuestra computadora, los ~números pseudo-aleatorios~ son secuencias generadas
-de manera determinista de tal forma que /parecen/ ser variables aleatorias uniformes
+de manera determinista de manera que /parecen/ ser variables aleatorias uniformes
 independientes. Es decir, parecen ser
 \begin{align}
 x_i \overset{\mathsf{iid}}{\sim} \mathsf{U}(0,1)\,.
@@ -217,7 +186,7 @@ $a$ para garantizar que se alcanza (~periodo completo~).  Por ejemplo, podemos u
 \begin{align}
 x_{n} = 3 x_{n-1} \mod 5\,,
 \end{align}
-para generar la secuencia a partir de $x_0 = 3$,
+para generar la secuencia a partir de $x_0 = 3$.
 
 #+begin_src R :exports both :results org 
   x0 <- 3; a <- 3; m <- 5;
@@ -257,8 +226,7 @@ un mayor colección de números aleatorios.
 
 #+RESULTS:
 #+begin_src org
- [1] 0.27273 0.54545 0.09091 0.18182 0.36364 0.72727 0.45455 0.90909 0.81818
-[10] 0.63636
+ [1] 0.27273 0.54545 0.09091 0.18182 0.36364 0.72727 0.45455 0.90909 0.81818 0.63636
 #+end_src
 
 #+REVEAL: split
@@ -278,7 +246,7 @@ Los lenguajes de programación tienen funciones para generar números
 aleatorios. Por ejemplo, en ~Matlab~ el enfoque es cómputo numérico por lo tanto
 el generador de aleatorios uniformes es la opción estándar.
 
-#+begin_src octave :exports both :results org :session octave.random 
+#+begin_src octave :exports both :results org :session octave.random :eval never
   rand         
 #+end_src
 
@@ -328,13 +296,10 @@ Es natural considerar la generación de números aleatorios en el intervalo $[a,
  [97] 7.649 9.783 8.565 9.753
 #+end_src
 
-*** Pregunta:
-:PROPERTIES:
-:reveal_background: #00468b
-:END:
-#+begin_quote
+#+REVEAL: split
+#+begin_exercise 
 ¿Cuál es la relación que existe entre $X \sim \mathsf{U}(0,1)$ y $Y\sim \mathsf{U}(a, b)$?
-#+end_quote
+#+end_exercise
 
 ** Reproducibilidad
 
@@ -350,8 +315,8 @@ variables aleatorias completamente dependientes.
 
 #+RESULTS:
 #+begin_src org
-[1] 0.02314 0.51438 0.23307 0.50082 0.47310
-[1] 0.8952 0.3630 0.7224 0.8002 0.6188
+[1] 0.1432 0.5805 0.8893 0.4105 0.1474
+[1] 0.7946 0.5606 0.1151 0.3609 0.7199
 #+end_src
 
 #+begin_src R :exports both :results org 
@@ -386,8 +351,9 @@ La distribución de esta colección de tuplas depende únicamente de la
 distribución de las semillas iniciales. Ver Capítulo 2 de citep:Robert2013a.
 #+END_NOTES
 
-*** ~Definición~ [Generador pseudo-aleatorio]:
-Decimos que un algoritmo es un generador de números uniformes pseudo-aleatorios
+#+attr_latex: :options [Generador pseudo-aleatorio]
+#+begin_definition
+Decimos que un algoritmo es un ~generador de números uniformes pseudo-aleatorios~
 si para algún valor inicial $u_0$ y la aplicación de una transformación $D :
 \mathbb{R} \rightarrow \mathbb{R}$ produce una secuencia
 \begin{align}
@@ -396,7 +362,7 @@ u_n = D^n (u_0) = \underbrace{(D \circ \cdots \circ D)}_{n \text{ veces}} (u_0)\
 de valores en el intervalo $(0,1)$. Además, el comportamiento de los valores
 $(u_1, \ldots, u_n)$ se comportan como si fueran una muestra $\mathsf{iid}$ de
 variables uniformes $(V_1, \ldots, V_n)$ .
-
+#+end_definition
 ** Comportamiento uniforme
 
 Para validar que el generador de pseudo-aleatorios es válido tendremos que
@@ -411,45 +377,72 @@ realización de números aleatorios uniformes.
 
 * Prueba de Kolmogorov-Smirnov
 
-Para comparar una muestra de números aleatorios podemos utilizar la prueba Kolmogorov-Smirnov (KS). La idea es sencilla: contrastar la ~función de acumulación empírica~ contra la ~función de acumulación de una uniforme~.
+Para comparar una muestra de números aleatorios podemos utilizar la prueba Kolmogorov-Smirnov (KS). La idea es sencilla: contrastar la ~función de acumulación empírica~ (la estimada en nuestra muestra) contra la ~función de acumulación de una uniforme~ (la distribución teórica).
 
-*** ~Definición~ [Función de acumulación de una variable uniforme]:
+#+REVEAL: split
+#+attr_latex: :options [Función de acumulación de una variable uniforme]
+#+begin_definition
+Decimos $x\sim \mathsf{Uniforme}(a,b)$ si su función de acumulación es:
+\begin{align}
+\mathbb{P}_{_X}(x) =  \mathbb{P}(X \leq x) = 1\{x \in (a, b)\} \times \frac{1}{b-a}\,.
+\end{align}
+#+end_definition
 
-*** ~Definición~ [Función de acumulación empírica]:
-
+#+REVEAL: split
+#+attr_latex: :options [Función de acumulación empírica]
+#+begin_definition
 Dada una muestra aleatoria $X_1, \ldots, X_n$ de variables con función de distribución $\mathbb{P}$, definimos
 \begin{align}
 \hat{\mathbb{P}}_n(x) = \frac{\text{muestras menores o iguales a } x}{n}\,.
 \end{align}
+#+end_definition
 
-*** Nota:
+#+REVEAL: split
+#+begin_remark
 La función de acumulación empírica (EDF) la podemos definir a través de los
 ~estadísticos de orden~.
+#+end_remark
 
-*** ~Definición~ [Estadísticos de orden]:
+
+#+REVEAL: split
+#+attr_latex: :options [Estadísticos orden]
+#+begin_definition
 Dada una muestra aleatoria $X_1, \ldots, X_n$ los estadísticos de orden se
 definen como el reordenamiento $X_{(1)} \leq \cdots \leq X_{(n)}$, donde
 \begin{align}
 X_{(1)} = \min \{ X_1, \ldots, X_n\}, \qquad \ldots \qquad, X_{(n)} = \max \{ X_1, \ldots, X_n\}\,.
 \end{align}
 
-*** ~Teorema~:
+#+end_definition
+
+#+REVEAL: split
+#+attr_latex: :options [CDF de estadísticos de orden]
+#+begin_theorem
 Sea $\hat{\mathbb{P}}_n$ la función de acumulación empírica para una muestra aleatoria de $X_1, \ldots, X_n$ de $\mathbb{P}$. Entonces:
 \begin{align}
 \mathsf{Prob}\Big\{ \hat{\mathbb{P}}_n = \frac{k}{n}\Big\} = {n \choose k} \mathbb{P}(x)^k ( 1- \mathbb{P}(x))^{n-k}\,.
 \end{align}
+#+end_theorem
 
-*** ~Propiedades~:
-El estimador $\hat{\mathbb{P}}_n$ es un estimador insesgado puntual y por el teorema del límite central
+#+REVEAL: split
+#+attr_latex: :options []
+#+begin_proposition
+El estimador $\hat{\mathbb{P}}_n$ es un ~estimador insesgado~ puntual y por el ~teorema del límite central~ tenemos que
 \begin{align}
 \hat{\mathbb{P}}_n (x) \sim \mathsf{N}\left( \mathbb{P}(x), \frac{{\mathbb{P}}_n (x) (1 - {\mathbb{P}}_n (x))}{n} \right)\,.
 \end{align}
+#+end_proposition
 
-*** ~Teorema~ [Glivenko-Cantelli]:
-El estimador $\hat{\mathbb{P}}_n (x)$ converge a $\mathbb{P}(x)$ uniformemente casi seguramente. Es decir,
+
+#+REVEAL: split
+#+attr_latex: :options [Glivenko-Cantelli]
+#+begin_theorem
+El estimador $\hat{\mathbb{P}}_n (x)$ converge a $\mathbb{P}(x)$ de manera uniforme casi seguramente. Es decir,
 \begin{align}
 \mathsf{Prob}\left( \lim_{n \rightarrow \infty} \sup_{x \in \mathbb{R}} |\hat{\mathbb{P}}_n (x) - {\mathbb{P}}_n (x)|  = 0\right) = 1\,.
 \end{align}
+#+end_theorem
+
 ** Comparación
 
 #+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
@@ -555,7 +548,7 @@ alternative hypothesis: two-sided
 #+end_src
 
 #+REVEAL: split
-La prueba KS es una ejercicio estadístico típico de ~prueba de hipótesis~ donde contrastamos
+La prueba $\mathsf{KS}$ es una ejercicio estadístico típico, conocido como ~contraste de hipótesis~ donde ponemos a prueba
 \begin{align}
 H_0: \mathbb{P}(x) = \mathbb{P}_0(x) \,\, \forall x\, \quad \text{ contra } \quad H_1: \mathbb{P}(x) \neq \mathbb{P}_0(x) \text{ para alguna } x\,.
 \end{align}
@@ -567,7 +560,7 @@ Puedes consultar la documentación de ~R~, utilizando el comando ~?Random~ en la
 #+DOWNLOADED: screenshot @ 2022-08-15 19:01:49
 #+attr_html: :width 1200 :align center
 #+attr_latex: :width .95 \linewidth
-#+CAPTION: Documentación de ~Random~. 
+#+CAPTION: Documentación de ~Random~.
 [[file:images/20220815-190149_screenshot.png]]
 
 #+REVEAL: split
@@ -575,10 +568,3 @@ El método /default/ en muchos lenguajes de programación es el de ~Mersenne-Twi
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
-
-
-# * Conclusiones                                                    
-
-
-
-
