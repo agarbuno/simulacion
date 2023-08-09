@@ -2,13 +2,18 @@
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Introducción~ 
-:LATEX_PROPERTIES:
-#+SETUPFILE: ~/.emacs.d/templates/latex/handout.org
-#+EXPORT_FILE_NAME: ../docs/00-introduction.pdf
+:REVEAL_PROPERTIES:
+#+SETUPFILE: ~/.emacs.d/templates/reveal/citeproc.org
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulacion">
+#+REVEAL_EXTRA_CSS: ./mods-citeproc.css
+#+bibliography: references.bib
+#+cite_export: csl
 :END:
 #+STARTUP: showall
 #+PROPERTY: header-args:R :session introduccion :exports both :results output org :tangle ../rscripts/00-introduccion.R :mkdirp yes :dir ../ :eval never
 #+EXCLUDE_TAGS: toc latex
+
+
 
 #+BEGIN_NOTES
 *Profesor*: Alfredo Garbuno Iñigo | Otoño, 2023 | Introducción.\\
@@ -51,8 +56,9 @@
 - [[#motivación][Motivación]]
 - [[#formulación][Formulación]]
 - [[#notación][Notación]]
-- [[#repaso-de-probabilidad][Repaso de probabilidad]]
+- [[#repaso-de-probabilidad---------------------------------------------][Repaso de probabilidad                                             :]]
 - [[#conclusiones][Conclusiones]]
+- [[#referencias][Referencias]]
 :END:
 
 * Motivación 
@@ -177,6 +183,11 @@ z \approx f(x ; \theta) \,,
 donde $f: X \times \Theta \rightarrow Z$ y pensamos que existe una configuración
 de $\theta$ --- que muchas veces le llamamos $\theta^\star$ --- que acerca
 proceso y que no podemos reducir por medio de un mejor modelo.
+
+#+REVEAL: split
+1. ~Incertidumbre aleatoria~: también conocida como incertidumbre estadística,
+   estocástica o irreducible. Se refiere a la incertidumbre que es natural para nuestro
+   proceso y que no podemos reducir por medio de un mejor modelo.
    
 2. ~Incertidumbre epistémica~: se refiere a la incertidumbre derivada de nuestra
    simplificación del problema, nuestro estado de conocimiento o supuestos. En
@@ -226,7 +237,7 @@ en este curso que con herramientas probabilísticas podemos cuantificar ciertas
 nociones de incertidumbre de ambos tipos.
 
 
-* Notación
+* Notación                                                          
 
 Denotamos por $x$ una ~variable aleatoria~ y por $\mathbb{P}(\cdot)$ una ~función
 de distribución~. Escribimos $x \sim \mathbb{P}$ para denotar que la variable
@@ -286,21 +297,23 @@ En general, nos interesa, y esperamos, que podamos:
    \end{align}
 
 
-* Repaso de probabilidad
+* Repaso de probabilidad                                             : 
 
 Consideraremos como requisitos el contenido de ~Cálculo de Probabilidades II~ y
 ~Álgebra Lineal~ (o equivalentes). En particular lo que requerimos como base es lo siguiente.
 
+#+REVEAL: split
 #+attr_latex: :options [Espacio de probabilidad]
-#+begin_definition
+#+begin_definition :label def
 Un espacio de probabilidad está definido por la terna $(\Omega, \mathcal{X}, \mathbb{P})$:
 1. El espacio muestral, $\Omega$ (elementos). 
 2. El espacio de eventos medibles, $\mathcal{X}$ (subconjuntos). 
 3. La medida de probabilidad, $\mathbb{P}: \mathcal{X} \rightarrow [0, 1]$. 
 #+end_definition
 
+#+REVEAL: split
 #+attr_latex: :options [Variable aleatoria]
-#+begin_definition
+#+begin_definition :label def
 Una variable aleatoria es una función $X:
 \mathcal{X} \rightarrow \mathbb{R}$ con la propiedad de que las pre-imágenes
 bajo $X$ son eventos medibles. Es decir,
@@ -309,8 +322,9 @@ bajo $X$ son eventos medibles. Es decir,
 \end{align}   
 #+end_definition
 
+#+REVEAL: split
 #+attr_latex: :options [Función de acumulación de probabilidad]
-#+begin_definition 
+#+begin_definition :label def
 Para toda variable aleatoria $X$ tenemos una función de acumulación
 $\mathbb{P}_{_X}: \mathbb{R} \rightarrow [0, 1]$ dada por
 \begin{align}
@@ -319,8 +333,9 @@ $\mathbb{P}_{_X}: \mathbb{R} \rightarrow [0, 1]$ dada por
 Esto usualmente lo escribimos como $\mathbb{P}_{_X}(x) = \mathbb{P}\{X \leq x\}$. 
 #+end_definition
 
+#+REVEAL: split
 #+attr_latex: :options [Función de densidad]
-#+begin_definition
+#+begin_definition :label def
 Una variable aleatoria es continua si su función de acumulación es ~absolutamente
 continua~ y puede ser expresada por medio de
 \begin{align}
@@ -347,7 +362,7 @@ Uno de los resultados que espero recuerden bien de sus cursos anteriores es el
 de la ~Ley de los Grandes Números~. La cual podemos enunciar como:
 
 #+attr_latex: :options [Ley de los grandes números]
-#+begin_theorem
+#+begin_theorem :label thm
 Sea $X_1, X_2, \ldots$ una colección de variables aleatorias independientes e
 idénticamente distribuidas ($\mathsf{iid}$) y sea $\bar X_n$ el promedio de un
 subconjunto de $n$.  Si denotamos por $\mu$ el valor promedio de $X_i$
@@ -358,8 +373,9 @@ dentro de esa colección, entonces tenemos que
 #+end_theorem
 
 
+#+REVEAL: split
 #+ATTR_LATEX: :options [Límite Central]
-#+begin_theorem 
+#+begin_theorem :label thm
 Sea $X_1, \ldots, X_n$ una colección de $n$ variables aleatorias $\mathsf{iid}$
 con $\mathbb{E}[X_i] = \mu$ y $\mathbb{V}[X_i] = \sigma^2 < \infty$. Entonces
 tenemos que el comportamiento del promedio sigue la siguiente distribución
@@ -368,6 +384,7 @@ tenemos que el comportamiento del promedio sigue la siguiente distribución
 \end{align}
 para $n$ suficientemente grande. 
 #+end_theorem
+
 
 * Conclusiones
 
@@ -388,6 +405,9 @@ Las ventajas de esta metodología (simulación estocástica) son:
 2. utilizar nuestras computadoras para realizar dichas simulaciones; 
 3. determinar hasta qué momento estamos satisfechos con nuestra aproximación. 
 
-bibliographystyle:abbrvnat
-bibliography:references.bib
+* Referencias
+:PROPERTIES:
+:CUSTOM_ID: bibliography
+:END:
 
+#+print_bibliography:

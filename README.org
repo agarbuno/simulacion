@@ -1,12 +1,12 @@
 #+TITLE: EST-24107: Simulación
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
-#+DATE: ~Otoño, 2022~
+#+DATE: ~Otoño, 2023~
 :REVEAL_PROPERTIES:
-# ============================================================
+# ==============================================================================
 # Template uses citeproc export with export option <v b> 
 # IMPORTANTE: Considera la bibliografía al final del documento
-# ============================================================
+# ==============================================================================
 #+LANGUAGE: es
 #+OPTIONS: num:nil toc:nil 
 #+OPTIONS: reveal_slide_number:nil 
@@ -18,6 +18,7 @@
 #+REVEAL_THEME: night
 #+REVEAL_MARGIN: .2
 #+REVEAL_TRANS: slide
+#+REVEAL_MATHJAX_URL: https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 #+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulacion">
 #+REVEAL_ROOT: https://cdn.jsdelivr.net/npm/reveal.js
 #+REVEAL_VERSION: 4
@@ -110,12 +111,12 @@ trabajos.
 #+REVEAL: split
 El curso está pensando para cursarse después de haber acreditado ~Cálculo de
 Probabilidades II~ (o equivalente). Sin embargo, se aprovechará mejor si se
-lleva a la par junto con Procesos Estocásticos I y Estadística Matemática (o
+lleva a la par junto con =Procesos Estocásticos I= y =Estadística Matemática= (o
 equivalentes).
 
 * Temario
 
-El temario para el semestre de Otoño 2022 se puede encontrar [[https://github.com/agarbuno/simulacion/blob/fall-2022/docs/temario.pdf][aqui]]. Este es un
+El temario para el semestre de Otoño 2023 se puede encontrar [[https://github.com/agarbuno/simulacion/blob/fall-2022/docs/temario.pdf][aqui]]. Este es un
 plan preliminar que está sujeto al avance del curso a lo largo del semestre.
 
 ** ¿De qué trata el curso?
@@ -145,7 +146,7 @@ en dicho modelo. Además de [[cref:fig-uq]]
 
 #+REVEAL: split
 #+DOWNLOADED: screenshot @ 2023-08-07 14:13:59
-#+attr_html: :width 1200 :align center
+#+attr_html: :width 900 :align center
 [[file:./images/vader.jpg]]
 
 
@@ -260,7 +261,7 @@ ejercicios de tarea que vayamos utilizando en el curso.
 ** Gestión de librerías: ~renv~
 
 Si utilizas ~MacOS~ o alguna distribución ~Linux~ se recomienda escribir en el
-archivo ~~/.Renviron~ la siguiente línea lo cual mantendrá el cache de ~renv~ en un
+archivo =~/.Renviron= la siguiente línea lo cual mantendrá el cache de ~renv~ en un
 lugar centralizado
 
 #+begin_src conf :tangle ~/.Renviron :mkdirp yes
@@ -316,7 +317,7 @@ correo del ITAM para que tengan acceso al ambiente de desarrollo educativo de
 Las primeras tareas del semestre son básicamente configuración y es recomendable
 hacerlas si no cuentan con experiencia en: ~Git~, ~Github~, y ~R~ base.
 
-* Referencias
+* Referencias                                                        :latex:
 :PROPERTIES:
 :CUSTOM_ID: bibliography
 :END:
