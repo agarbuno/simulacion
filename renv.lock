@@ -623,16 +623,16 @@
     },
     "distributions": {
       "Package": "distributions",
-      "Version": "0.1.0",
+      "Version": "0.1.1",
       "Source": "GitHub",
       "RemoteType": "github",
-      "RemoteHost": "api.github.com",
       "RemoteUsername": "agarbuno",
       "RemoteRepo": "distributions",
       "RemoteRef": "main",
-      "RemoteSha": "b1b3191341b9556857c5393a5be45ed9eb89707f",
+      "RemoteSha": "f39b5abc9415020381ef92a57f63a58bfc8d2658",
+      "RemoteHost": "api.github.com",
       "Remotes": "agarbuno/distributions",
-      "Hash": "fb4bb265315c3c77a7c2a9749b8cf940"
+      "Hash": "1d6021998ae62892bd82ca7aaf30e736"
     },
     "dplyr": {
       "Package": "dplyr",
