@@ -326,14 +326,14 @@ hacerlas si no cuentan con experiencia en: ~Git~, ~Github~, y ~R~ base.
 
 * COMMENT Agenda                                                           :noexport:
 
-| Sección | Sesiones | Tema                         |
-|---------+----------+------------------------------|
-|       1 |        1 | Administrativia              |
-|       1 |        2 | Introducción                 |
-|       2 |        2 | Generadores pseudo-uniformes |
-|       3 |        2 | Generadores no uniformes     |
-|       4 |        3 | Integración Monte Carlo      |
-|       5 |        2 | Reducción de varianza        |
+| Sección | Sesiones | Tema                         |        día |
+|---------+----------+------------------------------+------------|
+|       1 |        1 | Administrativia              | 2023-08-08 |
+|       1 |        1 | Introducción                 | 2023-08-08 |
+|       2 |        2 | Generadores pseudo-uniformes |            |
+|       3 |        2 | Generadores no uniformes     |            |
+|       4 |        3 | Integración Monte Carlo      |            |
+|       5 |        2 | Reducción de varianza        |            |
 
 
 
