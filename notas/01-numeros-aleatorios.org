@@ -250,6 +250,10 @@ el generador de aleatorios uniformes es la opción estándar.
   rand         
 #+end_src
 
+#+begin_src org
+0.875566919023124
+#+end_src
+
 #+REVEAL: split
 El lenguaje de ~python~ es multi-propósito. Por lo tanto, no es una opción /natural/
 y se llaman módulos especializados para generar números aleatorios. El módulo
@@ -384,7 +388,7 @@ Para comparar una muestra de números aleatorios podemos utilizar la prueba Kolm
 #+begin_definition
 Decimos $x\sim \mathsf{Uniforme}(a,b)$ si su función de acumulación es:
 \begin{align}
-\mathbb{P}_{_X}(x) =  \mathbb{P}(X \leq x) = 1\{x \in (a, b)\} \times \frac{1}{b-a}\,.
+\mathbb{P}_{_X}(x) =  \mathbb{P}(X \leq x) = 1\{x \in (a, b)\} \times \frac{b-x}{b-a}\,.
 \end{align}
 #+end_definition
 
