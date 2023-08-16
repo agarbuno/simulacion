@@ -7,6 +7,7 @@ ENV TARGET_DIR ""
 ENV RUNNING_IN_DOCKER true
 ENV RENV_CONFIG_SANDBOX_ENABLED false
 ENV CMDSTAN /root/.cmdstan
+ENV TZ America/Mexico_City
 
 # Lets declare the work directory ==============================================
 RUN adduser $RSTUDIO_USER sudo
