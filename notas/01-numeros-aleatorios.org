@@ -8,10 +8,10 @@
 #+EXPORT_FILE_NAME: ../docs/01-numeros-aleatorios.pdf
 :END:
 #+EXCLUDE_TAGS: toc noexport
-#+PROPERTY: header-args:R :session random :exports both :results output org :tangle ../rscripts/01-numeros-aleatorios.R :mkdirp yes :dir ../
+#+PROPERTY: header-args:R :session random :exports both :results output org :tangle ../rscripts/01-numeros-aleatorios.R :mkdirp yes :dir ../ :eval never
 
 #+BEGIN_NOTES
-*Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | Números aleatorios.\\
+*Profesor*: Alfredo Garbuno Iñigo | Otoño, 2023 | Números aleatorios.\\
 *Objetivo*: En esta sección veremos conceptos básicos del curso. Tanto para el trabajo computacional que realizaremos y la entrega de tareas, como las nociones básicas de generación de números aleatorios en una computadora. \\
 *Lectura recomendada*: Capítulo 3 de citep:Ross2013. Capítulo 2 de [[citep:&Robert2013a]].
 #+END_NOTES

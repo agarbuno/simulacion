@@ -54,6 +54,7 @@
   - [[#variables-gamma][Variables gamma]]
   - [[#variables-beta][Variables beta]]
     - [[#código][Código:]]
+    - [[#usando-distributions][Usando distributions]]
   - [[#variables-gaussianas-correlacionadas][Variables Gaussianas correlacionadas]]
 - [[#distribuciones-discretas][Distribuciones discretas]]
   - [[#binomial][Binomial]]
@@ -120,7 +121,7 @@ Considera $X \sim \mathsf{Exp}(1)$, de tal forma que $\mathbb{P}(x) = 1 - e^{-x}
 
   g1 + g2
 #+end_src
-
+#+CAPTION: Histogramas de simulaciones utilizando el método directo (izquierda) contra el de la transformada inversa (derecha).
 #+RESULTS:
 [[file:../images/exp-comparison.jpeg]]
 
@@ -233,6 +234,34 @@ variables.
   0.151   3.505   5.420   6.064   7.926  27.904
 #+end_src
 
+*** Usando ~distributions~
+
+La idea de ~distributions~ es definir instancias$^\dagger$ de variables aleatorias. Esto es,
+definir una variable aleatoria de una familia paramétrica utilizando un valor definido
+de los parámetros que la definen. Por ejemplo, una $\mathsf{N}(\mu, \sigma) = \mathsf{N}(0, 1)$
+o una $\mathsf{U}(a,b) = \mathsf{U}(0,1)$. 
+
+#+begin_src R :exports both :results org 
+  library(distributions)
+  ## Definimos nuestra variable aleatoria
+  x <- UniformRandomVariable$new()
+
+  ## Muestreamos 10,000 por cada renglon.
+  set.seed(108)
+  x$sample(10**4, 3) |>      
+    log() |>              
+    apply(2, function(x){-2 * sum(x)} ) |> 
+    summary()
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.151   3.505   5.420   6.064   7.926  27.904
+#+end_src
+
+
+
 ** Variables Gaussianas correlacionadas
 
 Supongamos que queremos generar un par de variables $X \in \mathbb{R}^2$ de tal forma que
@@ -332,7 +361,7 @@ Supongamos que nos interesa $X \sim \mathsf{Bin}(10, 0.3)$, el vector de probabi
             colour = "salmon") + 
     sin_lineas
 #+end_src
-
+#+CAPTION: Muestras de una binomial utilizando el método descrito anteriormente.
 #+RESULTS:
 [[file:../images/pseudobinomial-histogram.jpeg]]
 
@@ -341,7 +370,7 @@ Supongamos que nos interesa $X \sim \mathsf{Bin}(10, 0.3)$, el vector de probabi
 Ahora supongamos que nos interesa simular de una Poisson con parámetro $\lambda = 7$.
 
 #+REVEAL: split
-¿Cuál es el soporte de una $\mathsf{Bin}(10, .3)$? ¿Cuál es el soporte de una $\mathsf{Poisson}(7)$?
+¿Cuál es el soporte de una $\mathsf{Bin}(10, 0.3)$? ¿Cuál es el soporte de una $\mathsf{Poisson}(7)$?
 
 #+REVEAL: split
 Tenemos que guardar las probabilidades
@@ -385,26 +414,27 @@ Tenemos que guardar las probabilidades
             colour = "salmon") + 
     sin_lineas
 #+end_src
-
+#+CAPTION: Muestras de una Poisson utilizando el método descrito anteriormente.
 #+RESULTS:
 [[file:../images/pseudopoisson-histogram.jpeg]]
 
 #+REVEAL: split
 El problema de generar números aleatorios de la manera anterior es la necesidad de /guardar/ el vector de probabilidades. Por ejemplo, una $\mathsf{Poisson}(100)$. El intervalo $\lambda \pm 3 \sqrt{\lambda}$ es $(70, 130)$.
 
+#+REVEAL: split
 #+attr_latex: :options [Regla empírica o regla de las 3 sigmas]
-#+begin_property
+#+begin_proposition
 Si $X$ es una variable aleatoria con media y varianza finitas. Entonces, la probabilidad de que una realización de $X$ se encuentre a mas de 3 desviaciones estándar de la media es a lo mas $5\%$.     
-#+end_property
+#+end_proposition
 
 * Mezclas 
 
 Otra familia de distribuciones que es muy interesante de simular son las
 mezclas. Es decir, cuando podemos escribir
 \begin{align}
-\pi(x) = \int_\mathcal{Y} \pi(x | y) \, \pi(y) \, \text{d}y\,, \quad \text{ o } \quad \mathbb{P}(x) = \sum_{i \in \mathcal{Y}}^{} \mathbb{P}(x | Y = i) \, \mathbb{P}(Y = i) \,,
+\pi(x) = \int_\mathcal{Y} \pi(x | y) \, \pi(y) \, \text{d}y\,, \quad \text{ ó } \quad \mathbb{P}(x) = \sum_{i \in \mathcal{Y}}^{} \mathbb{P}(x | Y = i) \, \mathbb{P}(Y = i) \,,
 \end{align}
-siempre y cuando sea sencillo generar números aleatorios de las marginales.
+siempre y cuando sea sencillo generar números aleatorios de la condicional y la marginal adicional.
 
 #+REVEAL: split
 Por ejemplo, para generar números aleatorios de una $t$ Student con $\nu$ grados
@@ -440,7 +470,7 @@ donde $\beta = (1-\theta)/\theta$.
               colour = "salmon") +
     sin_lineas
 #+end_src
-
+#+CAPTION: Muestras de una binomial negativa utilizando el método de mezcla descrito anteriormente.
 #+RESULTS:
 [[file:../images/rbinneg-histogram.jpeg]]
 
@@ -474,7 +504,7 @@ donde $B(\alpha, \beta)$ se conoce como la función Beta $B(\alpha, \beta) = (\G
                    binwidth = 1, color = "white") +
     sin_lineas
 #+end_src
-
+#+CAPTION: Muestras de una beta binomial utilizando el método de mezclas descrito anteriormente.
 #+RESULTS:
 [[file:../images/rbetabinom-histogram.jpeg]]
 
@@ -508,7 +538,7 @@ Otro modelo /famoso/ es el de una mezcla de Gaussianas. Donde tenemos $k$ posibl
               colour = "salmon") +    
     sin_lineas
 #+end_src
-
+#+CAPTION: Muestras de una mezcla Gaussiana de tres componentes utilizando el método descrito anteriormente.
 #+RESULTS:
 [[file:../images/rgaussmix-histogram.jpeg]]
 
@@ -593,7 +623,7 @@ La visualización correspondiente sería lo siguiente. Utilizamos nuestro genera
     geom_histogram(bins = nbins, color = "white") + sin_lineas +
     ggtitle("Semilla: 166136")
 #+end_src
-
+#+CAPTION: Visualización de la realización de la prueba de $\chi^2$ descrita anteriormente.
 #+RESULTS:
 [[file:../images/pseudo-uniform-hist.jpeg]]
 
