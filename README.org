@@ -12,7 +12,6 @@
 :TOC:      :include all  :ignore this :depth 3
 :END:
 :CONTENTS:
-- [[#][::]]
 - [[#introducción][Introducción]]
 - [[#contexto][Contexto]]
 - [[#objetivo][Objetivo]]
