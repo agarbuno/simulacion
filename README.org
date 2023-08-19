@@ -2,38 +2,8 @@
 #+AUTHOR: Prof. Alfredo Garbuno Iñigo
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Otoño, 2023~
-:REVEAL_PROPERTIES:
-# ==============================================================================
-# Template uses citeproc export with export option <v b> 
-# IMPORTANTE: Considera la bibliografía al final del documento
-# ==============================================================================
-#+LANGUAGE: es
-#+OPTIONS: num:nil toc:nil 
-#+OPTIONS: reveal_slide_number:nil 
-#+OPTIONS: reveal_history:t reveal_fragmentinurl:t
-#+OPTIONS: reveal_mousewheel:t reveal_inter_presentation_links:t
-#+OPTIONS: reveal_width:1600 reveal_height:900
-#+OPTIONS: timestamp:nil
-
-#+REVEAL_THEME: night
-#+REVEAL_MARGIN: .2
-#+REVEAL_TRANS: slide
-#+REVEAL_MATHJAX_URL: https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
-#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulacion">
-#+REVEAL_ROOT: https://cdn.jsdelivr.net/npm/reveal.js
-#+REVEAL_VERSION: 4
-
-#+REVEAL_SLIDE_NUMBER: t
-#+REVEAL_PLUGINS: (notes search)
-#+REVEAL_EXTRA_CSS: ./notas/mods-citeproc.css
-
-#+bibliography: references.bib
-#+cite_export: csl
-:END:
 #+STARTUP: showall inlineimages
 #+EXCLUDE_TAGS: toc github latex
-
-*                                                                    :github:
 
 [[https://github.com/agarbuno/simulacion/actions/workflows/docker.yml/badge.svg]] [[https://img.shields.io/docker/pulls/agarbuno/simulacion.svg?logo=docker]] [[https://img.shields.io/docker/image-size/agarbuno/simulacion/notas.svg?logo=docker]] [[https://img.shields.io/github/languages/top/agarbuno/simulacion.svg?logo=r]] [[https://img.shields.io/github/languages/code-size/agarbuno/simulacion.svg?logo=r]] [[https://zenodo.org/badge/493864430.svg]]
 
