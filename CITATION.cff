@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: 'Notas del curso: Simulación'
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Alfredo
+    family-names: Garbuno-Inigo
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.8266099
+version: v0.1.0
+preferred-citation: 
+  type: report
+  title: "Notas del curso: Simulación"
+  authors: 
+    - given-names: Alfredo
+      family-names: Garbuno-Inigo
+  year: 2023
+  institution: ITAM
+  doi: 10.5281/zenodo.8266099
