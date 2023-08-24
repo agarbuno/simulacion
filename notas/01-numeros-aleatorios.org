@@ -417,7 +417,6 @@ definen como el reordenamiento $X_{(1)} \leq \cdots \leq X_{(n)}$, donde
 \begin{align}
 X_{(1)} = \min \{ X_1, \ldots, X_n\}, \qquad \ldots \qquad, X_{(n)} = \max \{ X_1, \ldots, X_n\}\,.
 \end{align}
-
 #+end_definition
 
 #+REVEAL: split
@@ -482,8 +481,8 @@ Para el panel de la izquierda, la distancia máxima es
 #+begin_src R :exports both :results org 
   Pn <- ecdf(samples$x)
   x_ <- seq(0, 1, length = 1000)
-  Dn <- max(abs(Pn(x_) - punif(x_)))
-  print(paste("Distancia: ", Dn))
+  Dn_samp <- max(abs(Pn(x_) - punif(x_)))
+  print(paste("Distancia: ", Dn_samp))
 #+end_src
 
 #+RESULTS:
@@ -492,39 +491,42 @@ Para el panel de la izquierda, la distancia máxima es
 #+end_src
 
 #+REVEAL: split
-Esta cantidad estimada de la muestra, $D_n$, depende precisamente de la muestra
+Esta cantidad estimada de la muestra, $D_n^{\mathsf{samp}}$, depende precisamente de la muestra
 que generamos. ¿Qué tan extraño fue haber observado dicha muestra? 
 
 #+REVEAL: split
 Si asumimos que los datos son generados por una uniforme observaríamos una distribución
-de posibles valores $D_n$ como se muestra 
+de posibles valores $D_n^\mathsf{sim}$ como se muestra en el histograma en [[fig:ks-muestreo]]. 
+
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/ks-histogram.jpeg :exports results :results output graphics file
   set.seed(10)
   experiment <- function(id){
-       Fn <- ecdf(runif(30))
-       max(abs(Fn(x_) - punif(x_)))
+       Fn_sim <- ecdf(runif(30))
+       max(abs(Fn_sim(x_) - punif(x_)))
     }
   replicas <- tibble(id = 1:5000) |>
-    mutate(estadistico = map_dbl(id, experiment))
+    mutate(estadistico_sim = map_dbl(id, experiment))
 
   replicas |>
-    ggplot(aes(estadistico)) +
+    ggplot(aes(estadistico_sim)) +
     geom_histogram() + sin_lineas +
     geom_vline(xintercept = Dn, lty = 2, color = 'red', lwd = 1.5)
 #+end_src
-
+#+caption: Histograma construido con los posibles valores de $D_n^\mathsf{sim}$ bajo el muestreado /teórico/.
+#+name: fig:ks-muestreo
 #+RESULTS:
 [[file:../images/ks-histogram.jpeg]]
 
 #+REVEAL: split
-Utilizando los datos que construyeron el histograma podemos calcular la
-probabilidad de haber observado un estadístico tan extremo. Es decir,
-la probabilidad de haber observado lo que observamos si el generador fuera
-el generador  uniforme. 
+Utilizando las *simulaciones* que construyeron el histograma podemos calcular la
+probabilidad de haber observado un estadístico mas alto (que quiere decir que
+hay una mayor distancia entre $\hat{\mathbb{P}}_n$ y $\mathbb{P}_U$). Es decir,
+la probabilidad de haber observado lo que observamos si el generador fuera el
+generador uniforme.
 
 #+begin_src R :exports both :results org 
-  print(paste("Probabilidad: ", mean(replicas$estadistico >= Dn)))
+  print(paste("Probabilidad: ", mean(replicas$estadistico_sim >= Dn)))
 #+end_src
 
 #+RESULTS:
@@ -555,7 +557,7 @@ alternative hypothesis: two-sided
 #+REVEAL: split
 La prueba $\mathsf{KS}$ es una ejercicio estadístico típico, conocido como ~contraste de hipótesis~ donde ponemos a prueba
 \begin{align}
-H_0: \mathbb{P}(x) = \mathbb{P}_0(x) \,\, \forall x\, \quad \text{ contra } \quad H_1: \mathbb{P}(x) \neq \mathbb{P}_0(x) \text{ para alguna } x\,.
+H_0: \mathbb{P}(x) = \mathbb{P}_U(x) \,\, \forall x\, \quad \text{ contra } \quad H_1: \mathbb{P}(x) \neq \mathbb{P}_U(x) \text{ para alguna } x\,.
 \end{align}
 
 * Documentación                                                 
