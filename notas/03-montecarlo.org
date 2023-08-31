@@ -3,20 +3,11 @@
 #+EMAIL:  agarbuno@itam.mx
 #+DATE: ~Integración Monte Carlo~
 #+STARTUP: showall
-:REVEAL_PROPERTIES:
-# Template uses org export with export option <R B>
-# Alternatives: use with citeproc
-#+LANGUAGE: es
-#+OPTIONS: num:nil toc:nil timestamp:nil
-#+REVEAL_REVEAL_JS_VERSION: 4
-#+REVEAL_THEME: night
-#+REVEAL_SLIDE_NUMBER: t
-#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
-#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
-#+REVEAL_EXTRA_CSS: ./mods.css
-#+REVEAL_PLUGINS: (notes)
+:LATEX_PROPERTIES:
+#+SETUPFILE: ~/.emacs.d/templates/latex/handout.org
+#+EXPORT_FILE_NAME: ../docs/03-montecarlo.pdf
 :END:
-#+PROPERTY: header-args:R :session monte-carlo :exports both :results output org :tangle ../rscripts/03-montecarlo.R :mkdirp yes :dir ../
+#+PROPERTY: header-args:R :session monte-carlo :exports both :results output org :tangle ../rscripts/03-montecarlo.R :mkdirp yes :dir ../ :eval never
 #+EXCLUDE_TAGS: toc noexport latex
 
 #+BEGIN_NOTES
@@ -27,7 +18,7 @@
 *Lectura recomendada*: Una lectura mas técnica sobre reglas de cuadratura se
 puede encontrar en la sección 3.1 de citet:Reich2015. Y una buena referencia
 (técnica) sobre el método Monte Carlo lo encuentran en citet:Sanz-Alonso2019.
-En el curso estamos explorando mas allá de lo que ofrece el capítulo 3 de citet:Robert2010a. 
+En el curso estamos explorando mas allá de lo que ofrece el capítulo 3 de [[citet:Robert2013a]]. 
 #+END_NOTES
 
 
@@ -44,35 +35,19 @@ En el curso estamos explorando mas allá de lo que ofrece el capítulo 3 de cite
 - [[#integración-monte-carlo][Integración Monte Carlo]]
   - [[#ejemplo-dardos][Ejemplo: Dardos]]
   - [[#propiedades][Propiedades]]
-    - [[#teorema-error-monte-carlo][Teorema [Error Monte Carlo]​]]
-    - [[#teorema-tlc-para-estimadores-monte-carlo][Teorema [TLC para estimadores Monte Carlo]​]]
-    - [[#nota][Nota:]]
-    - [[#nota][Nota:]]
-    - [[#nota][Nota:]]
   - [[#estimación-de-una-proporción][Estimación de una proporción]]
-    - [[#ejercicio][Ejercicio:]]
-    - [[#pregunta][Pregunta:]]
 - [[#desigualdades-de-concentración][Desigualdades de concentración]]
   - [[#desigualdad-de-chebyshev][Desigualdad de Chebyshev]]
-    - [[#teorema-desigualdad-de-chebyshev][Teorema [Desigualdad de Chebyshev]:]]
-    - [[#ejercicio][Ejercicio:]]
     - [[#solución][Solución:]]
-    - [[#discusión][Discusión:]]
   - [[#desigualdad-de-hoeffding][Desigualdad de Hoeffding]]
-    - [[#teorema-desigualdad-de-hoeffding][Teorema [Desigualdad de Hoeffding]:]]
-    - [[#ejercicio][Ejercicio:]]
 - [[#justificación-del-método-monte-carlo][Justificación del método Monte Carlo]]
-  - [[#teorema-ley-fuerte-de-los-grandes-números][Teorema [Ley (fuerte) de los grandes números]:]]
-  - [[#teorema-ley-débil-de-los-grandes-números][Teorema [Ley (débil) de los grandes números]:]]
 - [[#consideraciones][Consideraciones]]
   - [[#primera-estrategia][Primera estrategia]]
   - [[#segunda-estrategia][Segunda estrategia]]
   - [[#comparación][Comparación]]
   - [[#intervalos-de-confianza][Intervalos de confianza]]
-    - [[#importante][Importante:]]
     - [[#experimentación][Experimentación:]]
   - [[#lentitud-con-estimadores][Lentitud con estimadores]]
-- [[#referencias][Referencias]]
 :END:
 
 
@@ -505,7 +480,8 @@ A continuación enunciaremos algunas propiedades clave del método Monte
 Carlo. Poco a poco las iremos explicando y en particular discutiremos mas a
 fondo algunas de ellas. 
 
-*** ~Teorema~ [Error Monte Carlo]
+#+attr_latex: :options [Error Monte Carlo]
+#+begin_theorem
 Sea $f : \mathbb{R}^p \rightarrow \mathbb{R}$ cualquier función bien
 comportada$^\dagger$.  Entonces, el estimador Monte Carlo es *insesgado*. Es
 decir, se satisface
@@ -513,12 +489,21 @@ decir, se satisface
 \begin{align}
 \mathbb{E}\left[\hat  \pi_N^{\textsf{MC}}(f) - \pi(f)\right] = 0,
 \end{align}
-para cualquier $N$. Usualmente estudiamos el error en un escenario pesimista
-donde medimos el *error cuadrático medio* en el peor escenario
+para cualquier $N$.
+#+end_theorem
 
+Usualmente estudiamos el error en un escenario pesimista
+donde medimos el *error cuadrático medio* en el peor escenario.
+
+#+attr_latex: :options [Máximo error Monte Carlo posible]
+#+begin_proposition
+Sea $\mathcal{F}$ una familia de funciones bien comportadas. Entonces, el error de aproximación de dicha familia está dado por
 \begin{align*}
 \sup_{f \in \mathcal{F}} \, \,  \mathbb{E}\left[ \left(\hat \pi_N^{\textsf{MC}}(f) - \pi(f) \right)^2 \right] \leq \frac1N.
-\end{align*}
+\end{align*}        
+#+end_proposition
+
+
 
 #+BEGIN_NOTES
 Esta desigualdad nos muestra una de las propiedades que usualmente se celebran
@@ -528,9 +513,12 @@ simulaciones.
 #+END_NOTES
 
 #+REVEAL: split
-En particular, la varianza del estimador (*error estándar*) satisface la igualdad
+#+attr_latex: :options [Error Monte Carlo]
+#+begin_proposition
+La varianza del estimador Monte Carlo (*error estándar*) satisface la igualdad
 
 $$ \textsf{ee}^2\left(\hat \pi_N^{\textsf{MC}}(f)\right) = \frac{\mathbb{V}_\pi( f )}{N}.$$
+#+end_proposition
 
 #+BEGIN_NOTES
 Esta igualdad, aunque consistente con nuestra desigualdad anterior, nos dice
@@ -538,19 +526,23 @@ algo mas. El error de nuestra aproximación *depende* de la varianza de $f$ bajo
 distribución $\pi$.
 #+END_NOTES
 
-*** ~Teorema~ [TLC para estimadores Monte Carlo]
-Sea $f$ una función *bien comportada* $^{\dagger\dagger}$, entonces bajo una $N$
-suficientemente grande tenemos
+#+attr_latex: :options [~TLC~ para estimadores Monte Carlo]
+#+begin_theorem
 \begin{align}
 \sqrt{N} \left(\hat \pi_N^{\textsf{MC}} (f) - \pi(f) \right) \sim \mathsf{N}\left(0, \mathbb{V}_\pi(f)\right)\,.
 \end{align}
+    Sea $f$ una función *bien comportada* $^{\dagger\dagger}$, entonces bajo una $N$
+suficientemente grande tenemos
+#+end_theorem
 
-*** ~Nota~:
+#+attr_latex:
+#+begin_remark
 El estimador Monte Carlo del que hablamos, $\hat \pi_{N}^{\mathsf{MC}}(f)$, es una estimación con una ~muestra finita de simulaciones~. En ese sentido podemos pensar que tenemos un /mapeo/ de muestras a estimador
 \begin{align}
 (x^{(1)}, \ldots, x^{(N)}) \mapsto  \hat \pi_N^{\mathsf{MC}}(f)\,,
 \end{align}
-con $x^{(i)} \overset{\mathsf{iid}}{\sim} \pi$ . 
+con $x^{(i)} \overset{\mathsf{iid}}{\sim} \pi$ .     
+#+end_remark
 
 #+REVEAL: split
 De lo cual es natural pensar: ¿y si hubiéramos observado otro conjunto de
@@ -576,21 +568,26 @@ nombre de ~error estándar~. Lo cual denotamos por
 \mathsf{ee}[\hat \pi_N^{\mathsf{MC}}(f)] = \left( \mathbb{V}[\hat \pi_N^{\mathsf{MC}}(f)]  \right)^{1/2}= \left(  \frac{\mathbb{V}_\pi( f )}{N} \right)^{1/2}\,.
 \end{align}
 
-*** ~Nota~:
+#+attr_latex: 
+#+begin_remark
 Para algunos estimadores la fórmula del error estándar se puede obtener de
 manera analítica (curso de ~Inferencia Matemática~). Para otro tipo, tenemos que
-utilizar propiedades asintóticas (p.e. cota de Cramer-Rao).
+utilizar propiedades asintóticas (p.e. cota de Cramer-Rao).  
+#+end_remark
 
 #+REVEAL: split
 Hay casos en los que no existe una fórmula asintótica o resultado analítico, pero
 podemos usar simulación [ ~8)~ ] para cuantificar dicha dispersión (lo veremos en
 otra sección del curso).
 
-*** ~Nota~:
+#+attr_latex:
+#+begin_remark
 Hay situaciones en las que la distribución normal asintótica no tiene
 sentido. Para este tipo de situaciones también veremos cómo podemos utilizar
 simulación para cuantificar dicha dispersión.
+#+end_remark
 
+#+REVEAL: split
 #+DOWNLOADED: screenshot @ 2022-08-29 19:52:47
 #+attr_html: :width 700 :align center
 #+caption: Comportamiento promedio e intervalos de confianza con aproximación asintótica.
@@ -609,21 +606,24 @@ Si denotamos por $\theta$ la tasa de éxito. Entonces nuestro experimento (lanza
 \hat \theta_n := \bar X_n \approx \theta
 \end{align}
 
-*** ~Ejercicio~:
-:PROPERTIES:
-:reveal_background: #00468b
-:END:
 
-¿Cuál es la fórmula del error estándar para este estimador?
+#+attr_latex:
+#+begin_exercise
+¿Cuál es la fórmula del error estándar para este estimador?    
+#+end_exercise
 
-*** ~Pregunta~:
-¿Cuántas muestras necesitamos para tener una /buena/ aproximación?
+
+#+attr_latex:
+#+begin_exercise
+¿Cuántas muestras necesitamos para tener una /buena/ aproximación?  
+#+end_exercise
+
 
 * Desigualdades de concentración 
 
 En muchas situaciones nos interesa establecer cuántas simulaciones necesitamos
 para poder aproximar nuestras integrales hasta cierto orden. Por ejemplo, la
-tabla en ref:tab-darts muestra la aproximación conforme aumenta $N$.
+tabla en [[tab-darts]] muestra la aproximación conforme aumenta $N$.
 
 #+begin_src R :exports results :results org
   tibble(N = 1:nsamples, estimado = resultados[,1]/4) |>
@@ -645,30 +645,29 @@ tabla en ref:tab-darts muestra la aproximación conforme aumenta $N$.
 ** Desigualdad de Chebyshev
 
 Lo que queremos es encontrar una $N$ tal que con una ~alta probabilidad~ nuestro
-~estimador sea cercano al parámetro~ que está ajustando. Esto lo escribimos como
+~estimador sea cercano al parámetro~ que se está ajustando. Esto lo escribimos como:
 \begin{align}
 \mathsf{Prob} \left( |\hat \theta_N - \theta| < \epsilon \right) \geq 1 - \delta\,.
 \end{align}
 
-*** ~Teorema~ [Desigualdad de Chebyshev]:
+#+REVEAL: split
+#+attr_latex: :options [Desigualdad de Chebyshev]
+#+begin_theorem
 Sea $X$ una variable aleatoria con media y varianza finita denotadas por $\mu$ y
 $\sigma^2$ respectivamente. Entonces para cualquier constante positiva $k \in
 \mathbb{R}$, tenemos que
 \begin{align}
 \mathsf{Prob}\left( |X - \mu| \geq k \, \sigma\right) \leq \frac{1}{k^2}\,.
 \end{align}
+#+end_theorem 
 
-#+REVEAL: split
 Lo cual podemos utilizar para encontrar una cota inferior para $N$.
-
-*** ~Ejercicio~:
-:PROPERTIES:
-:reveal_background: #00468b
-:END:
-
-Calcula la desigualdad y obtén el número de simulaciones necesarios para
+#+attr_latex:
+#+begin_exercise
+Calcula la desigualdad y obtén el número de simulaciones necesarias para
 encontrar un estimador con nivel de precisión $\epsilon$ con una probabilidad
-$\alpha$.
+$\alpha$.  
+#+end_exercise
 
 *** ~Solución~:                                                       :latex:
 Usando la desigualdad de Chebyshev vemos que
@@ -680,12 +679,14 @@ Del cual podemos despejar
 \begin{align}
 N \geq \frac{\theta (1 -\theta)}{\delta \epsilon^2}\,.
 \end{align}
-
-*** ~Discusión~:
+#+attr_latex: 
+#+begin_remark 
 El resultado anterior nos permite escribir que con alta probabilidad (al menos $1 -\delta$) tendremos que 
 \begin{align}
 \hat \theta_N = \theta \pm \epsilon\,.
 \end{align}
+
+#+end_remark   
 
 ** Desigualdad de Hoeffding
 
@@ -693,8 +694,8 @@ La desigualdad de Chebyshev nos permite encontrar cotas para prácticamente cual
 calidad de la estimación.
 
 #+REVEAL: split
-Una alternativa es utilizar la desigualdad de Hoeffding que nos permite establecer cotas desviaciones de
-variables aleatorias acotadas.
+Una alternativa es utilizar la desigualdad de Hoeffding que nos permite
+establecer cotas para variables aleatorias acotadas en un intervalo.
 
 #+BEGIN_NOTES
 Aunque la discusión es a nivel variable aleatoria, lo que estamos discutiendo es
@@ -703,19 +704,21 @@ podemos pensar en $f(X)$ como una variable aleatoria acotada en $[a, b]$ y
 nuestra discusión procede.
 #+END_NOTES
 
-*** ~Teorema~ [Desigualdad de Hoeffding]:
+
+#+attr_latex: :options [Desigualdad de Hoeffding]
+#+begin_theorem
 Sea $X_{1}, \ldots, X_{n}$ una muestra ${\mathsf{iid}}$ de variables aleatorias con valores en $[a, b]$. Entonces para cualquier $t \geq 0$ y usando $S_n = X_{1} + \cdots+ X_{n}$ tenemos que
 \begin{align}
 \mathsf{Prob}\left( |S_n - \mathbb{E}[S_n] | \geq t \right) \leq 2 \exp \left( - \frac{2 t^2}{n (b - a)^2} \right)\,.
 \end{align}
+#+end_theorem
 
-*** ~Ejercicio~:
-:PROPERTIES:
-:reveal_background: #00468b
-:END:
-
+#+REVEAL: split
+#+attr_latex:
+#+begin_exercise
 Establece el tamaño de muestra necesario, $N$, para garantizar con probabilidad
-al menos $1-\delta$ que nuestro estimador será $\epsilon$ preciso.
+al menos $1-\delta$ que nuestro estimador será $\epsilon$ preciso.    
+#+end_exercise
 
 *** ~Solución~:                                                    :noexport:
 La solución es
@@ -731,17 +734,21 @@ Esto nos dice que para obtener una confianza determinada el costo es sublineal y
 
 Lo que hemos discutido hasta ahora nos permite ver que el método Monte Carlo ---aproxima integrales con promedios--- tiene buenas propiedades. El tiro de gracia es el siguiente resultado.
 
-*** ~Teorema~ [Ley (fuerte) de los grandes números]:
+#+attr_latex: :options [Ley ~fuerte~ de los grandes números]
+#+begin_theorem
 Sea $X_{1}, \ldots, X_{n}$ una muestra de variables $\mathsf{iid}$ y sea $X$ una variable con la misma distribución. Si utilizamos una $f: \mathbb{R} \rightarrow \mathbb{R}$ acotada, entonces $h(X_{1}), \ldots, h(X_{n})$ son variables independientes y acotadas con media finita. De tal forma que se satisface que
 \begin{align}
 \mathsf{Prob} \left( \lim_{N \rightarrow \infty} \hat \pi^{\mathsf{MC}}_N (h)= \pi(h) \right) = 1\,.
 \end{align}
+#+end_theorem
 
-*** ~Teorema~ [Ley (débil) de los grandes números]:
+#+attr_latex: :options [Ley ~débil~ de los grandes números]
+#+begin_theorem
 De los resultados anteriores ya sabíamos que
 \begin{align}
 \lim_{N \rightarrow \infty}  \mathsf{Prob} \left( \left| \hat \pi^{\mathsf{MC}}_N (h) - \pi(h) \right| < \epsilon\right) = 1\,.
 \end{align}
+#+end_theorem
 
 * Consideraciones
 
@@ -940,15 +947,17 @@ Los intervalos que hemos construido y se muestran en las figuras anteriores son 
 Cuando platicamos de la desigualdad de Chebyshev, construimos cotas para que con
 una alta probabilidad ($1- \delta$) nuestro estimador tenga una precisión dada ($\epsilon$).
 
-Nota que este tipo de argumentos habla sobre ~nuestro método~ de estimación ---el
-método Monte Carlo para integrales---. Es decir la probabilidad de que nuestra
-estimación no diste mas de $\epsilon$ unidades del verdadero valor.
+Nota que este tipo de argumentos habla sobre ~nuestro método~ de estimación---el
+método Monte Carlo para integrales---. Es decir, establece que la probabilidad de que nuestra
+estimación no diste mas de $\epsilon$ unidades del verdadero valor se alta ($1-\delta$).
 
-*** ~Importante~:
+#+attr_latex:
+#+begin_remark
 Jamás mencionamos que el verdadero valor del parámetro se encuentre dentro del
 intervalo con cierta probabilidad. Es decir, *jamás* mencionamos una propiedad
 probabilística del verdadero valor, $\pi(f)$, que en nuestra argumentación
 suponemos desconocido.
+#+end_remark
 
 *** ~Experimentación~:
 ¿Qué pasa si hacemos un ejercicio de réplicas de experimentos? Es decir, si
@@ -1122,8 +1131,6 @@ En algunas aplicaciones nos interesa calcular el valor esperado de $\theta | x$ 
 
 #+RESULTS:
 [[file:../images/cauchy-intervalos.jpeg]]
-
-* Referencias
 
 bibliographystyle:abbrvnat
 bibliography:references.bib
