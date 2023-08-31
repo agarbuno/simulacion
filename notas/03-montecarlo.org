@@ -1,0 +1,1129 @@
+#+TITLE: EST-24107: Simulación
+#+AUTHOR: Prof. Alfredo Garbuno Iñigo
+#+EMAIL:  agarbuno@itam.mx
+#+DATE: ~Integración Monte Carlo~
+#+STARTUP: showall
+:REVEAL_PROPERTIES:
+# Template uses org export with export option <R B>
+# Alternatives: use with citeproc
+#+LANGUAGE: es
+#+OPTIONS: num:nil toc:nil timestamp:nil
+#+REVEAL_REVEAL_JS_VERSION: 4
+#+REVEAL_THEME: night
+#+REVEAL_SLIDE_NUMBER: t
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Simulación">
+#+REVEAL_INIT_OPTIONS: width:1600, height:900, margin:.2
+#+REVEAL_EXTRA_CSS: ./mods.css
+#+REVEAL_PLUGINS: (notes)
+:END:
+#+PROPERTY: header-args:R :session monte-carlo :exports both :results output org :tangle ../rscripts/03-montecarlo.R :mkdirp yes :dir ../
+#+EXCLUDE_TAGS: toc noexport latex
+
+#+BEGIN_NOTES
+*Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | Integración Monte Carlo.\\
+*Objetivo*. Estudiar integración numérica en un contexto probabilístico. Estudiar,
+ en particular, el método Monte Carlo y entender sus bondades y limitaciones como un
+ método de aproximación de integrales. \\
+*Lectura recomendada*: Una lectura mas técnica sobre reglas de cuadratura se
+puede encontrar en la sección 3.1 de citet:Reich2015. Y una buena referencia
+(técnica) sobre el método Monte Carlo lo encuentran en citet:Sanz-Alonso2019.
+En el curso estamos explorando mas allá de lo que ofrece el capítulo 3 de citet:Robert2010a. 
+#+END_NOTES
+
+
+* Contenido                                                             :toc:
+:PROPERTIES:
+:TOC:      :include all  :ignore this :depth 3
+:END:
+:CONTENTS:
+- [[#introducción][Introducción]]
+- [[#integración-numérica][Integración numérica]]
+  - [[#análisis-de-error][Análisis de error]]
+  - [[#más-de-un-parámetro][Más de un parámetro]]
+  - [[#reglas-de-cuadratura][Reglas de cuadratura]]
+- [[#integración-monte-carlo][Integración Monte Carlo]]
+  - [[#ejemplo-dardos][Ejemplo: Dardos]]
+  - [[#propiedades][Propiedades]]
+    - [[#teorema-error-monte-carlo][Teorema [Error Monte Carlo]​]]
+    - [[#teorema-tlc-para-estimadores-monte-carlo][Teorema [TLC para estimadores Monte Carlo]​]]
+    - [[#nota][Nota:]]
+    - [[#nota][Nota:]]
+    - [[#nota][Nota:]]
+  - [[#estimación-de-una-proporción][Estimación de una proporción]]
+    - [[#ejercicio][Ejercicio:]]
+    - [[#pregunta][Pregunta:]]
+- [[#desigualdades-de-concentración][Desigualdades de concentración]]
+  - [[#desigualdad-de-chebyshev][Desigualdad de Chebyshev]]
+    - [[#teorema-desigualdad-de-chebyshev][Teorema [Desigualdad de Chebyshev]:]]
+    - [[#ejercicio][Ejercicio:]]
+    - [[#solución][Solución:]]
+    - [[#discusión][Discusión:]]
+  - [[#desigualdad-de-hoeffding][Desigualdad de Hoeffding]]
+    - [[#teorema-desigualdad-de-hoeffding][Teorema [Desigualdad de Hoeffding]:]]
+    - [[#ejercicio][Ejercicio:]]
+- [[#justificación-del-método-monte-carlo][Justificación del método Monte Carlo]]
+  - [[#teorema-ley-fuerte-de-los-grandes-números][Teorema [Ley (fuerte) de los grandes números]:]]
+  - [[#teorema-ley-débil-de-los-grandes-números][Teorema [Ley (débil) de los grandes números]:]]
+- [[#consideraciones][Consideraciones]]
+  - [[#primera-estrategia][Primera estrategia]]
+  - [[#segunda-estrategia][Segunda estrategia]]
+  - [[#comparación][Comparación]]
+  - [[#intervalos-de-confianza][Intervalos de confianza]]
+    - [[#importante][Importante:]]
+    - [[#experimentación][Experimentación:]]
+  - [[#lentitud-con-estimadores][Lentitud con estimadores]]
+- [[#referencias][Referencias]]
+:END:
+
+
+* Introducción
+
+En muchas aplicaciones nos interesa poder resolver integrales de manera numérica. Estas pueden ser de cualquier forma. Por ejemplo, nos puede interesar resolver
+\begin{align}
+\int_{\Theta}^{} h(\theta) \, \text{d}\theta\,,
+\end{align}
+que bien puede ser reexpresada como una integral bajo una medida de
+probabilidad.
+
+#+REVEAL: split
+Por ejemplo,
+\begin{align}
+\int_{\Theta}^{} f(\theta) \, \pi(\theta ) \,  \text{d}\theta\,,
+\end{align}
+de tal forma que podemos pensar en la ecuación de arriba como un valor esperado
+de una variable $\theta \sim \pi(\cdot)$ y calcular mediante un método numérico.
+
+#+REVEAL: split
+#+ATTR_REVEAL: :frag (appear)
+- La pregunta clave (I) es: ¿qué distribución podemos utilizar?
+- La pregunta clave (II) es: ¿con qué método numérico resuelvo la integral?
+- La pregunta clave (III) es: ¿y si no hay método numérico? 
+
+* Integración numérica
+
+Recordemos la definición de integrales Reimann:
+
+$$\int f(x) \text{d} x \approx \sum_{n=1}^N f(u_n) \Delta u_n =: \hat \pi_N^{\mathsf{R}} (f)\,.$$
+
+#+BEGIN_NOTES
+La aproximación utilizando una malla (cuadrícula) de $N$ puntos sería: 
+$$\sum_{n=1}^N f(u_n) \Delta u_n.$$
+
+El método es útil cuando las integrales se realizan cuando tenemos pocos
+parámetros. Es decir, cuando el dominio de integración es $\mathcal{X} \subseteq \mathbb{R}^p$ con $p$ pequeña.
+#+END_NOTES
+
+#+begin_src R :exports none :results none
+  ## Setup --------------------------------------------------
+#+end_src
+
+#+begin_src R :exports none :results none
+
+  library(tidyverse)
+  library(patchwork)
+  library(scales)
+  ## Cambia el default del tamaño de fuente 
+  theme_set(theme_linedraw(base_size = 25))
+
+  ## Cambia el número de decimales para mostrar
+  options(digits = 4)
+  options(rlang_backtrace_on_error = "none")
+  options(pillar.subtle = FALSE)
+
+
+  sin_lineas <- theme(panel.grid.major = element_blank(),
+                      panel.grid.minor = element_blank())
+  color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
+
+  sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  sin_leyenda <- theme(legend.position = "none")
+  sin_ejes <- theme(axis.ticks = element_blank(), 
+        axis.text = element_blank())
+
+  ## Ejemplo de integracion numerica -----------------------
+
+  grid.n          <- 11                 # Número de celdas 
+  grid.size       <- 6/(grid.n+1)       # Tamaño de celdas en el intervalo [-3, 3]
+  norm.cuadrature <- tibble(x = seq(-3, 3, by = grid.size), y = dnorm(x) )
+
+
+  norm.density <- tibble(x = seq(-5, 5, by = .01), 
+         y = dnorm(x) ) 
+
+#+end_src
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/quadrature.jpeg :exports results :results output graphics file
+  norm.cuadrature |>
+    ggplot(aes(x=x + grid.size/2, y=y)) + 
+    geom_area(data = norm.density, aes(x = x, y = y), fill = 'lightblue') + 
+    geom_bar(stat="identity", alpha = .3) + 
+    geom_bar(aes(x = x + grid.size/2, y = -0.01), fill = 'black', stat="identity") + 
+    sin_lineas + xlab('') + ylab("") + 
+    annotate('text', label = expression(Delta~u[n]),
+             x = .01 + 5 * grid.size/2, y = -.02, size = 12) + 
+    annotate('text', label = expression(f(u[n]) ),
+             x = .01 + 9 * grid.size/2, y = dnorm(.01 + 4 * grid.size/2), size = 12) + 
+    annotate('text', label = expression(f(u[n]) * Delta~u[n]), 
+             x = .01 + 5 * grid.size/2, y = dnorm(.01 + 4 * grid.size/2)/2, 
+             angle = -90, alpha = .7, size = 12) + sin_ejes
+#+end_src
+#+caption: Integral por medio de discretización con $N = 11$.
+#+RESULTS:
+[[file:../images/quadrature.jpeg]]
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/quadrature-hi.jpeg :exports results :results output graphics file
+  grid.n          <- 101                 # Número de celdas 
+  grid.size       <- 6/(grid.n+1)       # Tamaño de celdas en el intervalo [-3, 3]
+  norm.cuadrature <- tibble(x = seq(-3, 3, by = grid.size), y = dnorm(x) )
+
+  norm.cuadrature |>
+      ggplot(aes(x=x + grid.size/2, y=y)) + 
+      geom_area(data = norm.density, aes(x = x, y = y), fill = 'lightblue') + 
+      geom_bar(stat="identity", alpha = .3) + 
+      geom_bar(aes(x = x + grid.size/2, y = -0.01), fill = 'black', stat="identity") + 
+      sin_lineas + xlab('') + ylab("") + 
+      annotate('text', label = expression(Delta~u[n]),
+               x = .01 + 5 * grid.size/2, y = -.02, size = 12) + 
+      annotate('text', label = expression(f(u[n]) ),
+               x = .01 + 9 * grid.size/2, y = dnorm(.01 + 4 * grid.size/2), size = 12) + 
+      annotate('text', label = expression(f(u[n]) * Delta~u[n]), 
+               x = .01 + 5 * grid.size/2, y = dnorm(.01 + 4 * grid.size/2)/2, 
+               angle = -90, alpha = .7, size = 12) + sin_ejes
+#+end_src
+#+caption: Integral por medio de una malla fina, $N = 101$. 
+#+RESULTS:
+[[file:../images/quadrature-hi.jpeg]]
+
+** Análisis de error 
+
+El concepto de ~integrabilidad de Darboux~ nos puede ayudar a acotar el error
+cometido por nuestra estrategia de integración. Por ejemplo, para una partición $\rho_N$ (malla)
+del intervalo tenemos que
+\begin{align}
+L_{f, \rho_N} \leq \hat \pi_N^{\mathsf{R}}(f) \leq U_{f, \rho_N}\,.
+\end{align}
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/quadrature-darboux.jpeg :exports results :results output graphics file
+    grid.n          <- 11                 # Número de celdas 
+    grid.size       <- 6/(grid.n+1)       # Tamaño de celdas en el intervalo [-3, 3]
+    norm.cuadrature <- tibble(x = seq(-5, 0, by = grid.size),
+                              y.lo = dnorm(x - grid.size/2), y.hi = dnorm(x + grid.size/2))
+    norm.density.half <- tibble(x = seq(-5, 0, by = .01), y = dnorm(x - grid.size/2) ) 
+
+    g1 <- norm.cuadrature |>
+      ggplot(aes(x=x + grid.size/2, y=y.lo)) + 
+      geom_area(data = norm.density.half, aes(x = x, y = y), fill = 'lightblue') + 
+      geom_bar(stat="identity", alpha = .3) + 
+      geom_bar(aes(x = x + grid.size/2, y = -0.005), fill = 'black', stat="identity") + 
+      sin_lineas + xlab('') + ylab("") + sin_ejes + xlim(-5,0)
+
+    g2 <- norm.cuadrature |>
+      ggplot(aes(x=x + grid.size/2, y=y.hi)) + 
+      geom_area(data = norm.density.half, aes(x = x, y = y), fill = 'lightblue') + 
+      geom_bar(stat="identity", alpha = .3) + 
+      geom_bar(aes(x = x + grid.size/2, y = -0.005), fill = 'black', stat="identity") + 
+      sin_lineas + xlab('') + ylab("") + sin_ejes + xlim(-5, 0)
+
+    g1 + g2
+#+end_src
+#+caption: Integrales y cotas de Darboux. 
+#+RESULTS:
+[[file:../images/quadrature-darboux.jpeg]]
+
+#+REVEAL: split
+Lo que recordarán de sus cursos de cálculo es que
+\begin{align}
+\lim_{N \rightarrow \infty} |U_{f, \rho_N} - L_{f, \rho_N}| = 0\,,
+\end{align}
+y que además se satisface
+\begin{align}
+\int f(x) d x=\lim _{N \rightarrow \infty} U_{f, \rho_{N}}=\lim _{N \rightarrow \infty} L_{f, \rho_{N}}\,.
+\end{align}
+
+** Más de un parámetro
+
+#+BEGIN_NOTES
+Consideramos ahora un espacio con $\theta \in \mathbb{R}^p$. Si conservamos $N$
+puntos por cada dimensión, ¿cuántos puntos en la malla necesitaríamos?  Lo que
+tenemos son recursos computacionales limitados y hay que buscar hacer el mejor
+uso de ellos. En el ejemplo, hay zonas donde no habrá contribución en la
+integral.
+#+END_NOTES
+
+
+#+HEADER: :width 1500 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/eruption-quadrature.jpeg :exports results :results output graphics file
+      canvas <- ggplot(faithful, aes(x = eruptions, y = waiting)) +
+       xlim(0.5, 6) +
+       ylim(40, 110)
+
+      grid.size <- 10 - 1
+
+      mesh <- expand.grid(x = seq(0.5, 6, by = (6-.5)/grid.size),
+                          y = seq(40, 110, by = (110-40)/grid.size))
+
+    g1 <- canvas +
+        geom_density_2d_filled(aes(alpha = ..level..), bins = 8) +
+        scale_fill_manual(values = rev(color.itam)) + 
+        sin_lineas + theme(legend.position = "none") +
+        geom_point(data = mesh, aes(x = x, y = y)) + 
+        annotate("rect", xmin = .5 + 5 * (6-.5)/grid.size, 
+                  xmax = .5 + 6 * (6-.5)/grid.size, 
+                  ymin = 40 + 3 * (110-40)/grid.size, 
+                  ymax = 40 + 4 * (110-40)/grid.size,
+                  linestyle = 'dashed', 
+                 fill = 'salmon', alpha = .4) + ylab("") + xlab("") + 
+        annotate('text', x = .5 + 5.5 * (6-.5)/grid.size, 
+                         y = 40 + 3.5 * (110-40)/grid.size, 
+                 label = expression(u[n]), color = 'red', size = 15) +
+          theme(axis.ticks = element_blank(), 
+              axis.text = element_blank())
+
+
+    g2 <- canvas + 
+        stat_bin2d(aes(fill = after_stat(density)), binwidth = c((6-.5)/grid.size, (110-40)/grid.size)) +
+        sin_lineas + theme(legend.position = "none") +
+        theme(axis.ticks = element_blank(), 
+                axis.text = element_blank()) +
+        scale_fill_distiller(palette = "Greens", direction = 1) + 
+        sin_lineas + theme(legend.position = "none") +
+        ylab("") + xlab("")
+
+    g3 <- canvas + 
+        stat_bin2d(aes(fill = after_stat(density)), binwidth = c((6-.5)/25, (110-40)/25)) +
+        sin_lineas + theme(legend.position = "none") +
+        theme(axis.ticks = element_blank(), 
+                axis.text = element_blank()) +
+        scale_fill_distiller(palette = "Greens", direction = 1) + 
+        sin_lineas + theme(legend.position = "none") +
+        ylab("") + xlab("")
+
+  g1 + g2 + g3
+#+end_src
+#+caption: Integral multivariada por método de malla. 
+#+RESULTS:
+[[file:../images/eruption-quadrature.jpeg]]
+
+** Reglas de cuadratura
+
+Por el momento hemos escogido aproximar las integrales por medio de una aproximación con una ~malla uniforme~.
+Sin embargo, se pueden utilizar aproximaciones 
+
+$$\int f(x) \text{d} x \approx \sum_{n=1}^N f(\xi_n)\, \omega_n\,.$$
+
+Estas aproximaciones usualmente se realizan para integrales en intervalos cerrados $[a,b]$. La regla de cuadratura determina los pesos $\omega_n$ y los centros $\xi_n$ pues se escogen de acuerdo a ~ciertos criterios de convergencia~.
+
+#+BEGIN_NOTES
+Por ejemplo, se consideran polinomios que aproximen con cierto grado de precisión el integrando. Los pesos y los centros se escogen de acuerdo a la familia de polinomios. Pues para cada familia se tienen identificadas las mallas que optimizan la aproximación. Ver sección 3.1 de citet:Reich2015. 
+#+END_NOTES
+
+* Integración Monte Carlo
+
+\begin{gather*}
+\pi(f) = \mathbb{E}_\pi[f] = \int f(x) \pi(x) \text{d}x\,,\\
+\pi_N^{\textsf{MC}}(f) = \frac1N \sum_{n = 1}^N f( x^{(n)}), \qquad \text{ donde }  x^{(n)} \overset{\mathsf{iid}}{\sim} \pi, \qquad \text{ con } n = 1, \ldots, N \,, \\
+\pi_N^{\textsf{MC}}(f) \approx  \pi(f)\,.
+\end{gather*} 
+
+** Ejemplo: Dardos
+
+Consideremos el experimento de lanzar dardos uniformemente en un cuadrado de
+tamaño 2, el cual contiene un circulo de radio 1.
+
+#+HEADER: :width 1100 :height 300 :R-dev-args bg="transparent"
+#+begin_src R :file images/dardos-montecarlo.jpeg :exports results :results output graphics file
+  ## Integración Monte Carlo ----------------------------------- 
+  genera_dardos <- function(n = 100){
+      tibble(x1 = runif(n, min = -1, max = 1), 
+             x2 = runif(n, min = -1, max = 1)) %>% 
+        mutate(resultado = ifelse(x1**2 + x2**2 <= 1., 1., 0.))
+    }
+
+    dardos <- tibble(n = seq(2,5)) %>% 
+      mutate(datos = map(10**n, genera_dardos)) %>% 
+      unnest() 
+
+    dardos %>% 
+      ggplot(aes(x = x1, y = x2)) + 
+        geom_point(aes(color = factor(resultado))) + 
+        facet_wrap(~n, nrow = 1) +  
+      sin_lineas + sin_ejes + sin_leyenda + coord_equal()
+#+end_src
+#+caption: Integración Monte Carlo para aproximar $\pi$. 
+#+RESULTS:
+[[file:../images/dardos-montecarlo.jpeg]]
+
+#+REVEAL: split
+Si escogemos $N$ suficientemente grande entonces nuestro promedio converge a la
+integral. En [[fig-mc-rolling]] se muestra para cada $n$ en el eje horizontal cómo
+cambia nuestra estimación $\hat \pi_n^{\mathsf{MC}}(f)$ .
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/dardos-consistencia.jpeg :exports results :results output graphics file
+  set.seed(1087)
+  genera_dardos(n = 2**16) %>% 
+    mutate(n = seq(1, 2**16), 
+           approx = cummean(resultado) * 4) %>% 
+    ggplot(aes(x = n, y = approx)) + 
+      geom_line() + 
+      geom_hline(yintercept = pi, linetype = 'dashed') + 
+      scale_x_continuous(trans='log10', 
+                         labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas
+
+#+end_src
+#+caption: Estimación $\pi_N^{\textsf{MC}}(f)$ con $N \rightarrow \infty$.
+#+name: fig-mc-rolling
+#+RESULTS:
+[[file:../images/dardos-consistencia.jpeg]]
+
+
+#+REVEAL: split
+También podemos en replicar el experimento unas $M$ veces y observar cómo
+cambiaría nuestra estimación con distintas semillas. Por ejemplo, podemos
+replicar el experimento 10 veces. En ~R~ y ~python~ lo usual es utilizar ~arreglos
+multidimensionales~ para poder guardar muestras bajo distintas replicas.
+
+#+begin_src R :exports both :results org
+  set.seed(108)
+  nsamples <- 10**4; nexp <- 100
+  U <- runif(nexp * 2 * nsamples)
+  U <- array(U, dim = c(nexp, 2, nsamples))
+  apply(U[1:5,,], 1, str)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+ num [1:2, 1:10000] 0.4551 0.7159 0.164 0.0627 0.5291 ...
+ num [1:2, 1:10000] 0.404 0.2313 0.9282 0.0426 0.0883 ...
+ num [1:2, 1:10000] 0.351 0.739 0.449 0.658 0.369 ...
+ num [1:2, 1:10000] 0.664 0.984 0.627 0.762 0.185 ...
+ num [1:2, 1:10000] 0.4635 0.6107 0.0115 0.7251 0.0117 ...
+NULL
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  resultados <- apply(U, 1, function(x){
+    dardos <- apply(x**2, 2, sum)
+    exitos <- ifelse(dardos <= 1, 1, 0)
+    prop   <- cummean(exitos)
+    4 * prop
+  })
+#+end_src
+
+#+REVEAL: split
+Lo cual nos permite realizar distintos escenarios posibles. 
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/dardos-trayectorias.jpeg :exports results :results output graphics file
+  resultados |>
+    as_data_frame() |>
+    mutate(n = 1:nsamples) |>
+    pivot_longer(cols = 1:10) |>
+    ggplot(aes(n, value)) +
+    geom_line(aes(group = name, color = name)) +
+    geom_hline(yintercept = pi, linetype = 'dashed') + 
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda +
+    ylim(0, 7)
+#+end_src
+#+caption: Réplica de las trayectorias de diversas realizaciones de la aproximación de la integral.
+#+RESULTS:
+[[file:../images/dardos-trayectorias.jpeg]]
+
+#+REVEAL: split
+Bajo ciertas consideraciones teóricas podemos esperar un buen comportamiento de
+nuestro estimador de la integral. E incluso podríamos (si el número de
+simulaciones lo permite) aproximar dicho comportamiento utilizando
+distribuciones asintóticas, ($\mathsf{TLC}$).
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/dardos-normalidad.jpeg :exports results :results output graphics file
+      resultados |>
+        as_data_frame() |>
+        mutate(n = 1:nsamples) |>
+        pivot_longer(cols = 1:nexp) |>
+        group_by(n) |>
+        summarise(promedio = mean(value),
+                  desv.est = sd(value),
+                  y.lo = promedio - 2 * desv.est,
+                  y.hi = promedio + 2 * desv.est) |>
+        ggplot(aes(n , promedio)) +
+        geom_ribbon(aes(ymin = y.lo, ymax = y.hi), fill = "gray", alpha = .3) +
+        geom_ribbon(aes(ymin = promedio - 2 * sqrt(pi * (4 - pi)/(n)),
+                        ymax = promedio + 2 * sqrt(pi * (4 - pi)/(n))),
+                    fill = "salmon", alpha = .1) +
+        geom_hline(yintercept = pi, linetype = 'dashed') + 
+        geom_line() +
+        scale_x_continuous(trans='log10', 
+                           labels = trans_format("log10", math_format(10^.x))) + 
+        ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda +
+      ylim(0, 7)
+#+end_src
+#+caption: Comportamiento promedio e intervalos de confianza. 
+#+RESULTS:
+[[file:../images/dardos-normalidad.jpeg]]
+
+#+REVEAL: split
+Podemos explicar la reducción de los intervalos de confianza por medio de la
+varianza de la estimación de la integral en las distintas réplicas que
+tenemos. Mas adelante explicaremos de dónde viene la línea punteada. Vemos cómo,
+aunque captura bien la reducción en varianza, puede sub- o sobre-estimarla.
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/dardos-cota-cramerrao.jpeg :exports results :results output graphics file
+  resultados |>
+    as_data_frame() |>
+    mutate(n = 1:nsamples) |>
+    pivot_longer(cols = 1:nexp) |>
+    group_by(n) |>
+    summarise(varianza = var(value/4)) |>
+    mutate(cramer.rao = pi * (4 - pi)/(16 * n)) |>
+    ggplot(aes(n , varianza)) +
+    geom_line() +
+    geom_line(aes(n, cramer.rao), lty = 2, color = 'red') +
+    scale_y_continuous(trans='log10') +
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Varianza') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+#+end_src
+#+caption: Comportamiento promedio e intervalos de confianza. 
+#+RESULTS:
+[[file:../images/dardos-cota-cramerrao.jpeg]]
+
+
+
+** Propiedades
+
+A continuación enunciaremos algunas propiedades clave del método Monte
+Carlo. Poco a poco las iremos explicando y en particular discutiremos mas a
+fondo algunas de ellas. 
+
+*** ~Teorema~ [Error Monte Carlo]
+Sea $f : \mathbb{R}^p \rightarrow \mathbb{R}$ cualquier función bien
+comportada$^\dagger$.  Entonces, el estimador Monte Carlo es *insesgado*. Es
+decir, se satisface
+
+\begin{align}
+\mathbb{E}\left[\hat  \pi_N^{\textsf{MC}}(f) - \pi(f)\right] = 0,
+\end{align}
+para cualquier $N$. Usualmente estudiamos el error en un escenario pesimista
+donde medimos el *error cuadrático medio* en el peor escenario
+
+\begin{align*}
+\sup_{f \in \mathcal{F}} \, \,  \mathbb{E}\left[ \left(\hat \pi_N^{\textsf{MC}}(f) - \pi(f) \right)^2 \right] \leq \frac1N.
+\end{align*}
+
+#+BEGIN_NOTES
+Esta desigualdad nos muestra una de las propiedades que usualmente se celebran
+de los métodos Monte Carlo. La integral y nuestra aproximación de ella por medio
+de simulaciones tiene un error acotado proporcionalmente por el número de
+simulaciones.
+#+END_NOTES
+
+#+REVEAL: split
+En particular, la varianza del estimador (*error estándar*) satisface la igualdad
+
+$$ \textsf{ee}^2\left(\hat \pi_N^{\textsf{MC}}(f)\right) = \frac{\mathbb{V}_\pi( f )}{N}.$$
+
+#+BEGIN_NOTES
+Esta igualdad, aunque consistente con nuestra desigualdad anterior, nos dice
+algo mas. El error de nuestra aproximación *depende* de la varianza de $f$ bajo la
+distribución $\pi$.
+#+END_NOTES
+
+*** ~Teorema~ [TLC para estimadores Monte Carlo]
+Sea $f$ una función *bien comportada* $^{\dagger\dagger}$, entonces bajo una $N$
+suficientemente grande tenemos
+\begin{align}
+\sqrt{N} \left(\hat \pi_N^{\textsf{MC}} (f) - \pi(f) \right) \sim \mathsf{N}\left(0, \mathbb{V}_\pi(f)\right)\,.
+\end{align}
+
+*** ~Nota~:
+El estimador Monte Carlo del que hablamos, $\hat \pi_{N}^{\mathsf{MC}}(f)$, es una estimación con una ~muestra finita de simulaciones~. En ese sentido podemos pensar que tenemos un /mapeo/ de muestras a estimador
+\begin{align}
+(x^{(1)}, \ldots, x^{(N)}) \mapsto  \hat \pi_N^{\mathsf{MC}}(f)\,,
+\end{align}
+con $x^{(i)} \overset{\mathsf{iid}}{\sim} \pi$ . 
+
+#+REVEAL: split
+De lo cual es natural pensar: ¿y si hubiéramos observado otro conjunto de
+simulaciones? Nuestro proceso de estimación es el mismo pero la muestra puede
+cambiar.
+
+#+REVEAL: split
+En este sentido nos preguntamos por el ~comportamiento promedio~ bajo distintas
+muestras observadas
+\begin{align}
+\mathbb{E}[\hat \pi_N^{\mathsf{MC}}(f)] = \mathbb{E}_{x_{1}, \ldots, x_{N}}[\hat \pi_N^{\mathsf{MC}}(f)]\,.
+\end{align}
+De la misma manera nos podemos preguntar sobre la ~dispersión alrededor de dicho
+promedio~ (varianza)
+\begin{align}
+\mathbb{V}[\hat \pi_N^{\mathsf{MC}}(f)] = \mathbb{V}_{x_{1}, \ldots, x_{N}}[\hat \pi_N^{\mathsf{MC}}(f)]\,.
+\end{align}
+
+#+REVEAL: split
+Al ser un ejercicio de ~estimación~ la desviación estándar del estimador recibe el
+nombre de ~error estándar~. Lo cual denotamos por
+\begin{align}
+\mathsf{ee}[\hat \pi_N^{\mathsf{MC}}(f)] = \left( \mathbb{V}[\hat \pi_N^{\mathsf{MC}}(f)]  \right)^{1/2}= \left(  \frac{\mathbb{V}_\pi( f )}{N} \right)^{1/2}\,.
+\end{align}
+
+*** ~Nota~:
+Para algunos estimadores la fórmula del error estándar se puede obtener de
+manera analítica (curso de ~Inferencia Matemática~). Para otro tipo, tenemos que
+utilizar propiedades asintóticas (p.e. cota de Cramer-Rao).
+
+#+REVEAL: split
+Hay casos en los que no existe una fórmula asintótica o resultado analítico, pero
+podemos usar simulación [ ~8)~ ] para cuantificar dicha dispersión (lo veremos en
+otra sección del curso).
+
+*** ~Nota~:
+Hay situaciones en las que la distribución normal asintótica no tiene
+sentido. Para este tipo de situaciones también veremos cómo podemos utilizar
+simulación para cuantificar dicha dispersión.
+
+#+DOWNLOADED: screenshot @ 2022-08-29 19:52:47
+#+attr_html: :width 700 :align center
+#+caption: Comportamiento promedio e intervalos de confianza con aproximación asintótica.
+[[file:../images/dardos-normalidad.jpeg]]
+
+
+** Estimación de una proporción
+
+El lanzamiento de dardos que vimos es un ejemplo de una situación muy usual en
+estimación de integrales. Queremos estimar la tasa de éxito a partir de ver el
+éxito o fracaso de experimentos Bernoulli.
+
+#+REVEAL: split
+Si denotamos por $\theta$ la tasa de éxito. Entonces nuestro experimento (lanzar dados dentro del círculo) determina que $S_n \sim \mathsf{Binomial}(N, \theta)$ y que $\bar X_n$ es un *estimador* de $\theta$. Por lo tanto,
+\begin{align}
+\hat \theta_n := \bar X_n \approx \theta
+\end{align}
+
+*** ~Ejercicio~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+
+¿Cuál es la fórmula del error estándar para este estimador?
+
+*** ~Pregunta~:
+¿Cuántas muestras necesitamos para tener una /buena/ aproximación?
+
+* Desigualdades de concentración 
+
+En muchas situaciones nos interesa establecer cuántas simulaciones necesitamos
+para poder aproximar nuestras integrales hasta cierto orden. Por ejemplo, la
+tabla en ref:tab-darts muestra la aproximación conforme aumenta $N$.
+
+#+begin_src R :exports results :results org
+  tibble(N = 1:nsamples, estimado = resultados[,1]/4) |>
+    mutate( dif.abs = abs(estimado - pi/4)) |>
+    filter(N %% 10 == 0 & log10(N) %in% c(1, 2, 3, 4)) |>
+    as.data.frame()
+#+end_src
+#+name: tab-darts
+#+caption: Aproximación de la proporción de dardos dentro de la diana.
+#+RESULTS:
+#+begin_src org
+      N estimado dif.abs
+1    10   1.0000  0.5354
+2   100   0.8000  0.5854
+3  1000   0.7920  0.5874
+4 10000   0.7876  0.5885
+#+end_src
+
+** Desigualdad de Chebyshev
+
+Lo que queremos es encontrar una $N$ tal que con una ~alta probabilidad~ nuestro
+~estimador sea cercano al parámetro~ que está ajustando. Esto lo escribimos como
+\begin{align}
+\mathsf{Prob} \left( |\hat \theta_N - \theta| < \epsilon \right) \geq 1 - \delta\,.
+\end{align}
+
+*** ~Teorema~ [Desigualdad de Chebyshev]:
+Sea $X$ una variable aleatoria con media y varianza finita denotadas por $\mu$ y
+$\sigma^2$ respectivamente. Entonces para cualquier constante positiva $k \in
+\mathbb{R}$, tenemos que
+\begin{align}
+\mathsf{Prob}\left( |X - \mu| \geq k \, \sigma\right) \leq \frac{1}{k^2}\,.
+\end{align}
+
+#+REVEAL: split
+Lo cual podemos utilizar para encontrar una cota inferior para $N$.
+
+*** ~Ejercicio~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+
+Calcula la desigualdad y obtén el número de simulaciones necesarios para
+encontrar un estimador con nivel de precisión $\epsilon$ con una probabilidad
+$\alpha$.
+
+*** ~Solución~:                                                       :latex:
+Usando la desigualdad de Chebyshev vemos que
+\begin{align}
+1 - \delta \leq 1 - \frac{\mathbb{V}(\hat \theta_N)}{\epsilon^2}\,,
+\end{align}
+
+Del cual podemos despejar
+\begin{align}
+N \geq \frac{\theta (1 -\theta)}{\delta \epsilon^2}\,.
+\end{align}
+
+*** ~Discusión~:
+El resultado anterior nos permite escribir que con alta probabilidad (al menos $1 -\delta$) tendremos que 
+\begin{align}
+\hat \theta_N = \theta \pm \epsilon\,.
+\end{align}
+
+** Desigualdad de Hoeffding
+
+La desigualdad de Chebyshev nos permite encontrar cotas para prácticamente cualquier situación$^\dagger$. Sin embargo, el precio es la
+calidad de la estimación.
+
+#+REVEAL: split
+Una alternativa es utilizar la desigualdad de Hoeffding que nos permite establecer cotas desviaciones de
+variables aleatorias acotadas.
+
+#+BEGIN_NOTES
+Aunque la discusión es a nivel variable aleatoria, lo que estamos discutiendo es
+relevante en integración Monte Carlo. Pues, si $f : X \rightarrow [a, b]$
+podemos pensar en $f(X)$ como una variable aleatoria acotada en $[a, b]$ y
+nuestra discusión procede.
+#+END_NOTES
+
+*** ~Teorema~ [Desigualdad de Hoeffding]:
+Sea $X_{1}, \ldots, X_{n}$ una muestra ${\mathsf{iid}}$ de variables aleatorias con valores en $[a, b]$. Entonces para cualquier $t \geq 0$ y usando $S_n = X_{1} + \cdots+ X_{n}$ tenemos que
+\begin{align}
+\mathsf{Prob}\left( |S_n - \mathbb{E}[S_n] | \geq t \right) \leq 2 \exp \left( - \frac{2 t^2}{n (b - a)^2} \right)\,.
+\end{align}
+
+*** ~Ejercicio~:
+:PROPERTIES:
+:reveal_background: #00468b
+:END:
+
+Establece el tamaño de muestra necesario, $N$, para garantizar con probabilidad
+al menos $1-\delta$ que nuestro estimador será $\epsilon$ preciso.
+
+*** ~Solución~:                                                    :noexport:
+La solución es
+\begin{align}
+N \geq \frac{\log(2/\delta)}{2 \epsilon^2}\,.
+\end{align}
+
+#+BEGIN_NOTES
+Esto nos dice que para obtener una confianza determinada el costo es sublineal y mientras que en términos de precisión este es cuadrático. 
+#+END_NOTES
+
+* Justificación del método Monte Carlo
+
+Lo que hemos discutido hasta ahora nos permite ver que el método Monte Carlo ---aproxima integrales con promedios--- tiene buenas propiedades. El tiro de gracia es el siguiente resultado.
+
+*** ~Teorema~ [Ley (fuerte) de los grandes números]:
+Sea $X_{1}, \ldots, X_{n}$ una muestra de variables $\mathsf{iid}$ y sea $X$ una variable con la misma distribución. Si utilizamos una $f: \mathbb{R} \rightarrow \mathbb{R}$ acotada, entonces $h(X_{1}), \ldots, h(X_{n})$ son variables independientes y acotadas con media finita. De tal forma que se satisface que
+\begin{align}
+\mathsf{Prob} \left( \lim_{N \rightarrow \infty} \hat \pi^{\mathsf{MC}}_N (h)= \pi(h) \right) = 1\,.
+\end{align}
+
+*** ~Teorema~ [Ley (débil) de los grandes números]:
+De los resultados anteriores ya sabíamos que
+\begin{align}
+\lim_{N \rightarrow \infty}  \mathsf{Prob} \left( \left| \hat \pi^{\mathsf{MC}}_N (h) - \pi(h) \right| < \epsilon\right) = 1\,.
+\end{align}
+
+* Consideraciones
+
+Supongamos que queremos resolver la integral
+\begin{align}
+\int_{2}^{3} e^{-\frac{x^2}{2}} \text{d}x\,.
+\end{align}
+
+** Primera estrategia                                            
+
+Al tener un intervalo acotado podemos pensar en una $\mathsf{U}(2, 3)$.
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  set.see(108); nsamples <- 10**4; nexp <- 100
+  h <- function(x){ exp(-x**2/2) }
+  u <- runif(nexp * nsamples, min = 2, max = 3)
+  x <- array(u, c(nexp, nsamples))
+  h_x <- h(x)
+#+end_src
+
+#+begin_src R :exports code :results none
+  estimador_mc <- apply(h_x, 1, cummean)    # ojo, transpone el resultado
+  media_mc <- apply(estimador_mc, 1, mean)
+  error_mc <- apply(estimador_mc, 1, sd)
+  #+end_src
+
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/uniforme-normal-trayectorias.jpeg  :exports results :results output graphics file
+  estimador.uniforme <- estimador_mc
+  as.tibble(estimador_mc) |>
+    mutate(n = 1:nsamples) |>
+    pivot_longer(cols = 1:20) |>
+    ggplot(aes(n, value, color = name)) +
+    geom_line() +
+    geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) + 
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/uniforme-normal-trayectorias.jpeg]]
+
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/uniforme-normal-unica.jpeg  :exports results :results output graphics file
+  as.tibble(estimador_mc) |>
+    mutate(n = 1:nsamples) |>
+    ggplot(aes(n, V1)) +
+    geom_ribbon(aes(ymin = V1 - 2 * error_mc,
+                    ymax = V1 + 2 * error_mc),
+                alpha = .2, fill = 'salmon') + 
+    geom_line() +
+    geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) +
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/uniforme-normal-unica.jpeg]]
+
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/uniforme-normal-estimador.jpeg :exports results :results output graphics file
+  gunif <- tibble(n = 1:nsamples, media = media_mc, error = error_mc) |>
+    ggplot(aes(n, media)) +
+    geom_ribbon(aes(ymin = media - 2 * error,
+                    ymax = media + 2 * error), alpha = .2, fill = 'salmon') +
+    geom_line() +
+    geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) + 
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+
+  gunif
+
+#+end_src
+
+#+RESULTS:
+[[file:../images/uniforme-normal-estimador.jpeg]]
+
+** Segunda estrategia
+
+Por la forma que tiene la integral podemos considerar también una integral bajo
+una distribución normal.
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  set.seed(108); nsamples <- 10**4; nexp <- 100
+  f <- function(x){ ifelse(x >= 2 & x <= 3, sqrt(2 * pi), 0) }
+  u <- rnorm(nexp * nsamples)
+  x <- array(u, c(nexp, nsamples))
+  f_x <- f(x)
+#+end_src
+
+#+begin_src R :exports code :results none
+  estimador_mc <- apply(f_x, 1, cummean)    # ojo, transpone el resultado
+  media_mc <- apply(estimador_mc, 1, mean)
+  error_mc <- apply(estimador_mc, 1, sd)
+  #+end_src
+
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/normal-uniforme-trayectorias.jpeg  :exports results :results output graphics file
+  estimador.normal <- estimador_mc
+  as.tibble(estimador_mc) |>
+      mutate(n = 1:nsamples) |>
+      pivot_longer(cols = 1:20) |>
+      ggplot(aes(n, value, color = name)) +
+      geom_line() +
+      geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) + 
+      scale_x_continuous(trans='log10', 
+                         labels = trans_format("log10", math_format(10^.x))) + 
+      ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/uniforme-normal-trayectorias.jpeg]]
+
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/normal-uniforme-unica.jpeg  :exports results :results output graphics file
+  as.tibble(estimador_mc) |>
+    mutate(n = 1:nsamples) |>
+    ggplot(aes(n, V1)) +
+    geom_ribbon(aes(ymin = V1 - 2 * error_mc,
+                    ymax = V1 + 2 * error_mc),
+                alpha = .2, fill = 'salmon') + 
+    geom_line() +
+    geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) +
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/uniforme-normal-unica.jpeg]]
+
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/normal-uniforme-estimador.jpeg :exports results :results output graphics file
+  gnormal <- tibble(n = 1:nsamples, media = media_mc, error = error_mc) |>
+    ggplot(aes(n, media)) +
+    geom_ribbon(aes(ymin = media - 2 * error,
+                    ymax = media + 2 * error), alpha = .2, fill = 'salmon') +
+    geom_line() +
+    geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) + 
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+
+  gnormal
+
+#+end_src
+
+#+RESULTS:
+[[file:../images/uniforme-normal-estimador.jpeg]]
+
+** Comparación
+
+¿Cuál método preferimos?
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/normal-unif-compara.jpeg :exports results :results output graphics file
+  gunif + gnormal
+#+end_src
+
+#+RESULTS:
+[[file:../images/normal-unif-compara.jpeg]]
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/normal-unif-compara-2.jpeg :exports results :results output graphics file
+  (gunif + ylim(-.55, .55)) + (gnormal + ylim(-.55, .55))
+#+end_src
+
+#+RESULTS:
+[[file:../images/normal-unif-compara-2.jpeg]]
+
+** Intervalos de confianza
+
+Los intervalos que hemos construido y se muestran en las figuras anteriores son de la forma
+\begin{align}
+\hat \pi_{N}^{\mathsf{MC}} (f) \pm 2  \, \mathsf{ee}(\hat \pi_{N}^{\mathsf{MC}} (f))\,.
+\end{align}
+
+Cuando platicamos de la desigualdad de Chebyshev, construimos cotas para que con
+una alta probabilidad ($1- \delta$) nuestro estimador tenga una precisión dada ($\epsilon$).
+
+Nota que este tipo de argumentos habla sobre ~nuestro método~ de estimación ---el
+método Monte Carlo para integrales---. Es decir la probabilidad de que nuestra
+estimación no diste mas de $\epsilon$ unidades del verdadero valor.
+
+*** ~Importante~:
+Jamás mencionamos que el verdadero valor del parámetro se encuentre dentro del
+intervalo con cierta probabilidad. Es decir, *jamás* mencionamos una propiedad
+probabilística del verdadero valor, $\pi(f)$, que en nuestra argumentación
+suponemos desconocido.
+
+*** ~Experimentación~:
+¿Qué pasa si hacemos un ejercicio de réplicas de experimentos? Es decir, si
+repetimos $M$ veces una estimación de $\hat \pi_N^{\mathsf{MC}}(f)$ y
+registramos cuantas veces el intervalo cubre el verdadero valor del parámetro para distintas $N$?
+
+#+begin_src R :exports none :results none
+  media_mc <- apply(estimador.normal, 1, mean)
+  error_mc <- apply(estimador.normal, 1, sd)
+#+end_src
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/intervalos-normal.jpeg :exports results :results output graphics file
+  truth <- sqrt(2 * pi) * (pnorm(3) - pnorm(2))
+  as.tibble(estimador.normal) |>
+      mutate(n = 1:nsamples, error = error_mc) |>
+      pivot_longer(cols = 1:100) |>
+      filter(log10(n) %in% c(2, 3, 4)) |>
+      mutate(contains =
+               factor(ifelse(truth <= value + 2 * error & truth >= value - 2 * error, 1, 0))) |>
+      ggplot(aes(value, name)) +
+      geom_point(aes(color = contains)) +
+      geom_linerange(aes(xmin = value - 2 * error,
+                         xmax = value + 2 * error,
+                         color = contains), alpha = .4, lwd = 1.2) +
+      geom_vline(xintercept = truth, lty = 2) +
+      facet_wrap(~n, scales = "free_x") + sin_lineas + sin_leyenda +
+    theme(axis.ticks.y = element_blank(), axis.text.y = element_blank()) +
+    scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+    xlab("") + ylab("")
+#+end_src
+#+caption: Intervalos de confianza para la integral con respecto a una Normal. 
+#+RESULTS:
+[[file:../images/intervalos-normal.jpeg]]
+
+#+begin_src R :exports none :results none
+  media_mc <- apply(estimador.uniforme, 1, mean)
+  error_mc <- apply(estimador.uniforme, 1, sd)
+#+end_src
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/intervalos-uniforme.jpeg :exports results :results output graphics file
+  truth <- sqrt(2 * pi) * (pnorm(3) - pnorm(2))
+  as.tibble(estimador.uniforme) |>
+      mutate(n = 1:nsamples, error = error_mc) |>
+      pivot_longer(cols = 1:100) |>
+      filter(log10(n) %in% c(2, 3, 4)) |>
+      mutate(contains =
+               factor(ifelse(truth <= value + 2 * error & truth >= value - 2 * error, 1, 0))) |>
+      ggplot(aes(value, name)) +
+      geom_point(aes(color = contains)) +
+      geom_linerange(aes(xmin = value - 2 * error,
+                         xmax = value + 2 * error,
+                         color = contains), alpha = .4, lwd = 1.2) +
+      geom_vline(xintercept = truth, lty = 2) +
+      facet_wrap(~n, scales = "free_x") + sin_lineas + sin_leyenda +
+    theme(axis.ticks.y = element_blank(), axis.text.y = element_blank()) +
+    scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+    xlab("") + ylab("")
+#+end_src
+#+caption: Intervalos de confianza para la integral con respecto a una Uniforme. 
+#+RESULTS:
+[[file:../images/intervalos-uniforme.jpeg]]
+
+** Lentitud con estimadores
+
+Veremos un caso donde existen problemas en la estimación Monte Carlo. En
+particular, para estimar el error estándar. Esto se traduce en una reducción mas
+lenta en la incertidumbre de nuestra estimación. Y en algunos casos nuestros
+intervalos de confianza podrían no ser de confianza.
+
+#+REVEAL: split
+Supongamos que tenemos un modelo de mezcla ~Normal-Cauchy~. Es decir,
+\begin{gather}
+\pi(x | \theta) = \frac{1}{\sqrt{2\pi}} \exp \left[ -\frac{1}{2} (x - \theta)^2 \right]\,,\\
+\pi(\theta) = \frac{1}{\pi(1 + \theta^2)}\,.
+\end{gather}
+
+Nos interesa encontrar la marginal $\pi(x)$ para valores de $x = 0, 2, 4$.
+
+#+REVEAL: split
+Nota que $\pi(x)$ es un valor esperado bajo una distribución Cauchy. ¿Cuál es el integrando para $\pi(f)$?
+
+#+REVEAL: split
+En algunas aplicaciones nos interesa calcular el valor esperado de $\theta | x$ cuando asumimos una observación de $x$. La regla de probabilidad condicional nos permite calcular esto en términos de dos integrales.
+
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  set.seed(108727); nsamples <- 10**4; nexp <- 100
+  f <- function(theta){ pi * exp(-0.5 * (1 - theta)**2) }
+  h <- function(theta){ theta * f(theta) }
+  theta <- rcauchy(nexp * nsamples)
+  theta <- array(theta, c(nexp, nsamples))
+  f_theta <- f(theta)
+  h_theta <- h(theta)
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  num_estimador_mc   <- apply(h_theta, 1, cummean) # ojo, transpone el resultado
+  denom_estimador_mc <- apply(f_theta, 1, cummean) # ojo, transpone el resultado
+  estimador_mc <- num_estimador_mc / denom_estimador_mc
+  media_mc <- apply(estimador_mc, 1, mean)
+  error_mc <- apply(estimador_mc, 1, sd)
+#+end_src
+
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/cauchy-trayectorias.jpeg  :exports results :results output graphics file
+    estimador.cauchy <- estimador_mc
+    as.tibble(estimador_mc) |>
+        mutate(n = 1:nsamples) |>
+        pivot_longer(cols = 1:100) |>
+        ggplot(aes(n, value, group = name)) +
+        geom_line(alpha = .2, color = "salmon") +
+        geom_line(data = tibble(value = media_mc, n = 1:nsamples, name = "baseline"),
+                  aes(n, value), color = "black", lwd = 1.2) +
+        ## geom_hline(yintercept = sqrt(2 * pi) * (pnorm(3) - pnorm(2)), lty = 2) + 
+        scale_x_continuous(trans='log10', 
+                           labels = trans_format("log10", math_format(10^.x))) +
+        coord_cartesian(ylim = c(-.5, 1.5)) + 
+        ylab('Aproximación') + xlab("Número de muestras") + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/cauchy-trayectorias.jpeg]]
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/cauchy-reduccion-error.jpeg :exports results :results output graphics file
+
+  tibble(n = 1:nsamples, error = error_mc) |>
+  ggplot(aes(n, error)) +
+  geom_line() +
+  geom_line(aes(n, 5/n), color = 'salmon', lty = 2) + 
+  scale_x_continuous(trans='log10', 
+                     labels = trans_format("log10", math_format(10^.x))) +
+  scale_y_continuous(trans='log10') + sin_lineas +
+  xlab("Numero de simulaciones") + ylab("Error estándar")
+
+#+end_src
+
+#+RESULTS:
+[[file:../images/cauchy-reduccion-error.jpeg]]
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/cauchy-intervalos.jpeg :exports results :results output graphics file
+  truth <- media_mc[nsamples]
+  as.tibble(estimador.cauchy) |>
+      mutate(n = 1:nsamples, error = error_mc) |>
+      pivot_longer(cols = 1:100) |>
+      filter(log10(n) %in% c(2, 3, 4)) |>
+      mutate(contains =
+               factor(ifelse(truth <= value + 2 * error & truth >= value - 2 * error, 1, 0))) |>
+      ggplot(aes(value, name)) +
+      geom_point(aes(color = contains)) +
+      geom_linerange(aes(xmin = value - 2 * error,
+                         xmax = value + 2 * error,
+                         color = contains), alpha = .4, lwd = 1.2) +
+      geom_vline(xintercept = truth, lty = 2) +
+      facet_wrap(~n, scale = "free_x") + sin_lineas + sin_leyenda +
+    theme(axis.ticks.y = element_blank(), axis.text.y = element_blank()) +
+    scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+    xlab("") + ylab("")
+#+end_src
+
+#+RESULTS:
+[[file:../images/cauchy-intervalos.jpeg]]
+
+* Referencias
+
+bibliographystyle:abbrvnat
+bibliography:references.bib
