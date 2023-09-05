@@ -33,6 +33,8 @@ g2 <- tibble(u = runif(1000),
 
 g1 + g2
 
+## Ejemplo: Chi-cuadrada (6) =================================================
+
 set.seed(108)
 U <- runif(3 * 10^4)      # Genera uniformes
 U <- matrix(U, nrow = 3)  # Transforma a matriz
@@ -47,16 +49,7 @@ runif(3 * 10^4) |>        # Genera uniformes
   apply(2, function(x){-2 * sum(x)} ) |> 
   summary()
 
-library(distributions)
-## Definimos nuestra variable aleatoria
-x <- UniformRandomVariable$new()
-
-## Muestreamos 10,000 por cada renglon.
-set.seed(108)
-x$sample(10**4, 3) |>      
-  log() |>              
-  apply(2, function(x){-2 * sum(x)} ) |> 
-  summary()
+## Ejemplo: Vectores Gaussianos ==============================================
 
 set.seed(108)
 Sigma <- diag(2); Sigma[1,2] <- .75; Sigma[2,1] <- .75;
@@ -66,6 +59,8 @@ Z <- rnorm(2 * 10^4)      # Generamos vectores estandar
 Z <- matrix(Z, nrow = 2)  # Reacomodamos en matriz
 X <- t(L) %*% Z           # Transformacion lineal
 cov(t(X))
+
+## Ejemplo: Variables binomiales =============================================
 
 k <- 1:10
 pbinom(k, 10, .3)
@@ -92,6 +87,8 @@ tibble(samples = x) |>
           colour = "salmon") + 
   sin_lineas
 
+## Ejemplo: Poisson (discretas sin cota) =====================================
+
 k <- 1:24
 ppois(k, 7)
 
@@ -117,6 +114,10 @@ tibble(samples = x) |>
           colour = "salmon") + 
   sin_lineas
 
+# Mezclas, distribuciones conjuntas y distribuciones marginales ==============
+
+## Ejemplo: Poisson-Gamma ====================================================
+
 nsamples <- 10^4
 n <- 6; theta <- .3
 y <- rgamma(nsamples, n, rate = theta/(1-theta))
@@ -131,6 +132,8 @@ ggplot(aes(x)) +
             colour = "salmon") +
   sin_lineas
 
+## Ejemplo: Beta-Binomial ====================================================
+
 nsamples <- 10^4
 n <- 20; a <- 5; b <- 2
 theta <- rbeta(nsamples, a, b)
@@ -141,6 +144,8 @@ ggplot(aes(x)) +
   geom_histogram(aes(y = ..density..),
                  binwidth = 1, color = "white") +
   sin_lineas
+
+## Mezcla de Gaussianas ======================================================
 
 nsamples <- 10^5
 y <- sample(1:3, size = nsamples, prob = c(.1, .7, .2), replace = TRUE)
@@ -159,6 +164,8 @@ ggplot(aes(x)) +
             colour = "salmon") +    
   sin_lineas
 
+# Verificando distribución con Ji-cuadarada ==================================
+
 ## Esto es para poner a prueba un pseudo generador 
 rpseudo.uniform <- function(nsamples, seed = 108727){
   x0 <- seed; a <- 7**5; m <- (2**31)-1;
@@ -170,39 +177,37 @@ rpseudo.uniform <- function(nsamples, seed = 108727){
 }
 
 nsamples <- 30;  nbins <- 10;
-samples <- data.frame(x = rpseudo.uniform(nsamples, seed = 166136))
+samples <- tibble(x = rpseudo.uniform(nsamples, seed = 166136))
 samples |>
-ggplot(aes(x)) +
+  ggplot(aes(x)) +
   geom_hline(yintercept = nsamples/nbins, color = "darkgray", lty = 2) +
   annotate("rect",
            ymin = qbinom(.95, nsamples, 1/nbins),
            ymax = qbinom(.05, nsamples, 1/nbins),
            xmin = -Inf, xmax = Inf,
            alpha = .4, fill = "gray") + 
-  geom_histogram(bins = nbins, color = "white") + sin_lineas +
+  geom_histogram(binwidth = 1/nbins, color = "white", boundary = 1) + sin_lineas +
+  coord_cartesian(xlim = c(0, 1)) + 
   ggtitle("Semilla: 166136")
 
-## Esto es para poner a prueba un pseudo generador =============================
-rpseudo.uniform <- function(nsamples, seed = 108727){
-  x0 <- seed; a <- 7**5; m <- (2**31)-1;
-  x  <- x0; 
-  for (jj in 2:nsamples){
-    x[jj] <- (a * x[jj-1]) %% m
-  }
-  x/m
-}
+## Usando la noción del abogado del diablo ===================================
 
-nsamples <- 30; nbreaks <- 10
-samples <- data.frame(x = rpseudo.uniform(nsamples))
+set.seed(108727)
+## Generamos muestra de nuestro generador (congruencial lineal) 
+samples <- tibble(x = rpseudo.uniform(nsamples))
 
-Fn <- hist(samples$x, breaks = nbreaks, plot = FALSE)$counts/nsamples
-F0 <- 1/nbreaks
+## Calculamos frecuencias relativas y teoricas 
+Fn <- hist(samples$x, breaks = nbins, plot = FALSE)$counts/nsamples
+F0 <- 1/nbins
 
-X2.obs <- (nsamples*nbreaks)*sum((Fn - F0)**2)
+## Calculamos nuestra referencia 
+X2.obs <- (nsamples*nbins)*sum((Fn - F0)**2)
 
-## Esto es para generar datos observados de la distribucion que queremos 
-experiment <- function(nsamples){
-  nbreaks <- 10
+## La imprimimos en pantalla 
+paste("Estadístico: ", round(X2.obs, 3))
+
+## Replicando experimentos =================================================== 
+experiment <- function(nsamples, nbreaks = 20){
   samples <- data.frame(x = runif(nsamples))
   Fn <- hist(samples$x, breaks = nbreaks, plot = FALSE)$counts/nsamples
   F0 <- 1/nbreaks
@@ -212,15 +217,16 @@ experiment <- function(nsamples){
 
 X2 <- c()
 for (jj in 1:5000){
-  X2[jj] <- experiment(nsamples)
+  X2[jj] <- experiment(nsamples, nbins)
 }
 
-data.frame(estadistica = X2) |>
+tibble(estadistica = X2) |>
   ggplot(aes(estadistica)) +
-  geom_histogram(aes(y = ..density..)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "white") +
+  xlab(expression(chi[nbins-1]^{2})) + 
   geom_vline(xintercept = X2.obs, lty = 2, color = 'red', lwd = 1.5) +
-  stat_function(fun = dchisq, args = list(df = nbreaks - 1), color = 'salmon', lwd = 1.5) +
-  sin_lineas + xlab(expression(chi^{2}))
+  stat_function(fun = dchisq, args = list(df = nbins - 1), color = 'salmon', lwd = 1.5) +
+  sin_lineas
 
 print(paste("Estadistico: ", round(X2.obs, 4), ", Probabilidad: ", mean(X2 >= X2.obs), sep =''))
 
@@ -228,6 +234,8 @@ counts.obs <- Fn*nsamples
 chisq.test(counts.obs, p = rep(1, nbreaks)/nbreaks, simulate.p.value = TRUE)
 
 ks.test(samples$x, "punif")
+
+## Numeros aleatorios normales (aprox. uniforme) =============================
 
 nsamples <- 10^4; k <- 12
 U <- runif(k * nsamples)
@@ -245,6 +253,8 @@ g2 <- tibble(samples = rnorm(nsamples)) |>
   ggtitle("Utilizando rnorm")
 
 g1 + g2
+
+## Numeros normales (metodo polar)
 
 rnormal.bm <- function(n){
   r <- sqrt(-2 * log(runif(n)))

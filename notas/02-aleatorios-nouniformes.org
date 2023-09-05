@@ -7,7 +7,7 @@
 #+SETUPFILE: ~/.emacs.d/templates/latex/handout.org
 #+EXPORT_FILE_NAME: ../docs/02-aleatorios-nouniformes.pdf
 :END:
-#+PROPERTY: header-args:R :session transformacion :exports both :results output org :tangle ../rscripts/02-aleatorios-nouniformes.R :mkdirp yes :dir ../ :eval never
+#+PROPERTY: header-args:R :session transformacion :exports both :results output org :tangle ../rscripts/02-aleatorios-nouniformes.R :mkdirp yes :dir ../ 
 #+EXCLUDE_TAGS: toc
 
 #+BEGIN_NOTES
@@ -196,6 +196,10 @@ Prueba las igualdades anteriores.
 
 *** Código:
 
+#+begin_src R :exports none :results none
+  ## Ejemplo: Chi-cuadrada (6) =================================================
+#+end_src
+
 Por ejemplo, podemos utilizar el siguiente código para generar variables de una $\chi^2_6$ . 
 
 #+begin_src R :exports both :results org
@@ -241,7 +245,7 @@ definir una variable aleatoria de una familia paramétrica utilizando un valor d
 de los parámetros que la definen. Por ejemplo, una $\mathsf{N}(\mu, \sigma) = \mathsf{N}(0, 1)$
 o una $\mathsf{U}(a,b) = \mathsf{U}(0,1)$. 
 
-#+begin_src R :exports both :results org 
+#+begin_src R :exports both :results org :tangle no
   library(distributions)
   ## Definimos nuestra variable aleatoria
   x <- UniformRandomVariable$new()
@@ -276,6 +280,10 @@ j$. Supongamos que sólo sabemos generar números aleatorios $\mathsf{N}(0,1)$.
 
 #+REVEAL: split
 ¿Qué saben de propiedades matriciales de vectores aleatorios?
+
+#+begin_src R :exports none :results none
+  ## Ejemplo: Vectores Gaussianos ==============================================
+#+end_src
 
 #+REVEAL: split
 #+begin_src R :exports both :results org 
@@ -322,6 +330,10 @@ X = k \text{ si } \, p_{k-1} < U < p_k\,.
 
 ** Binomial
 Supongamos que nos interesa $X \sim \mathsf{Bin}(10, 0.3)$, el vector de probabilidades lo podemos calcular con la función ~pbinom(k, 10, .3)~.
+
+#+begin_src R :exports none :results none
+  ## Ejemplo: Variables binomiales =============================================
+#+end_src
 
 #+begin_src R :exports both :results org 
   k <- 1:10
@@ -373,6 +385,9 @@ Ahora supongamos que nos interesa simular de una Poisson con parámetro $\lambda
 ¿Cuál es el soporte de una $\mathsf{Bin}(10, 0.3)$? ¿Cuál es el soporte de una $\mathsf{Poisson}(7)$?
 
 #+REVEAL: split
+#+begin_src R :exports none :results none
+  ## Ejemplo: Poisson (discretas sin cota) =====================================
+#+end_src
 Tenemos que guardar las probabilidades
 #+begin_src R :exports both :results org
   k <- 1:24
@@ -427,7 +442,11 @@ El problema de generar números aleatorios de la manera anterior es la necesidad
 Si $X$ es una variable aleatoria con media y varianza finitas. Entonces, la probabilidad de que una realización de $X$ se encuentre a mas de 3 desviaciones estándar de la media es a lo mas $5\%$.     
 #+end_proposition
 
-* Mezclas 
+* Mezclas
+
+#+begin_src R :exports none :results none
+  # Mezclas, distribuciones conjuntas y distribuciones marginales ==============
+#+end_src
 
 Otra familia de distribuciones que es muy interesante de simular son las
 mezclas. Es decir, cuando podemos escribir
@@ -450,6 +469,10 @@ La variable aleatoria $X\sim \mathsf{BinNeg}(n, \theta)$ tiene una representaci�
 X | y \sim \mathsf{Poisson}(y)\,, \quad Y \sim \mathsf{Gamma}(n , \beta )\,,
 \end{align}
 donde $\beta = (1-\theta)/\theta$.
+
+#+begin_src R :exports none :results none
+  ## Ejemplo: Poisson-Gamma ====================================================
+#+end_src
 
 #+begin_src R :exports code :results none
   nsamples <- 10^4
@@ -481,6 +504,10 @@ Poisson-Gamma.
 
 
 ** Beta Binomial
+
+#+begin_src R :exports none :results none
+  ## Ejemplo: Beta-Binomial ====================================================
+#+end_src
 
 Una distribución bastante conocida es la distribución Beta-Binomial la cual, como su nombre indica, está conformada por una mezcla de una $\mathsf{Bin}(n, \theta)$ y una $\mathsf{Beta}(\alpha, \beta)$. Es decir, $x \sim \mathsf{BetaBin}(n, \alpha, \beta)$ si su función de masa de probabilidad está dada por
 \begin{align}
@@ -516,6 +543,10 @@ Otro modelo /famoso/ es el de una mezcla de Gaussianas. Donde tenemos $k$ posibl
 \end{align}
 
 #+REVEAL: split
+#+begin_src R :exports none :results none
+  ## Mezcla de Gaussianas ======================================================
+#+end_src
+
 #+begin_src R :exports code :results none
   nsamples <- 10^5
   y <- sample(1:3, size = nsamples, prob = c(.1, .7, .2), replace = TRUE)
@@ -595,6 +626,10 @@ prueba?
 #+REVEAL: split
 La visualización correspondiente sería lo siguiente. Utilizamos nuestro generador para obtener muestras. 
 
+#+begin_src R :exports none :results none
+  # Verificando distribución con Ji-cuadarada ==================================
+#+end_src
+
 #+begin_src R :exports code :results none 
   ## Esto es para poner a prueba un pseudo generador 
   rpseudo.uniform <- function(nsamples, seed = 108727){
@@ -611,16 +646,17 @@ La visualización correspondiente sería lo siguiente. Utilizamos nuestro genera
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/pseudo-uniform-hist.jpeg :exports results :results output graphics file
   nsamples <- 30;  nbins <- 10;
-  samples <- data.frame(x = rpseudo.uniform(nsamples, seed = 166136))
+  samples <- tibble(x = rpseudo.uniform(nsamples, seed = 166136))
   samples |>
-  ggplot(aes(x)) +
+    ggplot(aes(x)) +
     geom_hline(yintercept = nsamples/nbins, color = "darkgray", lty = 2) +
     annotate("rect",
              ymin = qbinom(.95, nsamples, 1/nbins),
              ymax = qbinom(.05, nsamples, 1/nbins),
              xmin = -Inf, xmax = Inf,
              alpha = .4, fill = "gray") + 
-    geom_histogram(bins = nbins, color = "white") + sin_lineas +
+    geom_histogram(binwidth = 1/nbins, color = "white", boundary = 1) + sin_lineas +
+    coord_cartesian(xlim = c(0, 1)) + 
     ggtitle("Semilla: 166136")
 #+end_src
 #+CAPTION: Visualización de la realización de la prueba de $\chi^2$ descrita anteriormente.
@@ -636,8 +672,12 @@ La visualización correspondiente sería lo siguiente. Utilizamos nuestro genera
 
 ** Aplicación de la prueba
 
-#+begin_src R :exports none :results none 
-  ## Esto es para poner a prueba un pseudo generador =============================
+#+begin_src R :exports none :results none
+  ## Usando la noción del abogado del diablo ===================================
+#+end_src
+
+#+begin_src R :exports none :results none :tangle no
+  ## Recordemos nuestro generado uniforme 
   rpseudo.uniform <- function(nsamples, seed = 108727){
     x0 <- seed; a <- 7**5; m <- (2**31)-1;
     x  <- x0; 
@@ -650,21 +690,26 @@ La visualización correspondiente sería lo siguiente. Utilizamos nuestro genera
 
 #+REVEAL: split
 #+begin_src R :exports code :results none 
-  nsamples <- 30; nbreaks <- 10
-  samples <- data.frame(x = rpseudo.uniform(nsamples))
+  set.seed(108727)
+  ## Generamos muestra de nuestro generador (congruencial lineal) 
+  samples <- tibble(x = rpseudo.uniform(nsamples))
 
-  Fn <- hist(samples$x, breaks = nbreaks, plot = FALSE)$counts/nsamples
-  F0 <- 1/nbreaks
+  ## Calculamos frecuencias relativas y teoricas 
+  Fn <- hist(samples$x, breaks = nbins, plot = FALSE)$counts/nsamples
+  F0 <- 1/nbins
 
-  X2.obs <- (nsamples*nbreaks)*sum((Fn - F0)**2)  
+  ## Calculamos nuestra referencia 
+  X2.obs <- (nsamples*nbins)*sum((Fn - F0)**2)
+
+  ## La imprimimos en pantalla 
+  paste("Estadístico: ", round(X2.obs, 3))
 #+end_src
 
 
 #+REVEAL: split
 #+begin_src R :exports code :results none
-  ## Esto es para generar datos observados de la distribucion que queremos 
-  experiment <- function(nsamples){
-    nbreaks <- 10
+  ## Replicando experimentos =================================================== 
+  experiment <- function(nsamples, nbreaks = 20){
     samples <- data.frame(x = runif(nsamples))
     Fn <- hist(samples$x, breaks = nbreaks, plot = FALSE)$counts/nsamples
     F0 <- 1/nbreaks
@@ -674,7 +719,7 @@ La visualización correspondiente sería lo siguiente. Utilizamos nuestro genera
 
   X2 <- c()
   for (jj in 1:5000){
-    X2[jj] <- experiment(nsamples)
+    X2[jj] <- experiment(nsamples, nbins)
   }
 #+end_src
 
@@ -687,12 +732,13 @@ de libertad) que es la distribución asintótica del estadístico.
 
 #+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/chi2-histograma.jpeg :exports results :results output graphics file
-  data.frame(estadistica = X2) |>
+  tibble(estadistica = X2) |>
     ggplot(aes(estadistica)) +
-    geom_histogram(aes(y = ..density..)) +
+    geom_histogram(aes(y = ..density..), bins = 20, color = "white") +
+    xlab(expression(chi[nbins-1]^{2})) + 
     geom_vline(xintercept = X2.obs, lty = 2, color = 'red', lwd = 1.5) +
-    stat_function(fun = dchisq, args = list(df = nbreaks - 1), color = 'salmon', lwd = 1.5) +
-    sin_lineas + xlab(expression(chi^{2}))
+    stat_function(fun = dchisq, args = list(df = nbins - 1), color = 'salmon', lwd = 1.5) +
+    sin_lineas 
 #+end_src
 #+name: fig-chisq-hist
 #+RESULTS:
@@ -770,6 +816,10 @@ pues por el CLT tenemos que
 Z = \frac{\sum_{i = 1}^{k} U_j - k/2}{\sqrt{k/12}} \overset{.}{\sim} \mathsf{N}(0,1)\,.
 \end{align}
 
+#+begin_src R :exports none :results none
+  ## Numeros aleatorios normales (aprox. uniforme) =============================
+#+end_src
+
 #+REVEAL: split
 #+begin_src R :exports code :results none
   nsamples <- 10^4; k <- 12
@@ -840,6 +890,10 @@ z_2 = \sqrt{-2\log u_1} \sin (2\pi u_2)\,.\\
 \end{align}
 #+REVEAL: split
 El problema de esto es que necesitamos calcular funciones complejas ($\sin(\cdot), \cos(\cdot), \sqrt{\cdot}$). 
+
+#+begin_src R :exports none :results none
+  ## Numeros normales (metodo polar)
+#+end_src
 
 #+REVEAL: split
 #+begin_src R :exports code :results none 
