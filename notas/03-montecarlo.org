@@ -11,7 +11,7 @@
 #+EXCLUDE_TAGS: toc noexport latex
 
 #+BEGIN_NOTES
-*Profesor*: Alfredo Garbuno Iñigo | Primavera, 2022 | Integración Monte Carlo.\\
+*Profesor*: Alfredo Garbuno Iñigo | Otoño, 2023 | Integración Monte Carlo.\\
 *Objetivo*. Estudiar integración numérica en un contexto probabilístico. Estudiar,
  en particular, el método Monte Carlo y entender sus bondades y limitaciones como un
  método de aproximación de integrales. \\
@@ -93,23 +93,21 @@ parámetros. Es decir, cuando el dominio de integración es $\mathcal{X} \subset
 #+end_src
 
 #+begin_src R :exports none :results none
-
   library(tidyverse)
   library(patchwork)
   library(scales)
   ## Cambia el default del tamaño de fuente 
   theme_set(theme_linedraw(base_size = 25))
 
-  ## Cambia el número de decimales para mostrar
+ ## Cambia el número de decimales para mostrar
   options(digits = 4)
-  options(rlang_backtrace_on_error = "none")
+  ## Problemas con mi consola en Emacs
   options(pillar.subtle = FALSE)
+  options(rlang_backtrace_on_error = "none")
+  options(crayon.enabled = FALSE)
+  options(width=70)
 
-
-  sin_lineas <- theme(panel.grid.major = element_blank(),
-                      panel.grid.minor = element_blank())
   color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
-
   sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   sin_leyenda <- theme(legend.position = "none")
   sin_ejes <- theme(axis.ticks = element_blank(), 
@@ -120,7 +118,6 @@ parámetros. Es decir, cuando el dominio de integración es $\mathcal{X} \subset
   grid.n          <- 11                 # Número de celdas 
   grid.size       <- 6/(grid.n+1)       # Tamaño de celdas en el intervalo [-3, 3]
   norm.cuadrature <- tibble(x = seq(-3, 3, by = grid.size), y = dnorm(x) )
-
 
   norm.density <- tibble(x = seq(-5, 5, by = .01), 
          y = dnorm(x) ) 
@@ -234,50 +231,50 @@ integral.
 
 #+HEADER: :width 1500 :height 500 :R-dev-args bg="transparent"
 #+begin_src R :file images/eruption-quadrature.jpeg :exports results :results output graphics file
-      canvas <- ggplot(faithful, aes(x = eruptions, y = waiting)) +
-       xlim(0.5, 6) +
-       ylim(40, 110)
+  canvas <- ggplot(faithful, aes(x = eruptions, y = waiting)) +
+    xlim(0.5, 6) +
+    ylim(40, 110)
 
-      grid.size <- 10 - 1
+  grid.size <- 10 - 1
 
-      mesh <- expand.grid(x = seq(0.5, 6, by = (6-.5)/grid.size),
-                          y = seq(40, 110, by = (110-40)/grid.size))
+  mesh <- expand.grid(x = seq(0.5, 6, by = (6-.5)/grid.size),
+                      y = seq(40, 110, by = (110-40)/grid.size))
 
-    g1 <- canvas +
-        geom_density_2d_filled(aes(alpha = ..level..), bins = 8) +
-        scale_fill_manual(values = rev(color.itam)) + 
-        sin_lineas + theme(legend.position = "none") +
-        geom_point(data = mesh, aes(x = x, y = y)) + 
-        annotate("rect", xmin = .5 + 5 * (6-.5)/grid.size, 
-                  xmax = .5 + 6 * (6-.5)/grid.size, 
-                  ymin = 40 + 3 * (110-40)/grid.size, 
-                  ymax = 40 + 4 * (110-40)/grid.size,
-                  linestyle = 'dashed', 
-                 fill = 'salmon', alpha = .4) + ylab("") + xlab("") + 
-        annotate('text', x = .5 + 5.5 * (6-.5)/grid.size, 
-                         y = 40 + 3.5 * (110-40)/grid.size, 
-                 label = expression(u[n]), color = 'red', size = 15) +
-          theme(axis.ticks = element_blank(), 
-              axis.text = element_blank())
+  g1 <- canvas +
+    geom_density_2d_filled(aes(alpha = ..level..), bins = 8) +
+    scale_fill_manual(values = rev(color.itam)) + 
+    sin_lineas + theme(legend.position = "none") +
+    geom_point(data = mesh, aes(x = x, y = y)) + 
+    annotate("rect", xmin = .5 + 5 * (6-.5)/grid.size, 
+             xmax = .5 + 6 * (6-.5)/grid.size, 
+             ymin = 40 + 3 * (110-40)/grid.size, 
+             ymax = 40 + 4 * (110-40)/grid.size,
+             linestyle = 'dashed', 
+             fill = 'salmon', alpha = .4) + ylab("") + xlab("") + 
+    annotate('text', x = .5 + 5.5 * (6-.5)/grid.size, 
+             y = 40 + 3.5 * (110-40)/grid.size, 
+             label = expression(u[n]), color = 'red', size = 15) +
+    theme(axis.ticks = element_blank(), 
+          axis.text = element_blank())
 
 
-    g2 <- canvas + 
-        stat_bin2d(aes(fill = after_stat(density)), binwidth = c((6-.5)/grid.size, (110-40)/grid.size)) +
-        sin_lineas + theme(legend.position = "none") +
-        theme(axis.ticks = element_blank(), 
-                axis.text = element_blank()) +
-        scale_fill_distiller(palette = "Greens", direction = 1) + 
-        sin_lineas + theme(legend.position = "none") +
-        ylab("") + xlab("")
+  g2 <- canvas + 
+    stat_bin2d(aes(fill = after_stat(density)), binwidth = c((6-.5)/grid.size, (110-40)/grid.size)) +
+    sin_lineas + theme(legend.position = "none") +
+    theme(axis.ticks = element_blank(), 
+          axis.text = element_blank()) +
+    scale_fill_distiller(palette = "Greens", direction = 1) + 
+    sin_lineas + theme(legend.position = "none") +
+    ylab("") + xlab("")
 
-    g3 <- canvas + 
-        stat_bin2d(aes(fill = after_stat(density)), binwidth = c((6-.5)/25, (110-40)/25)) +
-        sin_lineas + theme(legend.position = "none") +
-        theme(axis.ticks = element_blank(), 
-                axis.text = element_blank()) +
-        scale_fill_distiller(palette = "Greens", direction = 1) + 
-        sin_lineas + theme(legend.position = "none") +
-        ylab("") + xlab("")
+  g3 <- canvas + 
+    stat_bin2d(aes(fill = after_stat(density)), binwidth = c((6-.5)/25, (110-40)/25)) +
+    sin_lineas + theme(legend.position = "none") +
+    theme(axis.ticks = element_blank(), 
+          axis.text = element_blank()) +
+    scale_fill_distiller(palette = "Greens", direction = 1) + 
+    sin_lineas + theme(legend.position = "none") +
+    ylab("") + xlab("")
 
   g1 + g2 + g3
 #+end_src
@@ -313,7 +310,7 @@ tamaño 2, el cual contiene un circulo de radio 1.
 
 #+HEADER: :width 1100 :height 300 :R-dev-args bg="transparent"
 #+begin_src R :file images/dardos-montecarlo.jpeg :exports results :results output graphics file
-  ## Integración Monte Carlo ----------------------------------- 
+  ## Integración Monte ========================================================= 
   genera_dardos <- function(n = 100){
       tibble(x1 = runif(n, min = -1, max = 1), 
              x2 = runif(n, min = -1, max = 1)) %>% 
@@ -362,35 +359,140 @@ cambia nuestra estimación $\hat \pi_n^{\mathsf{MC}}(f)$ .
 #+REVEAL: split
 También podemos en replicar el experimento unas $M$ veces y observar cómo
 cambiaría nuestra estimación con distintas semillas. Por ejemplo, podemos
-replicar el experimento 10 veces. En ~R~ y ~python~ lo usual es utilizar ~arreglos
+replicar el experimento 100 veces. En ~R~ y ~python~ lo usual es utilizar ~arreglos
 multidimensionales~ para poder guardar muestras bajo distintas replicas.
 
-#+begin_src R :exports both :results org
+#+begin_src R :exports code :results org
   set.seed(108)
   nsamples <- 10**4; nexp <- 100
   U <- runif(nexp * 2 * nsamples)
   U <- array(U, dim = c(nexp, 2, nsamples))
+#+end_src
+
+#+begin_src R :exports both :results org 
+  str(U)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+ num [1:100, 1:2, 1:10000] 0.455 0.404 0.351 0.664 0.463 ...
+#+end_src
+
+#+REVEAL: split
+Hay que tener cuidado como accesamos a un arreglo multidimensional. Por ejemplo,
+¿cómo podemos accesar las primeras 5 réplicas de lanzar 10,000 dardos al plano?
+
+#+begin_src R :exports both :results org 
+  U[1:5] |> str() 
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+ num [1:5] 0.455 0.404 0.351 0.664 0.463
+#+end_src
+
+#+REVEAL: split
+El código anterior no funcionó. El que usamos es el siguiente:
+
+#+begin_src R :exports both :results org 
+   U[1:5,,] |> str() 
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+ num [1:5, 1:2, 1:10000] 0.455 0.404 0.351 0.664 0.463 ...
+#+end_src
+
+#+REVEAL: split
+Una pregunta natural es: ¿cómo aplicamos un resumen (función) a cada
+experimento? Para esto, podemos usar la función ~apply~ que ya hemos usado
+anteriormente. 
+
+#+begin_src R :exports both :results org 
   apply(U[1:5,,], 1, str)
 #+end_src
 
 #+RESULTS:
 #+begin_src org
- num [1:2, 1:10000] 0.4551 0.7159 0.164 0.0627 0.5291 ...
- num [1:2, 1:10000] 0.404 0.2313 0.9282 0.0426 0.0883 ...
- num [1:2, 1:10000] 0.351 0.739 0.449 0.658 0.369 ...
- num [1:2, 1:10000] 0.664 0.984 0.627 0.762 0.185 ...
- num [1:2, 1:10000] 0.4635 0.6107 0.0115 0.7251 0.0117 ...
+ num [1:2, 1:10000] 0.455 0.164 0.529 0.415 0.474 ...
+ num [1:2, 1:10000] 0.404 0.9282 0.0883 0.3126 0.4386 ...
+ num [1:2, 1:10000] 0.351 0.449 0.369 0.814 0.695 ...
+ num [1:2, 1:10000] 0.664 0.627 0.185 0.882 0.113 ...
+ num [1:2, 1:10000] 0.4635 0.0115 0.0117 0.5086 0.9384 ...
 NULL
 #+end_src
 
 #+REVEAL: split
-#+begin_src R :exports code :results none
-  resultados <- apply(U, 1, function(x){
+Vamos a usar una función para encapsular el resumen: 
+#+begin_src R :exports code :results none 
+  cuenta_dardos <- function(x){
+    ## obtiene la norma 2
     dardos <- apply(x**2, 2, sum)
+    ## cuenta si los dardos estan en el circulo unitario
     exitos <- ifelse(dardos <= 1, 1, 0)
+    ## obtiene frecuencias relativas
+    prop   <- mean(exitos)
+    4 * prop
+  }
+#+end_src
+
+#+begin_src R :exports both :results org
+  resultados <- apply(U, 1, cuenta_dardos)
+  resultados
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+  [1] 3.152 3.139 3.163 3.140 3.151 3.147 3.146 3.139 3.163 3.129
+ [11] 3.146 3.118 3.148 3.116 3.134 3.127 3.161 3.128 3.139 3.136
+ [21] 3.132 3.124 3.140 3.159 3.142 3.158 3.201 3.118 3.140 3.152
+ [31] 3.175 3.133 3.132 3.142 3.135 3.122 3.132 3.126 3.145 3.162
+ [41] 3.148 3.117 3.173 3.150 3.154 3.146 3.102 3.197 3.140 3.144
+ [51] 3.132 3.144 3.124 3.128 3.156 3.159 3.124 3.136 3.141 3.148
+ [61] 3.146 3.136 3.153 3.114 3.123 3.136 3.143 3.128 3.169 3.124
+ [71] 3.145 3.130 3.164 3.188 3.111 3.132 3.154 3.139 3.112 3.122
+ [81] 3.143 3.170 3.170 3.152 3.155 3.114 3.124 3.120 3.164 3.146
+ [91] 3.147 3.136 3.163 3.146 3.164 3.153 3.131 3.156 3.134 3.158
+#+end_src
+
+#+REVEAL: split
+Nota cómo podemos obtener la distribución de distintos promedios usando un histograma de los resultados.
+
+#+HEADER: :width 900 :height 400 :R-dev-args bg="transparent"
+#+begin_src R :file images/dardos-muestreo.jpeg :exports results :results output graphics file
+  tibble(x = resultados) |>
+  ggplot(aes(x)) +
+  geom_histogram(bins = 20) + sin_lineas +
+  geom_vline(xintercept = pi, lty = 2, color = "salmon", size =2)
+#+end_src
+#+caption: Distribución de posibles promedios bajo distintas semillas. 
+#+RESULTS:
+[[file:../images/dardos-muestreo.jpeg]]
+
+#+REVEAL: split
+También es usual utilizar un gráfico de ~trazas~ o ~trayectorias~ para ver comportamientos interesantes. Por ejemplo, podemos usar la función ~cuenta_acumulacion_dardos~ como se muestra a continuación.
+
+#+begin_src R :exports code :results none
+  cuenta_acumulacion_dardos <- function(x){
+    ## obtiene la norma 2
+    dardos <- apply(x**2, 2, sum)
+    ## cuenta si los dardos estan en el circulo unitario
+    exitos <- ifelse(dardos <= 1, 1, 0)
+    ## obtiene frecuencias relativas mientras avanza N
     prop   <- cummean(exitos)
     4 * prop
-  })
+  }
+#+end_src
+
+#+begin_src R :exports both :results org
+  resultados <- apply(U, 1, cuenta_acumulacion_dardos)
+  resultados |> str()
+  ## Nota como transpone el resultado
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+ num [1:10000, 1:100] 4 4 4 4 4 4 4 4 4 4 ...
 #+end_src
 
 #+REVEAL: split
@@ -528,11 +630,11 @@ distribución $\pi$.
 
 #+attr_latex: :options [~TLC~ para estimadores Monte Carlo]
 #+begin_theorem
+Sea $f$ una función *bien comportada* $^{\dagger\dagger}$, entonces bajo una $N$
+suficientemente grande tenemos
 \begin{align}
 \sqrt{N} \left(\hat \pi_N^{\textsf{MC}} (f) - \pi(f) \right) \sim \mathsf{N}\left(0, \mathbb{V}_\pi(f)\right)\,.
 \end{align}
-    Sea $f$ una función *bien comportada* $^{\dagger\dagger}$, entonces bajo una $N$
-suficientemente grande tenemos
 #+end_theorem
 
 #+attr_latex:
@@ -551,14 +653,14 @@ cambiar.
 
 #+REVEAL: split
 En este sentido nos preguntamos por el ~comportamiento promedio~ bajo distintas
-muestras observadas
+muestras observadas (nota las variables aleatorias con respecto a lo que estamos tomado el valor esperado).
 \begin{align}
-\mathbb{E}[\hat \pi_N^{\mathsf{MC}}(f)] = \mathbb{E}_{x_{1}, \ldots, x_{N}}[\hat \pi_N^{\mathsf{MC}}(f)]\,.
+\mathbb{E}[\hat \pi_N^{\mathsf{MC}}(f)] = \mathbb{E}_{\color{red} {x^{(1)}, \ldots, x^{(N)}}}[\hat \pi_N^{\mathsf{MC}}(f)]\,.
 \end{align}
 De la misma manera nos podemos preguntar sobre la ~dispersión alrededor de dicho
 promedio~ (varianza)
 \begin{align}
-\mathbb{V}[\hat \pi_N^{\mathsf{MC}}(f)] = \mathbb{V}_{x_{1}, \ldots, x_{N}}[\hat \pi_N^{\mathsf{MC}}(f)]\,.
+\mathbb{V}[\hat \pi_N^{\mathsf{MC}}(f)] = \mathbb{V}_{\color{red} {x^{(1)}, \ldots, x^{(N)}}}[\hat \pi_N^{\mathsf{MC}}(f)]\,.
 \end{align}
 
 #+REVEAL: split
@@ -625,21 +727,26 @@ En muchas situaciones nos interesa establecer cuántas simulaciones necesitamos
 para poder aproximar nuestras integrales hasta cierto orden. Por ejemplo, la
 tabla en [[tab-darts]] muestra la aproximación conforme aumenta $N$.
 
+#+begin_src R :exports none :results none
+  options(digits = 8)
+#+end_src
+
 #+begin_src R :exports results :results org
-  tibble(N = 1:nsamples, estimado = resultados[,1]/4) |>
-    mutate( dif.abs = abs(estimado - pi/4)) |>
-    filter(N %% 10 == 0 & log10(N) %in% c(1, 2, 3, 4)) |>
-    as.data.frame()
+  tibble(N = 1:nsamples, estimado = resultados[,1]) |>
+    mutate( diff.abs = abs(estimado - pi)) |>
+    filter(N %% 10 == 0 & log10(N) %in% c(1, 2, 3, 4))
 #+end_src
 #+name: tab-darts
 #+caption: Aproximación de la proporción de dardos dentro de la diana.
 #+RESULTS:
 #+begin_src org
-      N estimado dif.abs
-1    10   1.0000  0.5354
-2   100   0.8000  0.5854
-3  1000   0.7920  0.5874
-4 10000   0.7876  0.5885
+# A tibble: 4 × 3
+      N estimado diff.abs
+  <int>    <dbl>    <dbl>
+1    10     4      0.858 
+2   100     3.12   0.0216
+3  1000     3.16   0.0224
+4 10000     3.15   0.0100
 #+end_src
 
 ** Desigualdad de Chebyshev
@@ -732,7 +839,7 @@ Esto nos dice que para obtener una confianza determinada el costo es sublineal y
 
 * Justificación del método Monte Carlo
 
-Lo que hemos discutido hasta ahora nos permite ver que el método Monte Carlo ---aproxima integrales con promedios--- tiene buenas propiedades. El tiro de gracia es el siguiente resultado.
+Lo que hemos discutido hasta ahora nos permite ver que el método Monte Carlo---aproximar integrales con promedios--- tiene buenas propiedades. El tiro de gracia es el siguiente resultado.
 
 #+attr_latex: :options [Ley ~fuerte~ de los grandes números]
 #+begin_theorem
@@ -924,7 +1031,7 @@ una distribución normal.
 #+begin_src R :file images/normal-unif-compara.jpeg :exports results :results output graphics file
   gunif + gnormal
 #+end_src
-
+#+caption: Resultados de la estimación Monte Carlo usando una uniforme (izquierda) y una normal (derecha).
 #+RESULTS:
 [[file:../images/normal-unif-compara.jpeg]]
 
@@ -933,7 +1040,7 @@ una distribución normal.
 #+begin_src R :file images/normal-unif-compara-2.jpeg :exports results :results output graphics file
   (gunif + ylim(-.55, .55)) + (gnormal + ylim(-.55, .55))
 #+end_src
-
+#+caption: Resultados de la estimación Monte Carlo usando una uniforme (izquierda) y una normal (derecha).
 #+RESULTS:
 [[file:../images/normal-unif-compara-2.jpeg]]
 
@@ -949,7 +1056,7 @@ una alta probabilidad ($1- \delta$) nuestro estimador tenga una precisión dada 
 
 Nota que este tipo de argumentos habla sobre ~nuestro método~ de estimación---el
 método Monte Carlo para integrales---. Es decir, establece que la probabilidad de que nuestra
-estimación no diste mas de $\epsilon$ unidades del verdadero valor se alta ($1-\delta$).
+estimación no diste mas de $\epsilon$ unidades del verdadero valor sea tan alta como el usuario espera (al menos $1-\delta$).
 
 #+attr_latex:
 #+begin_remark
@@ -1132,5 +1239,51 @@ En algunas aplicaciones nos interesa calcular el valor esperado de $\theta | x$ 
 #+RESULTS:
 [[file:../images/cauchy-intervalos.jpeg]]
 
+#+begin_src R :exports both :results org 
+  sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+R version 4.3.1 (2023-06-16)
+Platform: x86_64-apple-darwin20 (64-bit)
+Running under: macOS Ventura 13.5.1
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Mexico_City
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices datasets  utils     methods  
+[7] base     
+
+other attached packages:
+ [1] scales_1.2.1    patchwork_1.1.2 lubridate_1.9.2 forcats_1.0.0  
+ [5] stringr_1.5.0   dplyr_1.1.2     purrr_1.0.1     readr_2.1.4    
+ [9] tidyr_1.3.0     tibble_3.2.1    ggplot2_3.4.2   tidyverse_2.0.0
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.3       compiler_4.3.1     renv_1.0.0        
+ [4] crayon_1.5.2       tidyselect_1.2.0   R6_2.5.1          
+ [7] labeling_0.4.2     generics_0.1.3     isoband_0.2.7     
+[10] MASS_7.3-60        munsell_0.5.0      pillar_1.9.0      
+[13] RColorBrewer_1.1-3 tzdb_0.4.0         rlang_1.1.1       
+[16] utf8_1.2.3         stringi_1.7.12     timechange_0.2.0  
+[19] cli_3.6.1          withr_2.5.0        magrittr_2.0.3    
+[22] grid_4.3.1         hms_1.1.3          lifecycle_1.0.3   
+[25] vctrs_0.6.3        glue_1.6.2         farver_2.1.1      
+[28] fansi_1.0.4        colorspace_2.1-0   tools_4.3.1       
+[31] pkgconfig_2.0.3
+#+end_src
+
+
 bibliographystyle:abbrvnat
 bibliography:references.bib
+
+

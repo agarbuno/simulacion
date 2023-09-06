@@ -1,35 +1,33 @@
 ## Setup --------------------------------------------------
 
 library(tidyverse)
-library(patchwork)
-library(scales)
-## Cambia el default del tamaño de fuente 
-theme_set(theme_linedraw(base_size = 25))
+ library(patchwork)
+ library(scales)
+ ## Cambia el default del tamaño de fuente 
+ theme_set(theme_linedraw(base_size = 25))
 
 ## Cambia el número de decimales para mostrar
-options(digits = 4)
-options(rlang_backtrace_on_error = "none")
-options(pillar.subtle = FALSE)
+ options(digits = 4)
+ ## Problemas con mi consola en Emacs
+ options(pillar.subtle = FALSE)
+ options(rlang_backtrace_on_error = "none")
+ options(crayon.enabled = FALSE)
+ options(width=70)
 
+ color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
+ sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+ sin_leyenda <- theme(legend.position = "none")
+ sin_ejes <- theme(axis.ticks = element_blank(), 
+       axis.text = element_blank())
 
-sin_lineas <- theme(panel.grid.major = element_blank(),
-                    panel.grid.minor = element_blank())
-color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
+ ## Ejemplo de integracion numerica -----------------------
 
-sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-sin_leyenda <- theme(legend.position = "none")
-sin_ejes <- theme(axis.ticks = element_blank(), 
-      axis.text = element_blank())
+ grid.n          <- 11                 # Número de celdas 
+ grid.size       <- 6/(grid.n+1)       # Tamaño de celdas en el intervalo [-3, 3]
+ norm.cuadrature <- tibble(x = seq(-3, 3, by = grid.size), y = dnorm(x) )
 
-## Ejemplo de integracion numerica -----------------------
-
-grid.n          <- 11                 # Número de celdas 
-grid.size       <- 6/(grid.n+1)       # Tamaño de celdas en el intervalo [-3, 3]
-norm.cuadrature <- tibble(x = seq(-3, 3, by = grid.size), y = dnorm(x) )
-
-
-norm.density <- tibble(x = seq(-5, 5, by = .01), 
-       y = dnorm(x) )
+ norm.density <- tibble(x = seq(-5, 5, by = .01), 
+        y = dnorm(x) )
 
 norm.cuadrature |>
   ggplot(aes(x=x + grid.size/2, y=y)) + 
@@ -86,53 +84,53 @@ g2 <- norm.cuadrature |>
 g1 + g2
 
 canvas <- ggplot(faithful, aes(x = eruptions, y = waiting)) +
-     xlim(0.5, 6) +
-     ylim(40, 110)
+  xlim(0.5, 6) +
+  ylim(40, 110)
 
-    grid.size <- 10 - 1
+grid.size <- 10 - 1
 
-    mesh <- expand.grid(x = seq(0.5, 6, by = (6-.5)/grid.size),
-                        y = seq(40, 110, by = (110-40)/grid.size))
+mesh <- expand.grid(x = seq(0.5, 6, by = (6-.5)/grid.size),
+                    y = seq(40, 110, by = (110-40)/grid.size))
 
-  g1 <- canvas +
-      geom_density_2d_filled(aes(alpha = ..level..), bins = 8) +
-      scale_fill_manual(values = rev(color.itam)) + 
-      sin_lineas + theme(legend.position = "none") +
-      geom_point(data = mesh, aes(x = x, y = y)) + 
-      annotate("rect", xmin = .5 + 5 * (6-.5)/grid.size, 
-                xmax = .5 + 6 * (6-.5)/grid.size, 
-                ymin = 40 + 3 * (110-40)/grid.size, 
-                ymax = 40 + 4 * (110-40)/grid.size,
-                linestyle = 'dashed', 
-               fill = 'salmon', alpha = .4) + ylab("") + xlab("") + 
-      annotate('text', x = .5 + 5.5 * (6-.5)/grid.size, 
-                       y = 40 + 3.5 * (110-40)/grid.size, 
-               label = expression(u[n]), color = 'red', size = 15) +
-        theme(axis.ticks = element_blank(), 
-            axis.text = element_blank())
+g1 <- canvas +
+  geom_density_2d_filled(aes(alpha = ..level..), bins = 8) +
+  scale_fill_manual(values = rev(color.itam)) + 
+  sin_lineas + theme(legend.position = "none") +
+  geom_point(data = mesh, aes(x = x, y = y)) + 
+  annotate("rect", xmin = .5 + 5 * (6-.5)/grid.size, 
+           xmax = .5 + 6 * (6-.5)/grid.size, 
+           ymin = 40 + 3 * (110-40)/grid.size, 
+           ymax = 40 + 4 * (110-40)/grid.size,
+           linestyle = 'dashed', 
+           fill = 'salmon', alpha = .4) + ylab("") + xlab("") + 
+  annotate('text', x = .5 + 5.5 * (6-.5)/grid.size, 
+           y = 40 + 3.5 * (110-40)/grid.size, 
+           label = expression(u[n]), color = 'red', size = 15) +
+  theme(axis.ticks = element_blank(), 
+        axis.text = element_blank())
 
 
-  g2 <- canvas + 
-      stat_bin2d(aes(fill = after_stat(density)), binwidth = c((6-.5)/grid.size, (110-40)/grid.size)) +
-      sin_lineas + theme(legend.position = "none") +
-      theme(axis.ticks = element_blank(), 
-              axis.text = element_blank()) +
-      scale_fill_distiller(palette = "Greens", direction = 1) + 
-      sin_lineas + theme(legend.position = "none") +
-      ylab("") + xlab("")
+g2 <- canvas + 
+  stat_bin2d(aes(fill = after_stat(density)), binwidth = c((6-.5)/grid.size, (110-40)/grid.size)) +
+  sin_lineas + theme(legend.position = "none") +
+  theme(axis.ticks = element_blank(), 
+        axis.text = element_blank()) +
+  scale_fill_distiller(palette = "Greens", direction = 1) + 
+  sin_lineas + theme(legend.position = "none") +
+  ylab("") + xlab("")
 
-  g3 <- canvas + 
-      stat_bin2d(aes(fill = after_stat(density)), binwidth = c((6-.5)/25, (110-40)/25)) +
-      sin_lineas + theme(legend.position = "none") +
-      theme(axis.ticks = element_blank(), 
-              axis.text = element_blank()) +
-      scale_fill_distiller(palette = "Greens", direction = 1) + 
-      sin_lineas + theme(legend.position = "none") +
-      ylab("") + xlab("")
+g3 <- canvas + 
+  stat_bin2d(aes(fill = after_stat(density)), binwidth = c((6-.5)/25, (110-40)/25)) +
+  sin_lineas + theme(legend.position = "none") +
+  theme(axis.ticks = element_blank(), 
+        axis.text = element_blank()) +
+  scale_fill_distiller(palette = "Greens", direction = 1) + 
+  sin_lineas + theme(legend.position = "none") +
+  ylab("") + xlab("")
 
 g1 + g2 + g3
 
-## Integración Monte Carlo ----------------------------------- 
+## Integración Monte ========================================================= 
 genera_dardos <- function(n = 100){
     tibble(x1 = runif(n, min = -1, max = 1), 
            x2 = runif(n, min = -1, max = 1)) %>% 
@@ -164,14 +162,46 @@ set.seed(108)
 nsamples <- 10**4; nexp <- 100
 U <- runif(nexp * 2 * nsamples)
 U <- array(U, dim = c(nexp, 2, nsamples))
+
+str(U)
+
+U[1:5] |> str()
+
+U[1:5,,] |> str()
+
 apply(U[1:5,,], 1, str)
 
-resultados <- apply(U, 1, function(x){
+cuenta_dardos <- function(x){
+  ## obtiene la norma 2
   dardos <- apply(x**2, 2, sum)
+  ## cuenta si los dardos estan en el circulo unitario
   exitos <- ifelse(dardos <= 1, 1, 0)
+  ## obtiene frecuencias relativas
+  prop   <- mean(exitos)
+  4 * prop
+}
+
+resultados <- apply(U, 1, cuenta_dardos)
+resultados
+
+tibble(x = resultados) |>
+ggplot(aes(x)) +
+geom_histogram(bins = 20) + sin_lineas +
+geom_vline(xintercept = pi, lty = 2, color = "salmon", size =2)
+
+cuenta_acumulacion_dardos <- function(x){
+  ## obtiene la norma 2
+  dardos <- apply(x**2, 2, sum)
+  ## cuenta si los dardos estan en el circulo unitario
+  exitos <- ifelse(dardos <= 1, 1, 0)
+  ## obtiene frecuencias relativas mientras avanza N
   prop   <- cummean(exitos)
   4 * prop
-})
+}
+
+resultados <- apply(U, 1, cuenta_acumulacion_dardos)
+resultados |> str()
+## Nota como transpone el resultado
 
 resultados |>
   as_data_frame() |>
@@ -221,10 +251,11 @@ resultados |>
                      labels = trans_format("log10", math_format(10^.x))) + 
   ylab('Varianza') + xlab("Número de muestras") + sin_lineas + sin_leyenda
 
-tibble(N = 1:nsamples, estimado = resultados[,1]/4) |>
-  mutate( dif.abs = abs(estimado - pi/4)) |>
-  filter(N %% 10 == 0 & log10(N) %in% c(1, 2, 3, 4)) |>
-  as.data.frame()
+options(digits = 8)
+
+tibble(N = 1:nsamples, estimado = resultados[,1]) |>
+  mutate( diff.abs = abs(estimado - pi)) |>
+  filter(N %% 10 == 0 & log10(N) %in% c(1, 2, 3, 4))
 
 set.see(108); nsamples <- 10**4; nexp <- 100
 h <- function(x){ exp(-x**2/2) }
@@ -416,3 +447,5 @@ as.tibble(estimador.cauchy) |>
   theme(axis.ticks.y = element_blank(), axis.text.y = element_blank()) +
   scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
   xlab("") + ylab("")
+
+sessionInfo()
