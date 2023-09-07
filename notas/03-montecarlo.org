@@ -7,7 +7,7 @@
 #+SETUPFILE: ~/.emacs.d/templates/latex/handout.org
 #+EXPORT_FILE_NAME: ../docs/03-montecarlo.pdf
 :END:
-#+PROPERTY: header-args:R :session monte-carlo :exports both :results output org :tangle ../rscripts/03-montecarlo.R :mkdirp yes :dir ../ 
+#+PROPERTY: header-args:R :session monte-carlo :exports both :results output org :tangle ../rscripts/03-montecarlo.R :mkdirp yes :dir ../ :eval never
 #+EXCLUDE_TAGS: toc noexport latex
 
 #+BEGIN_NOTES
