@@ -30,7 +30,7 @@ RUN tlmgr install amsmath latex-amsmath-dev iftex kvoptions \
     auxhook bigintcalc bitset etexcmds gettitlestring hycolor hyperref \
     intcalc kvdefinekeys letltxmacro pdfescape refcount rerunfilecheck \
     stringenc uniquecounter zapfding pdftexcmds infwarerr epstopdf-pkg mdwtools \
-    awesomebox fontawesome5
+    awesomebox fontawesome5 ec tcolorbox fp ms pgf environ trimspaces
 
 # Clean up =====================================================================
 RUN apt-get clean all \
