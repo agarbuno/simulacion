@@ -1,0 +1,1745 @@
+#+TITLE: EST-24107: Simulación
+#+AUTHOR: Prof. Alfredo Garbuno Iñigo
+#+EMAIL:  agarbuno@itam.mx
+#+DATE: ~Remuestreo~
+:LATEX_PROPERTIES:
+#+SETUPFILE: ~/.emacs.d/templates/latex/handout.org
+#+EXPORT_FILE_NAME: ../docs/05-bootstrap.pdf
+:END:
+#+STARTUP: showall
+#+PROPERTY: header-args:R :session bootstrap :exports both :results output org :tangle ../rscripts/05-bootstrap.R :mkdirp yes :dir ../ :eval never 
+#+EXCLUDE_TAGS: toc noexport 
+
+#+BEGIN_NOTES
+*Profesor*: Alfredo Garbuno Iñigo | Otoño, 2023 | /Bootstrap/.\\
+*Objetivo*: En esta sección estudiaremos los métodos de remuestreo que permiten cuantificar incertidumbre en situaciones donde nuestro estimador se construye con una sola muestra y donde no hay acceso al sistema que genera los datos. Esto contrasta con los métodos anteriores pues antes hemos estudiado bajo el supuesto de poder tener acceso al generador de números aleatorios correctos. En esta ocasión sólo tenemos una muestra y querríamos cuantificar incertidumbre en nuestros estimadores.\\
+*Lectura recomendada*: El libro de [[citet:&Chihara2018]] presenta una discusión del tema bajo el esquema de análisis estadístico. El libro [[citet:&Efron1993]] es una referencia clásica para /bootstrap/. El capítulo 8 de [[citet:&Wasserman2004]] contiene una discusión condensada de /bootstrap/. El capítulo 10 de [[citet:&Efron2016]] establece el método /bootstrap/ como parte del /set/ de herramientas del estadístico moderno.
+#+END_NOTES
+
+#+begin_src R :exports none :results none
+  ## Setup ---------------------------------------------------------------------
+  library(tidyverse)
+  library(patchwork)
+  library(scales)
+
+  ## Cambia el default del tamaño de fuente 
+  theme_set(theme_linedraw(base_size = 25))
+
+  ## Cambia el número de decimales para mostrar
+  options(digits = 4)
+  ## Problemas con mi consola en Emacs
+  options(pillar.subtle = FALSE)
+  options(rlang_backtrace_on_error = "none")
+  options(crayon.enabled = FALSE)
+  options(width=60)
+
+  ## Para el tema de ggplot
+  color.itam  <- c("#00362b","#004a3b", "#00503f", "#006953", "#008367", "#009c7b", "#00b68f", NA)
+  sin_leyenda <- theme(legend.position = "none")
+  sin_ejes <- theme(axis.ticks = element_blank(), axis.text = element_blank())
+  sin_lineas <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+#+end_src
+
+
+* Contenido                                                             :toc:
+:PROPERTIES:
+:TOC:      :include all  :ignore this :depth 3
+:END:
+:CONTENTS:
+- [[#introducción][Introducción]]
+  - [[#contexto-histórico][Contexto histórico]]
+  - [[#idea-general][Idea general]]
+  - [[#ejemplo][Ejemplo]]
+  - [[#la-distribución-de-muestreo][La distribución de muestreo]]
+- [[#la-idea-del-bootstrap][La idea del bootstrap]]
+  - [[#mundo-poblacional][Mundo poblacional]]
+  - [[#mundo-bootstrap][Mundo bootstrap]]
+  - [[#ejemplo][Ejemplo]]
+- [[#el-principio-de-plug-in][El principio de plug-in]]
+  - [[#observación][Observación]]
+  - [[#ejemplo][Ejemplo]]
+- [[#propiedades-distribución-bootstrap][Propiedades distribución bootstrap]]
+  - [[#ejemplo][Ejemplo]]
+  - [[#variación-en-distribución-bootstrap][Variación en distribución bootstrap]]
+  - [[#estimación-de-sesgo][Estimación de sesgo]]
+- [[#jackknife][Jackknife]]
+  - [[#estimación-de-sesgo-usando-jackknife][Estimación de sesgo usando jackknife]]
+  - [[#justificación-fórmula-de-sesgo][Justificación fórmula de sesgo]]
+  - [[#estimación-de-errores-estándar-usando-jackknife][Estimación de errores estándar usando jackknife]]
+- [[#bootstrap-y-otras-estadísticas][Bootstrap y otras estadísticas]]
+  - [[#estimadores-de-razón][Estimadores de razón]]
+  - [[#suavizadores][Suavizadores]]
+:END:
+
+
+* Introducción 
+
+El remuestreo se refiere a un conjunto de técnicas estadísticas,
+computacionalmente intensivas, que ~estiman~ la /distribución de una población/
+basadas en ~muestreo aleatorio con reemplazo~ de una muestra observada.
+
+Se considera una muestra aleatoria $X_{1}, \ldots, X_{N}$ como si fuera una
+población finita y se generan muestras aleatorias de la misma muestra para
+estimar características poblacionales y hacer inferencia de la población
+muestreada.
+
+#+REVEAL: split
+Las técnicas de remuestreo permiten calcular medidas de ajuste (en términos de
+sesgo, varianza, intervalos de confianza, errores de predicción o de algunas
+otras medidas) a los estimados basados en muestras.
+
+Estas técnicas son usualmente no paramétricas, y varias son tan antiguas como la
+estadística misma. Por ejemplo, las técnicas de permutación son de Fisher (1935)
+y Pitmann (1937); la validación cruzadas fue propuesta por Kurtz en 1948, y el
+/Jackknife/ fue propuesto por Maurice Quenouille en 1949 aunque fue John Tukey en
+1958 quién le dio el nombre a la técnica.
+
+** Contexto histórico
+
+Bradley Efron introdujo el ~bootstrap~ en 1979.  El término ‘bootstrapping’ se
+refiere al concepto de /pulling oneself up by one’s bootstraps/, frase que
+aparentemente se usó por primera vez en:
+- Raspe, R. E. (1786). /Gulliver Revived: Or the Singular Travels, Campaigns,
+  Voyages, and Adventures of Baron Munikhouson, Commonly Called Munchausen/.
+
+** Idea general
+
+El objetivo del remuestreo es estimar alguna característica poblacional,
+representada por $\theta$ (tal como media, mediana, desviación estándar,
+coeficientes de regresión, matriz de covarianza, etc.) ~basada sólo en los datos observados~.
+
+También interesan las propiedades de la ~distribución de estimador~, sin hacer supuestos
+restrictivos sobre la forma de la distribución de los datos originales.
+
+Para una muestra aleatoria $X_1, \ldots , X_N$ , la ~distribución de remuestreo~ es la distribución
+empírica $\hat{\mathbb{P}}_N$, que asigna probabilidad $1/N$ a cada una de las observaciones de la muestra.
+** Ejemplo
+
+Consideremos una muestra de 6 parejas. La variable de interés es la diferencia
+del ingreso de los miembros de cada pareja (en miles de pesos al mes).
+
+|-----+-------------+-------------+-------------------------------|
+| $i$ | $P_i^{(1)}$ | $P_i^{(2)}$ | $d_i = P_i^{(1)} - P_i^{(2)}$ |
+|-----+-------------+-------------+-------------------------------|
+|   1 |          24 |          18 |                             6 |
+|   2 |          14 |          17 |                            -3 |
+|   3 |          40 |          35 |                             5 |
+|   4 |          44 |          41 |                             3 |
+|   5 |          35 |          37 |                            -2 |
+|   6 |          45 |          45 |                             0 |
+|-----+-------------+-------------+-------------------------------|
+
+#+REVEAL: split
+Definamos $\theta$ como el promedio de las diferencias de ingreso poblacional. Podemos estimar $\theta$ con
+\begin{align}
+\hat \theta_N= \frac{6 - 3 + 5 + 3 - 2+ 0}{6} = 1.5\,.
+\end{align}
+¿Cómo calculamos la variabilidad de nuestro estimador? Es decir, ¿cómo
+calculamos la variabilidad de $\hat \theta_n$?
+#+attr_latex:
+#+begin_exercise
+Escribe la fórmula del error estándar bajo los siguientes supuestos:
+1. La diferencia tiene una distribución $d_i \sim \mathsf{N}(\theta, \sigma^2)$.
+2. La varianza $\sigma^2$ es conocida.    
+#+end_exercise
+
+#+attr_latex: :options [Consideraciones estadísticas]
+#+begin_remark
+Del ejemplo anterior, tenemos lo siguiente:
+
+- Suponer que la diferencia de ingresos $d_i$ se comporta como una variable
+  normal puede no estar /tan/ errado. Pues con un número suficiente de muestras
+  podríamos suponer que el resultado del $\mathsf{TLC}$ se cumple. Entonces,
+  ¿qué hacemos si no conocemos la distribución de las observaciones?
+
+- Si no conocemos $\sigma^2$ lo podemos estimar con la muestra. Por ejemplo,
+  podemos utilizar intervalos de confianza derivados de una distribución
+  $t_{N-1}$.
+
+- Si nos interesa otro parámetro de la población podemos construir estimadores
+  diferentes. Por ejemplo, nos podría interesar la ~mediana~ de una población
+  $q_{0.5} = \mathbb{P}^{-1}(1/2)$. Para este caso, podemos estimar dicho
+  parámetro por medio de
+  \begin{align}
+  \hat q_{0.5} = \begin{cases}
+    X_{(\frac{n+1}{2})} & \text{ si } N \text{ es impar }\\
+    \frac{X_{(n/2)} + X_{(n/2 + 1)}}{2} & \text{ si } N \text{ es par }
+  \end{cases} \,.
+  \end{align}
+#+end_remark
+
+
+#+REVEAL: split
+  En [[fig-medianas]] la estimación de la mediana en distintos grupos acompañados de su estimación de incertidumbre. 
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/bootstrap-medianas-grupos.jpeg :exports results :results output graphics file :tangle no :eval never
+    set.seed(8)
+    ## Generamos nuestros datos ficticios - poblacion 
+    pob_tab <- tibble(id = 1:2000,
+                      x = rgamma(2000, 4, 1), 
+                      grupo = sample(c("a","b", "c"),
+                                     2000, prob = c(4,2,1),
+                                     replace = T))
+    ## Generamos una muestras - observaciones 
+    muestra_tab <- pob_tab |> 
+      sample_n(125)
+    g_1 <- ggplot(muestra_tab, aes(x = grupo, y = x)) + 
+      geom_boxplot(outlier.alpha = 0) +
+      geom_jitter(alpha = 0.3) +  sin_lineas + 
+      labs(subtitle = "Muestra \n") + ylim(c(0,14))
+    ## Hacemos bootstrap 
+    fun_boot <- function(datos){
+        datos |> group_by(grupo) |>
+          sample_n(n(), replace = TRUE)
+    }
+    reps_boot <- map_df(1:2000, function(i){
+      muestra_tab %>% 
+        fun_boot %>%
+        group_by(grupo) %>%
+        summarise(mediana = median(x), .groups = "drop")}, 
+      .id = 'rep') 
+    resumen_boot <- reps_boot |> group_by(grupo) |> 
+        summarise(ymin = quantile(mediana, 0.025), 
+                  ymax = quantile(mediana, 0.975), .groups = "drop") |> 
+        left_join(muestra_tab |> 
+                    group_by(grupo) |> 
+                    summarise(mediana = median(x)), .groups = "drop")
+    g_2 <- ggplot(resumen_boot, aes(x = grupo, y = mediana, ymin = ymin, 
+                                    ymax = ymax)) +
+        geom_linerange() + sin_lineas +
+        geom_point(colour = "red", size = 2) +  ylim(c(0,14)) +
+        labs(subtitle = "Intervalos de 95% \n para la mediana")
+    g_1 + g_2
+#+end_src
+#+name: fig-medianas
+#+caption:Estimación de mediana (panel izquierdo) con intervalos de incertidumbre (panel derecho). 
+#+RESULTS:
+[[file:../images/bootstrap-medianas-grupos.jpeg]]
+
+** La distribución de muestreo
+
+Hasta ahora lo que hemos hecho es estimar $\hat{\pi}_N^{\mathsf{MC}}(f) \approx
+\pi(f) = \int f(x) \, \pi(x) \, \text{d}x$ por medio de muestras de la densidad
+$\pi(\cdot)$. Es decir, por medio de
+\begin{align}
+X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \pi\,.
+\end{align}
+
+#+REVEAL: split
+Hemos considerado la noción ~frecuentista~ de medir nuestra incertidumbre en nuestro estimador por medio del *error estándar* de nuestro estimador. Donde éste último está definido como
+\begin{align}
+\mathsf{ee}\left(\hat{\pi}_N^{\mathsf{MC}}(f) \right) = \left( \mathbb{V}(\hat{\pi}_N^{\mathsf{MC}}(f) ) \right)^{1/2}\,,
+\end{align}
+y la varianza es con respecto a la variabilidad que /nace/ por haber observado distintas muestras.
+
+#+REVEAL: split
+Es decir, estamos considerando la situación en que podemos replicar el proceso
+de muestreo tantas veces como queramos (o recursos computacionales tengamos).
+Denotemos por $B$ el número de réplicas que podemos realizar y denotemos por
+\begin{align}
+X^{(b)}_{1}, \ldots, X^{(b)}_{N} \overset{\mathsf{iid}}{\sim} \pi\,, \qquad b = 1, \ldots, B\,,
+\end{align}
+las réplicas que generamos.
+
+#+REVEAL: split
+Notemos que es a través de este proceso de crear réplicas que podemos construir
+una distribución para $\hat{\pi}_N^{\mathsf{MC}}(f)$ y notemos, además, que
+nuestro estimador es el resultado de aplicar una función a la muestra dada
+\begin{align}
+\hat{\pi}_{N, b}^{\mathsf{MC}}(f) = s(X^{(b)}_{1}, \ldots, X^{(b)}_{N})\,, \qquad b = 1, \ldots, B\,.
+\end{align}
+
+La distribución resultante de nuestro estimador
+$\hat{\pi}_N^{\mathsf{MC}}(f)$ ---derivada de haber observado un conjunto de datos
+distinto---es lo que en sus cursos de estadística le llamamos ~distribución de
+muestreo~ del estimador.
+
+#+REVEAL: split
+Nota que en esta situación asumimos que podemos generar tantas muestras como
+queramos de la distribución de interés $\pi$. En esta sección del curso
+estudiaremos un mecanismo para cuando no podemos hacer eso (generar muestras de
+una población) y sólo tenemos acceso a una muestra---que asumimos aleatoria---de
+la población que nos interesa.
+
+* La idea del /bootstrap/
+
+Como explicamos, el problema que tenemos ahora es que normalmente sólo tenemos
+una muestra, así que no es posible calcular las distribuciones de muestreo como
+hicimos arriba y evaluar qué tan preciso es nuestro estimador. Sin embargo,
+podemos hacer lo siguiente:
+
+Supongamos que tenemos una muestra $X_1,X_2,\dots, X_N$ de alguna
+población desconocida y un estimador $\hat \theta_N=s(X_1,\dots, X_N)$.
+
+** Mundo poblacional
+
+1. Si tuviéramos la distribución poblacional, simulamos muestras $\mathsf{iid}$ para
+   aproximar la distribución de muestreo de nuestro estimador, y así entender su
+   variabilidad.
+2. Pero *no* tenemos la distribución poblacional.
+3. *Sin embargo, podemos estimar la distribución poblacional con nuestros valores muestrales*.
+
+** Mundo /bootstrap/
+
+4. Si usamos la estimación del inciso 3, entonces usando el inciso 1 podríamos
+   tomar muestras de nuestros datos muestrales, como si fueran de la población,
+   y usando el mismo tamaño de muestra. El muestreo lo hacemos con reemplazo de
+   manera que produzcamos muestras independientes de la misma ``población
+   estimada'', que es la muestra.
+5. Evaluamos nuestra estadística en cada una de estas remuestras.
+6. A la distribución resultante le llamamos *distribución /bootstrap/* o
+   *distribución de remuestreo* del estimador.
+7. Usamos la distribución /bootstrap/ de la muestra para estimar la variabilidad
+   en nuestra estimación con *la muestra original*.
+
+#+REVEAL: split
+El esquema de esta estrategia lo podemos representar con la figura siguiente
+#+DOWNLOADED: screenshot @ 2022-09-20 08:58:18
+#+attr_html: :width 700 :align center
+#+attr_latex: :width .65 \linewidth
+[[file:images/20220920-085818_screenshot.png]]
+
+
+#+REVEAL: split
+Veamos que sucede para un ejemplo concreto, donde  nos interesa estimar
+la media de los precios de venta de una población de casas. Tenemos nuestra muestra:
+
+#+begin_src R :exports none :results none
+  ## Idea de bootstrap ---------------------------------------------------------
+#+end_src
+
+#+begin_src R :exports both :results none
+  set.seed(2112)
+  poblacion_casas <- read_csv("data/casas.csv")
+  muestra <- sample_n(poblacion_casas, 200, replace = FALSE) |>
+    select(id, nombre_zona, area_habitable_sup_m2, precio_miles)
+#+end_src
+
+#+begin_src R :exports results :results org 
+  muestra |> print(n = 5)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 200 × 4
+     id nombre_zona area_habitable_sup_m2 precio_miles
+  <dbl> <chr>                       <dbl>        <dbl>
+1   502 Somerst                     164.          227.
+2    79 Sawyer                      164.          136.
+3   440 Edwards                     111.          110 
+4   524 Edwards                     434.          185.
+5  1442 CollgCr                      78.8         149.
+# ℹ 195 more rows
+# ℹ Use `print(n = ...)` to see more rows
+#+end_src
+
+#+begin_src R :exports results :results org 
+  sprintf("Hay %0.0f casas en total, tomamos muestra de %0.0f",
+        nrow(poblacion_casas), nrow(muestra))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] "Hay 1144 casas en total, tomamos muestra de 200"
+#+end_src
+
+#+REVEAL: split
+Esta muestra nos da nuestro estimador de la distribución poblacional.
+
+#+begin_src R :exports both :results org 
+  mean(muestra$precio_miles)  
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 181.5
+#+end_src
+
+Por ejemplo, podemos fijarnos en un gráfico con histogramas:
+
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/casas-qqplot.jpeg :exports results :results output graphics file :tangle no :eval never
+  bind_rows(muestra |> mutate(tipo = "muestra"),
+      poblacion_casas |> mutate(tipo = "población")) |>  
+  ggplot(aes(sample = precio_miles, colour = tipo, group = tipo)) + 
+    geom_qq(distribution = stats::qunif, alpha = 0.4, size = 1) +
+    facet_wrap(~ tipo) + sin_lineas + sin_leyenda
+#+end_src
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/casas-histogramas.jpeg :exports results :results output graphics file
+  bind_rows(muestra |> mutate(tipo = "muestra"),
+      poblacion_casas |> mutate(tipo = "población")) |>
+  ggplot(aes(x = precio_miles, group = tipo)) + 
+      geom_histogram(aes(y=..density..), binwidth = 50) + 
+    facet_wrap(~ tipo) + sin_lineas + sin_leyenda
+#+end_src
+
+#+RESULTS:
+[[file:../images/casas-histogramas.jpeg]]
+
+Y vemos que la aproximación es razonable en las partes centrales de la 
+distribución. 
+
+#+REVEAL: split
+Ahora supongamos que nos interesa cuantificar la precisión de nuestra
+estimación de la media poblacional de precios de casas, y usaremos la media
+muestral para hacer esto. Para nuestra muestra, nuestra estimación puntual es:
+
+#+begin_src R :exports both :results org 
+  media <- mean(muestra$precio_miles)
+  media
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 181.5
+#+end_src
+
+
+Y recordamos que para aproximar la distribución de muestreo podíamos muestrear
+repetidamente la población y calcular el valor del estimador en cada una de
+estas muestras. Aquí no tenemos la población, *pero tenemos una estimación de la
+población*: la muestra obtenida.
+
+#+REVEAL: split
+Así que para evaluar la variabilidad de nuestro estimador, entramos en el mundo
+/bootstrap/, y consideramos que la población es nuestra muestra.
+
+Podemos entonces extraer un número grande de muestras con reemplazo de tamaño
+200 *de la muestra*: el muestreo debe ser análogo al que se tomó para nuestra
+muestra original. Evaluamos nuestra estadística (en este caso la media) en cada
+una de estas remuestras:
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  ## paso 1: define el estimador
+  calcula_estimador <- function(data){
+    data |>
+      summarise(media_precio = mean(precio_miles), .groups = "drop")
+  }
+#+end_src
+
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  ## paso 2: define el proceso de remuestreo
+  genera_remuestras <- function(data, n = 200){
+    data |>
+      sample_n(200, replace = TRUE)
+  }
+#+end_src
+
+
+#+REVEAL: split
+#+begin_src R :exports code :results none
+  ## paso 3: definimos el paso bootstrap
+  paso_bootstrap <-function(id){
+    muestra |>
+    genera_remuestras() |>
+      calcula_estimador() |>
+      pull(media_precio)
+  }
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports both :results org 
+  ## paso 4: aplica el procedimiento bootstrap
+  media_muestras <- map_dbl(1:1000, paso_bootstrap)
+  media_muestras[1:9]
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 174.6 178.9 178.7 180.2 178.5 179.7 187.0 177.7 180.9
+#+end_src
+
+#+REVEAL: split
+Y nuestra estimación de la distribución de muestreo para la media es entonces:
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/casas-bootstrap.jpeg :exports results :results output graphics file
+  bootstrap <- tibble(media = media_muestras)
+  g_cuantiles <- ggplot(bootstrap, aes(sample = media)) +
+    geom_qq(distribution = stats::qunif) +
+    ggtitle("QQ-plots de la distribución \nde la media") +
+    sin_lineas
+  g_histograma <- ggplot(bootstrap, aes(x = media)) +
+    geom_histogram(binwidth = 2) + sin_lineas +
+    ggtitle("Histograma de la distribución \nde la media")
+  g_cuantiles + g_histograma
+#+end_src
+
+#+RESULTS:
+[[file:../images/casas-bootstrap.jpeg]]
+
+#+REVEAL: split
+A esta le llamamos la distribución de remuestreo de la media, que definimos más
+abajo. Ahora podemos calcular un intervalo de confianza del $90\%$ simplemente
+calculando los cuantiles de esta distribución (no son los cuantiles de la
+muestra original!):
+
+#+begin_src R :exports both :results org 
+  limites_ic <- quantile(media_muestras, c(0.05,  0.95)) |> round(4)
+  limites_ic
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+   5%   95% 
+173.2 189.8
+#+end_src
+
+#+REVEAL: split
+Otra cosa que podríamos hacer para describir la dispersión de nuestro estimador
+es calcular el error estándar de remuestreo, que estima el error estándar de la
+distribución de muestreo:
+
+#+begin_src R :exports both :results org
+  ee_boot <- sd(media_muestras)
+  round(ee_boot, 2)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 5.09
+#+end_src
+
+#+attr_latex: :options [Distirbución de remuestreo]
+#+begin_definition
+Sea $X_1,X_2,\ldots,X_N$ una muestra independiente y idénticamente distribuida
+($\mathsf{iid}$), y $\hat \theta_N=s(X_1, X_2, \ldots, X_N)$ una
+estadística. Supongamos que los valores que obervamos son $x_1, x_2,\ldots,
+x_N$. La *distribución de remuestreo* de $\hat \theta_N$ es la distribución de
+$\theta^*_N=s(X_1^*, X_2^*, \dots X_N^*)$, donde cada $X_i^*$ se obtiene tomando
+al azar uno de los valores de $x_1,x_2,\ldots, x_N$.
+#+end_definition
+
+Otra manera de decir esto es que la remuestra $X_1^*, X_2^*, \ldots, X_N^*$ es una muestra
+con reemplazo de los valores observados $x_1, x_2, \ldots, x_N$. 
+
+** Ejemplo
+
+Si observamos la muestra
+
+#+begin_src R :exports none :results none
+  ### Ejemplo: muestreo aleatorio con reemplazo ================================
+#+end_src
+
+#+begin_src R :exports both :results org 
+  muestra <- sample(1:20, 5)
+  muestra
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 20  9 12  1 11
+#+end_src
+
+Una remuestra se obtiene:
+
+#+begin_src R :exports both :results org 
+  sample(muestra, size = 5, replace = TRUE)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+[1] 11  9  9 20  9
+#+end_src
+
+Nótese que algunos valores de la muestra original pueden aparecer varias veces, y otros no aparecen del todo.
+
+#+attr_latex: :options [Aproximación /bootstrap/]
+#+begin_remark
+La muestra original es una aproximación de la población de donde fue
+extraída. Así que remuestrear la muestra aproxima lo que pasaría si tomáramos
+muestras de la población. La *distribución de remuestreo* de una estadística, que
+se construye tomando muchas remuestras, aproxima la distribución de muestreo de
+la estadística.
+#+end_remark
+
+#+attr_latex: :options [Proceso de remuestreo]
+#+begin_definition
+Dada una muestra de tamaño $n$ de una población, 
+
+1. Obtenemos una remuestra de tamaño $n$ con reemplazo de la muestra original
+2. Repetimos este remuestreo muchas veces (por ejemplo $10,000$).
+3. Construímos la distribución /bootstrap/, y examinamos sus características
+   (dónde está centrada, dispersión y forma).
+
+#+end_definition
+
+
+
+* El principio de /plug-in/
+
+La idea básica detrás del /bootstrap/ es el principio de /plug-in/ para estimar
+parámetros poblacionales: si queremos estimar una cantidad poblacional,
+calculamos esa cantidad poblacional con la muestra obtenida. Es un principio
+común en estadística.
+
+#+REVEAL: split
+Por ejemplo, si queremos estimar la media o desviación estándar poblacional,
+usamos la media muestral o la desviación estándar muestral. Si queremos estimar
+un cuantil de la población usamos el cuantil correspondiente de la muestra, y
+así sucesivamente.
+
+#+REVEAL: split
+En todos estos casos, lo que estamos haciendo es:
+
+- Tenemos una fórmula para la cantidad poblacional de interés en términos de la
+  distribución poblacional.
+- Tenemos una muestra, que usamos para estimar la cantidad poblacional. La
+  distribución que da una muestra se llama distribución *empírica*.
+- Contruimos nuestro estimador ``enchufando'' la distribución empírica de la
+  muestra en la fórmula del estimador.
+
+#+REVEAL: split
+En el /bootstrap/ aplicamos este principio simple a la *distribución de 
+muestreo*:
+
+- *Si tenemos la población*, podemos *calcular* la distribución de muestreo de
+  nuestro estimador tomando muchas muestras de la *población*.
+- Estimamos la *poblacion* con la *muestra* y enchufamos en la frase anterior:
+- Podemos *estimar* la distribucion de muestreo de nuestro estimador tomando
+  muchas muestras de la *muestra* (/bootstrap/).
+
+#+REVEAL: split
+Nótese que el proceso de muestreo en el último paso *debe ser el mismo* que
+se usó para tomar la muestra original. Estas dos imágenes simuladas con base en 
+un ejemplo de citep:Chihara2018 muestran lo que acabamos de describir:
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/mundo-poblacional.jpeg :exports results :results output graphics file :tangle no 
+  library(LaplacesDemon)
+  library(patchwork)
+  ## En este ejemplo la población es una mezcla de normales
+  pob_plot <- ggplot(data_frame(x = -15:20), aes(x)) +
+    stat_function(fun = dnormm, args = list(p = c(0.3, 0.7), mu = c(-2, 8),
+                                            sigma = c(3.5, 3)), alpha = 0.8) +
+    geom_vline(aes(color = "mu", xintercept = 5), alpha = 0.5) +
+    scale_colour_manual(values = c('mu' = 'red'), name = '', 
+                        labels = expression(mu)) +
+    scale_y_continuous(breaks = NULL) +
+    labs(x = "", subtitle = expression("Población "~F), color = "") +
+    theme_classic()
+
+  samples <- data_frame(sample = 1:3) |>
+    mutate(sims = rerun(3, rnormm(30, p = c(0.3, 0.7), mu = c(-2, 8), 
+                                  sigma = c(3.5, 3))), 
+           x_bar = map_dbl(sims, mean))
+
+  muestras_plot <- samples |>
+    unnest(cols = c(sims)) |> 
+    ggplot(aes(x = sims)) +
+    geom_histogram(binwidth = 2, alpha = 0.5, fill = "darkgray") +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    geom_segment(aes(x = x_bar, xend = x_bar, y = 0, yend = 0.8), 
+                 color = "blue") +
+    xlim(-15, 20) +
+    facet_wrap(~ sample) +
+    scale_y_continuous(breaks = NULL) +
+    geom_text(aes(x = x_bar, y = 0.95, label = "bar(x)"), parse = TRUE, 
+              color = "blue", alpha = 0.2, hjust = 1) +
+    labs(x = "", subtitle = "Muestras") +
+    theme_classic() +
+    theme(strip.background = element_blank(), strip.text.x = element_blank())
+
+  samples_dist <- tibble(sample = 1:10000) |>
+    mutate(sims = rerun(10000, rnormm(100, p = c(0.3, 0.7), mu = c(-2, 8), 
+                                      sigma = c(3.5, 3))), 
+           mu_hat = map_dbl(sims, mean))
+  dist_muestral_plot <- ggplot(samples_dist, aes(x = mu_hat)) +
+    geom_density(adjust = 2) +
+    scale_y_continuous(breaks = NULL) +
+    labs(x = "", y = "",
+         subtitle = expression("Distribución muestral de "~hat(mu)==bar(X))) +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    theme_classic() + coord_cartesian(x = c(1, 8))
+
+  (pob_plot | plot_spacer()) / (muestras_plot | dist_muestral_plot) 
+#+end_src
+
+#+RESULTS:
+[[file:../images/mundo-poblacional.jpeg]]
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/mundo-bootstrap.jpeg :exports results :results output graphics file :tangle no
+  dist_empirica <- tibble(id = 1:30, obs = samples$sims[[1]])
+
+  dist_empirica_plot <- ggplot(dist_empirica, aes(x = obs)) +
+    geom_histogram(binwidth = 2, alpha = 0.5, fill = "darkgray") +
+    geom_vline(aes(color = "mu", xintercept = 5), alpha = 0.5) +
+    geom_vline(aes(xintercept = samples$x_bar[1], color = "x_bar"), 
+               alpha = 0.8, linetype = "dashed") +
+    xlim(-15, 20) +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    labs(x = "", subtitle = expression("Distribución empírica"~hat(F))) +
+    scale_colour_manual(values = c('mu' = 'red', 'x_bar' = 'blue'), name = '', 
+                        labels = c(expression(mu), expression(bar(x)))) +
+    scale_y_continuous(breaks = NULL) +
+    theme_classic()
+
+  samples_boot <- tibble(sample_boot = 1:3) |> 
+    mutate(
+      sims_boot = rerun(3, sample(dist_empirica$obs, replace = TRUE)), 
+      x_bar_boot = map_dbl(sims_boot, mean)
+    )
+
+  muestras_boot_plot <- samples_boot |>
+    unnest(cols = c(sims_boot)) |> 
+    ggplot(aes(x = sims_boot)) +
+    geom_histogram(binwidth = 2, alpha = 0.5, fill = "darkgray") +
+    geom_vline(aes(xintercept = samples$x_bar[1]), color = "blue",
+               linetype = "dashed", alpha = 0.8) +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    geom_segment(aes(x = x_bar_boot, xend = x_bar_boot, y = 0, yend = 0.8), 
+                 color = "black") +
+    xlim(-15, 20) +
+    facet_wrap(~ sample_boot) +
+    geom_text(aes(x = x_bar_boot, y = 0.95, label = "bar(x)^'*'"), 
+              parse = TRUE, color = "black", alpha = 0.3, hjust = 1) +
+    labs(x = "", subtitle = "Muestras bootstrap") +
+    scale_y_continuous(breaks = NULL) +
+    theme_classic() + 
+    theme(strip.background = element_blank(), strip.text.x = element_blank())
+
+  boot_dist <- data_frame(sample = 1:10000) |>
+    mutate(
+      sims_boot = rerun(10000, sample(dist_empirica$obs, replace = TRUE)), 
+      mu_hat_star = map_dbl(sims_boot, mean))
+  boot_muestral_plot <- ggplot(boot_dist, aes(x = mu_hat_star)) +
+    geom_histogram(alpha = 0.5, fill = "darkgray", bins = 30) +
+    labs(x = "", 
+         subtitle = expression("Distribución bootstrap de "~hat(mu)^'*'==bar(X))) +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    geom_vline(aes(xintercept = samples$x_bar[1]), color = "blue", 
+               linetype = "dashed", alpha = 0.8) +
+    scale_y_continuous(breaks = NULL) +
+    theme_classic() + coord_cartesian(x = c(1, 8))
+
+  (dist_empirica_plot | plot_spacer()) / (muestras_boot_plot | boot_muestral_plot) 
+#+end_src
+
+#+RESULTS:
+[[file:../images/mundo-bootstrap.jpeg]]
+
+** Observación
+Veremos ejemplos más complejos, pero nótese que si la muestra original son
+observaciones independientes obtenidas de la distribución poblacional, entonces
+logramos esto en las remuestras tomando aleatoriamente observaciones con
+reemplazo de la muestra. Igualmente, las remuestras deben ser del mismo tamaño
+que la muestra original.
+
+#+attr_latex:
+#+begin_exercise
+Considera lo siguiente: 
+
+- ¿Porqué no funcionaría tomar muestras sin reemplazo? Piensa si hay
+  independencia entre las observaciones de la remuestra, y cómo serían las
+  remuestras sin reemplazo.
+- ¿Por qué no se puede hacer bootstrap si no conocemos cómo se obtuvo la muestra
+  original?
+  
+#+end_exercise
+
+#+REVEAL: split
+#+attr_latex: :options [Sobre la notación]
+#+begin_remark
+Realizamos una distinción importante.
+- Denotamos por $\mathbb{P}$ la función de distribución acumulada de la población y su estimador, que es la función
+  empírica $\hat{\mathbb{P}}_n$, como en citep:Efron1993.
+
+- Denotamos por $X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \mathbb{P}$
+  una muestra aleatoria de la distribución $\mathbb{P}$ y por $\theta =
+  t(\mathbb{P})$ una cantidad poblacional de interés y que queremos estimar.
+#+end_remark
+
+#+attr_latex: :options [Aclaración]
+#+begin_remark   
+La notación hace enfásis en que la característica de la distribución que nos
+interesa es resultado de aplicar un procedimiento numérico $t(\cdot)$ a nuestra
+distribución $\mathbb{P}$. Esto no contradice nuestra notación. Pues nosotros
+hemos considerado
+\begin{align}
+\theta = t(\mathbb{P}) = \mathbb{P}(f)\,,
+    \end{align}
+donde $\mathbb{P}(f)$ es el procedimiento asociado a realizar la integral de la
+función $f$ ponderada por $\mathbb{P}$. Es decir, $\int f(u)
+\text{d}\mathbb{P}(u)$.
+#+end_remark
+
+#+attr_latex: :options [El principio de \emph{plug-in}]
+#+begin_definition
+Es un método de estimación de parámetros que utiliza muestras para el
+procedimiento de estimación. El estimador /plug-in/ del parámetro $\theta =
+t(\mathbb{P})$ está definido como
+\begin{align}
+\hat{\theta} = t(\hat{\mathbb{P}}_n)\,.
+\end{align}
+Es decir, para estimar $\theta$ por medio del procedimiento $t(\cdot)$
+utilizamos la aproximación la distribución de acumulación empírica como si fuera
+la distribución real.
+#+end_definition
+
+#+attr_latex: :options [Conexión con aproximación Monte Carlo]
+#+begin_remark
+El principio del /plug-in/ tiene un íntima conexión con integrales Monte Carlo.
+- Hemos visto que nuestras aproximaciones a $\pi(f)$ son de la forma
+  \begin{align}
+  \hat{\pi}^{(\cdot)}_N(f) = \frac1N \sum_{n = 1}^{N} f(x_n)\,,
+  \end{align}
+  donde las $x_n$ son realizaciones aleatorias de la distribución $\pi$.
+
+- Noten que nuestros estimadores de la familia de métodos Monte Carlo también
+  son estimadores /plug-in/ pues tomamos la distribución
+  \begin{align}
+  \pi^{(\cdot)}_N(x) = \frac1N \sum_{n = 1}^{N} \delta(x - x_n)\,,
+  \end{align}
+  como la aproximación de $\pi(\cdot)$ para obtener valores de estimador que nos
+  interesa $\theta = \pi(f)$.
+
+#+REVEAL: split
+- Esto nos permite escribir nuestros estimadores como
+  \begin{align}
+  \hat \theta = t\left(\hat{\pi}_N^{(\cdot)}\right)\,.
+  \end{align}
+#+end_remark
+  
+#+attr_latex: :options [Limitaciones de \emph{bootstrap}]
+#+begin_remark
+El método de remuestreo *no* es infalible. Considera que: 
+- La distribución empírica $\hat{\mathbb{P}}_N$ es un estimador /razonable/ de la
+  distribución poblacional $\mathbb{P}$ pues por el teorema de Glivenko-Cantelli
+  (citep:Wasserman2004, o [[https://en.wikipedia.org/wiki/Glivenko-Cantelli_theorem][aquí]]), $\hat{\mathbb{P}}_N$ converge a $\mathbb{P}$
+  /cuando el tamaño de muestra es suficientemente grande,  $N\to\infty$/.
+#+end_remark
+
+
+#+attr_latex: :options [Conexión con remuestreo]
+#+begin_remark
+Podemos conectar el método de remuestreo con el principio de /plug-in/. Considera lo siguiente:
+
+- Nuestros estimadores /bootstrap/ son estimadores
+  \begin{align}
+  \hat \theta_N^* = s(X^*_{1}, \ldots, X^*_{N})\,,
+  \end{align}
+  donde $X^*_{1}, \ldots, X^*_{N}$ son muestras escogidas por ~muestreo aleatorio simple~ de la muestra original.
+
+- Es decir, podemos pensar en $X^*_{1}, \ldots, X^*_{N} \overset{\mathsf{iid}}{\sim} \hat{\mathbb{P}}_N$. Por lo que nuestros estimadores /bootstrap/ son de la forma
+  \begin{align}
+  \hat \theta^*_N = t \left( \hat{\mathbb{P}}_N \right)\,.
+  \end{align}
+  #+end_remark
+  
+** Ejemplo 
+En el siguiente ejemplo (tomadores de té), podemos estimar la proporción de
+tomadores de té que prefiere el té negro usando nuestra muestra:
+
+#+begin_src R :exports none :results none
+  ## Datos de te (plugin) ------------------------------------------------------
+#+end_src
+
+#+begin_src R :exports both :results none
+  te <- read_csv("data/tea.csv") |>
+    rowid_to_column() |>
+    select(rowid, Tea, sugar)
+#+end_src
+
+#+begin_src R :exports both :results org 
+  te |>
+    mutate(negro = ifelse(Tea == "black", 1, 0)) |>
+    summarise(prop_negro = mean(negro), n = length(negro), .groups = "drop")
+#+end_src
+
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 2
+  prop_negro     n
+       <dbl> <int>
+1      0.247   300
+#+end_src
+
+#+begin_src R :exports none :results none
+  muestra.obs <- te |>
+    mutate(negro = ifelse(Tea == "black", 1, 0)) |>
+    summarise(media = mean(negro), n = length(negro), .groups = "drop")
+#+end_src
+
+#+REVEAL: split
+¿Cómo evaluamos la precisión de este estimador? Supondremos que el estudio se
+hizo tomando una muestra aleatoria simple de tamaño 300 de la población de tomadores de té que
+nos interesa. Podemos entonces usar el /bootstrap/:
+
+#+REVEAL: split
+#+begin_src R :exports code :results none 
+  ## paso 1: define el estimador
+  calc_estimador <- function(datos){
+    prop_negro <- datos |>
+      mutate(negro = ifelse(Tea == "black", 1, 0)) |>
+      summarise(prop_negro = mean(negro), n = length(negro), .groups = "drop") |>
+      pull(prop_negro)
+    prop_negro
+  }  
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none 
+  ## paso 2: define el proceso de remuestreo
+  muestra_boot <- function(datos){
+    ## tomar muestra con reemplazo del mismo tamaño
+    sample_n(datos, size = nrow(datos), replace = TRUE)
+  }  
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none 
+  ## paso 3: definimos el paso bootstrap
+  paso_bootstrap <- function(id){
+    muestra_boot(datos = te) |>
+      calc_estimador()
+  }
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none 
+  ## paso 4: aplica el procedimiento bootstrap
+  prop_negro_tbl <- map_dbl(1:2000, paso_bootstrap ) |>
+    as_tibble() |>
+    rename( prop_negro = value)
+#+end_src
+
+#+begin_src R :exports none :results none 
+  write_rds(prop_negro_tbl, "cache/prop_negro_tbl.rds")
+#+end_src
+
+
+#+REVEAL: split
+#+HEADER: :width 900 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/bootstrap-tea-mean.jpeg :exports results :results output graphics file
+  ## paso 5: examina la distribución bootstrap
+  prop_negro_tbl |>
+    ggplot(aes(x = prop_negro)) +
+    geom_histogram(bins = 15) + sin_lineas
+#+end_src
+
+#+RESULTS:
+[[file:../images/bootstrap-tea-mean.jpeg]]
+
+#+REVEAL: split
+Y podemos evaluar varios aspectos, por ejemplo dónde está centrada y 
+qué tan dispersa es la distribución /bootstrap/:
+
+#+begin_src R :exports both :results org 
+  prop_negro_tbl |>
+    summarise(
+      cuantil_25 = quantile(prop_negro, 0.25),
+      cuantil_75 = quantile(prop_negro, 0.75), 
+      media = mean(prop_negro),
+      ee = sd(prop_negro)/sqrt(muestra.obs$n),
+      sesgo = mean(prop_negro) - muestra.obs$media,
+      .groups = "drop") |>
+    mutate(across(where(is.numeric), round, 4))
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 5
+  cuantil_25 cuantil_75 media     ee   sesgo
+       <dbl>      <dbl> <dbl>  <dbl>   <dbl>
+1       0.23      0.263 0.246 0.0015 -0.0007
+#+end_src
+
+* Propiedades distribución /bootstrap/
+
+Uasremos la distribución /bootstrap/ principalmente para evaluar la variabilidad
+de nuestros estimadores (y también otros aspectos como sesgo) estimando
+la dispersión de la distribución de muestreo. Sin embargo, es importante notar
+que *no* la usamos, por ejemplo, para saber dónde está centrada la distribución 
+de muestreo, o para ``mejorar'' la estimación remuestreando.
+
+** Ejemplo
+
+#+begin_src R :exports none :results none
+  ## Propiedadesde distirbucion bootstrap --------------------------------------
+#+end_src
+
+En nuestro ejemplo, podemos ver varias muestras (por ejemplo 20) de tamaño 200.
+Podemos calcular las distribuciones de remuestreo para cada muestra bootstrap y
+compararlas con la distribución de muestreo real. El procedimiento es como sigue.
+
+#+REVEAL: split
+#+begin_src R :exports code :results none :eval never
+  set.seed(911)
+  ## Generamos 20 conjuntos de datos observados 
+  muestras <- map(1:16, function(x) {
+    muestra <- sample_n(poblacion_casas, 200, replace = F) |>
+      mutate(rep = x, tipo = "muestras")
+  }) |> bind_rows()
+  ## Agregamos las columnas tipo y rep
+  dat_pob <- poblacion_casas |> mutate(tipo = "población", rep = 1)
+  ## Pegamos las tablas
+  datos_sim <- bind_rows(dat_pob, muestras)
+#+end_src
+
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/distribucion-boostrap.jpeg :exports results :results output graphics file :tangle no :eval never
+  ggplot(datos_sim, aes(sample = precio_miles, group = interaction(tipo, rep))) + 
+    geom_qq(distribution = stats::qunif, alpha = 0.7, size = 0.5, geom = "line") + 
+    geom_qq(data = dat_pob, aes(sample = precio_miles), colour = "red", size = 1,
+            distribution = stats::qunif, geom="point") +
+    scale_y_log10(breaks = c(50, 100, 200, 400, 800)) + sin_lineas
+#+end_src
+
+
+#+begin_src R :exports code :results none 
+  ## paso 1: define el estimador
+  calc_estimador <- function(datos){
+    media_precio <- datos |>
+      summarise(media = mean(precio_miles), .groups = "drop") |>
+      pull(media)
+    media_precio
+  }
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none 
+  ## paso 2: define el proceso de remuestreo
+  muestra_boot <- function(datos, n = NULL){
+    ## tomar muestra con reemplazo del mismo tamaño
+    if(is.null(n)){
+        m <- sample_n(datos, size = nrow(datos), replace = TRUE)}
+    else {
+        m <- sample_n(datos, size = n, replace = TRUE)
+      }
+    m
+  }
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none 
+  ## paso 3: definimos el paso bootstrap
+  paso_bootstrap <- function(data, n = NULL){
+    data |>
+      muestra_boot(n) |>
+      calc_estimador()
+  }
+#+end_src
+
+#+begin_src R :exports code :results none 
+  ## paso 4: define el procedimiento bootstrap
+  procedimiento_bootstrap <- function(data){
+    tibble(precio_miles = rerun(1000, paso_bootstrap(data)))
+  }
+#+end_src
+
+
+#+REVEAL: split
+#+begin_src R :exports code :results none :tangle no :eval never
+  ## paso 5: aplica el procedimiento bootstrap
+  dist_boot <- datos_sim |>
+    filter(tipo == "muestras") |>
+    select(precio_miles, rep) |> 
+    group_by(rep) |> nest() |> 
+    mutate(precio_miles =  map(data, procedimiento_bootstrap)) |>
+    select(rep, precio_miles) |>
+    unnest(precio_miles) |>
+    mutate(precio_miles = unlist(precio_miles))
+
+  write_rds(dist_boot, "cache/sims_boot_precios.rds")
+#+end_src
+
+#+REVEAL: split
+#+begin_src R :exports code :results none :tangle no :eval never
+  ## extra: comparamos contra distribucion de muestreo
+  dist_muestreo <- datos_sim |>
+    filter(tipo == "población") |>
+    group_by(rep) |> nest() |>
+    mutate(precio_miles =  map(data, function(data){
+      tibble(precio_miles = rerun(1000, paso_bootstrap(data, n = 200)))
+    })) |>
+    select(rep, precio_miles) |>
+    unnest(precio_miles) |>
+    mutate(precio_miles = unlist(precio_miles))
+  write_rds(dist_muestreo, "cache/sims_muestreo_precios.rds")
+#+end_src
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 900 :R-dev-args bg="transparent"
+#+begin_src R :file images/precios-distribucion-bootstrap.jpeg :exports results :results output graphics file :eval never
+  dist_muestreo <- read_rds("cache/sims_muestreo_precios.rds")
+  dist_boot <- read_rds("cache/sims_boot_precios.rds")
+  mean_boot <- dist_boot |> summarise(media = mean(precio_miles)) |> filter(rep <= 16)
+  dist_boot |>
+    ungroup() |>
+    filter(rep <= 16) |>
+    ggplot(aes(x = precio_miles)) +
+    geom_histogram(data = dist_muestreo |> ungroup() |> select(precio_miles),
+                   fill = "lightblue", alpha = .6,
+                   position = "identity", bins = 20) +
+    geom_histogram(alpha = .6, fill = "salmon", bins = 20) +
+    geom_vline(data = mean_boot, aes(xintercept = media), color = 'black', lty = 2) +
+    geom_vline(data = dist_muestreo |>
+                 ungroup() |>
+                 select(precio_miles) |>
+                 summarise(media = mean(precio_miles)),
+               aes(xintercept = media), color = 'black') +
+    facet_wrap(~rep) + sin_lineas
+#+end_src
+
+#+RESULTS:
+[[file:../images/precios-distribucion-bootstrap.jpeg]]
+
+
+#+HEADER: :width 1200 :height 700 :R-dev-args bg="transparent"
+#+begin_src R :file images/distribucion-bootstrap.jpeg :exports results :results output graphics file :tangle no :eval never
+  ggplot(dist_boot, aes(sample = precio_miles, group = interaction(rep))) + 
+    geom_qq(distribution = stats::qunif, size = 0.1, alpha = 0.1) + 
+    geom_qq(data = dist_muestreo, aes(sample = precio_miles), colour = "red",
+            distribution = stats::qunif, alpha = 0.1) +
+    ylim(c(125, 230)) + sin_lineas + 
+    labs(subtitle = "Estimaciones de distribución \n de muestreo (media)")
+#+end_src
+
+#+REVEAL: split
+Obsérvese que:
+
+- En algunos casos la aproximación es mejor que en otros (a veces la muestra
+  tiene valores ligeramente más altos o más bajos).
+- La dispersión de cada una de estas distribuciones /bootstrap/ es similar a la de
+  la verdadera distribución de muestreo (en rojo), pero puede está desplazada
+  dependiendo de la muestra original que utilizamos.
+- Adicionalmente, los valores centrales de la distribución de /bootstrap/ tiende
+  cubrir el verdadero valor que buscamos estimar, que es:
+  #+begin_src R :exports both :results org 
+    poblacion_casas |>
+      summarise(media = mean(precio_miles), .groups = "drop")  
+  #+end_src
+
+  #+RESULTS:
+  #+begin_src org
+  # A tibble: 1 × 1
+    media
+    <dbl>
+  1  183.
+  #+end_src
+
+** Variación en distribución /bootstrap/
+
+En el proceso de estimación /bootstrap/ hay dos fuentes de variación pues:
+
+- La muestra original se selecciona con aleatoriedad de una población.
+- Las muestras /bootstrap/ se seleccionan con aleatoriedad de la muestra
+  original. Esto es, la estimación /bootstrap/ ideal es un resultado asintótico
+  $B=\infty$, en esta caso $\hat{\textsf{ee}}_B$ iguala la estimación /plug-in/
+  $\mathsf{ee}_{\mathbb{P}_n}$.
+
+#+REVEAL: split
+En el proceso de /bootstrap/ podemos controlar la variación del segundo aspecto,
+conocida como *implementación de muestreo Monte Carlo*, y la variación Monte Carlo
+decrece conforme incrementamos el número de muestras.
+
+#+REVEAL: split
+Podemos eliminar la variación Monte Carlo si seleccionamos todas las posibles
+muestras con reemplazo de tamaño $n$, hay ${2n-1}\choose{n}$ posibles muestras y
+si seleccionamos todas obtenemos $\hat{\textsf{ee}}_\infty$ (/bootstrap/ ideal),
+sin embargo, en la mayor parte de los problemas no es factible proceder así.
+
+#+attr_latex:
+#+begin_exercise
+¿Cuántas remuestras posibles existen para nuestro ejemplo introductorio de la
+diferencia de nivel de ingreso?
+#+end_exercise
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/remuestras-combinaciones.jpeg :exports results :results output graphics file
+  tibble(n = 1:100) |>
+    mutate(combinaciones = choose(2 * n - 1, n)) |>
+    ggplot(aes(n, combinaciones)) + geom_point() + geom_line() +
+    geom_hline(yintercept = choose(11, 6), lty = 2)+
+    geom_vline(xintercept = 6, lty = 2) + 
+    scale_x_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) +
+    scale_y_continuous(trans='log10', 
+                       labels = trans_format("log10", math_format(10^.x))) + 
+    sin_lineas
+#+end_src
+#+caption: Número de remuestras posibles como función del tamaño de muestra.
+#+RESULTS:
+[[file:../images/remuestras-combinaciones.jpeg]]
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/bootstrap-variacion.jpeg  :exports results :results output graphics file :eval never :tangle no
+  set.seed(8098)
+  pob_plot <- ggplot(data_frame(x = -15:20), aes(x)) +
+    stat_function(fun = dnormm, args = list(p = c(0.3, 0.7), mu = c(-2, 8), 
+                                            sigma = c(3.5, 3)), alpha = 0.8) +
+    geom_vline(aes(color = "mu", xintercept = 5), alpha = 0.5) +
+    scale_colour_manual(values = c('mu' = 'red'), name = '', 
+                        labels = expression(mu)) +
+    labs(x = "", y = "", subtitle = "Población", color = "") +
+    theme(axis.text.y = element_blank())
+
+  samples <- data_frame(sample = 1:6) %>% 
+    mutate(
+      sims = rerun(6, rnormm(50, p = c(0.3, 0.7), mu = c(-2, 8), 
+                             sigma = c(3.5, 3))), 
+      x_bar = map_dbl(sims, mean))
+
+  means_boot <- function(n, sims) {
+    rerun(n, mean(sample(sims, replace = TRUE))) %>%
+      flatten_dbl()
+  }
+  samples_boot <- samples %>% 
+    mutate(
+      medias_boot_30_1 = map(sims, ~means_boot(n = 30, .)), 
+      medias_boot_30_2 = map(sims, ~means_boot(n = 30, .)), 
+      medias_boot_1000_1 = map(sims, ~means_boot(n = 1000, .)), 
+      medias_boot_1000_2 = map(sims, ~means_boot(n = 1000, .))
+    )
+
+  emp_dists <- samples_boot %>% 
+    unnest(cols = sims) %>% 
+    rename(obs = sims)
+  emp_dists_plots <- ggplot(emp_dists, aes(x = obs)) +
+    geom_histogram(binwidth = 2, alpha = 0.5, fill = "darkgray") +
+    geom_vline(aes(color = "mu", xintercept = 5), alpha = 0.5, 
+               show.legend = FALSE) +
+    geom_vline(aes(xintercept = x_bar, color = "x_bar"), show.legend = FALSE, 
+               alpha = 0.8, linetype = "dashed") +
+    xlim(-15, 20) +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    labs(x = "", y = "", subtitle = expression("Distribución empírica"~P[n])) +
+    scale_colour_manual(values = c('mu' = 'red', 'x_bar' = 'blue'), name = '', 
+                        labels = c(expression(mu), expression(bar(x)))) +
+    facet_wrap(~ sample, ncol = 1) +
+    theme(strip.background = element_blank(), strip.text.x = element_blank(), 
+          axis.text.y = element_blank())
+
+  boot_dists_30 <- samples_boot %>% 
+    unnest(cols = c(medias_boot_30_1, medias_boot_30_2)) %>% 
+    pivot_longer(cols = c(medias_boot_30_1, medias_boot_30_2), 
+                 values_to = "mu_hat_star", names_to = "boot_trial",
+                 names_prefix = "medias_boot_30_")
+  boot_dists_30_plot <- ggplot(boot_dists_30, aes(x = mu_hat_star)) +
+    geom_histogram(alpha = 0.5, fill = "darkgray") +
+    labs(x = "", y = "",
+         subtitle = expression("Distribución bootstrap B = 30")) +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    geom_vline(aes(xintercept = x_bar), color = "blue", 
+               linetype = "dashed", alpha = 0.8) +
+    facet_grid(sample~boot_trial) +
+    theme(strip.background = element_blank(), strip.text.y = element_blank(), 
+          axis.text.y = element_blank())
+
+  boot_dists_1000 <- samples_boot %>% 
+    unnest(cols = c(medias_boot_1000_1, medias_boot_1000_2)) %>% 
+    pivot_longer(cols = c(medias_boot_1000_1, medias_boot_1000_2), 
+                 values_to = "mu_hat_star", names_to = "boot_trial",
+                 names_prefix = "medias_boot_1000_")
+  boot_dists_1000_plot <- ggplot(boot_dists_1000, aes(x = mu_hat_star)) +
+    geom_histogram(alpha = 0.5, fill = "darkgray") +
+    labs(subtitle = expression("Distribución bootstrap B = 1000"), 
+         x = "", y = "") +
+    geom_vline(xintercept = 5, color = "red", alpha = 0.5) +
+    geom_vline(aes(xintercept = x_bar), color = "blue", 
+               linetype = "dashed", alpha = 0.8) +
+    facet_grid(sample~boot_trial) +
+    scale_colour_manual(values = c('mu' = 'red', 'x_bar' = 'blue'), name = '',
+                        labels = c(expression(mu), expression(bar(x)))) +
+    theme(strip.background = element_blank(), strip.text.y = element_blank(), 
+          strip.text.x = element_blank(), axis.text.y = element_blank())
+
+  (pob_plot | plot_spacer() | plot_spacer()) /
+    (emp_dists_plots | boot_dists_30_plot | boot_dists_1000_plot) +
+    plot_layout(heights = c(1, 5), "cm")
+#+end_src
+
+#+REVEAL: split
+En la siguiente gráfica mostramos 6 posibles muestras de tamaño 50 simuladas de
+la población, para cada una de ellas se graficó la distribución empírica y se
+se realizan histogramas de la distribución bootstrap con $B=30$ y $B=1000$, en 
+cada caso hacemos dos repeticiones, notemos que cuando el número de muestras 
+bootstrap es grande las distribuciones bootstrap son muy similares (para una 
+muestra de la población dada), esto es porque disminuimos el erro Monte Carlo. 
+También vale la pena recalcar que la distribución /bootstrap/ está centrada en el 
+valor observado en la muestra (línea azúl punteada) y no en el valor poblacional
+sin embargo la forma de la distribución es similar a lo largo de las filas.
+
+#+REVEAL: split
+#+attr_html: :width 1200 :align center
+file:images/bootstrap_mc_error.png
+
+#+REVEAL: split
+Entonces, ¿cuántas muestras /bootstrap/? 
+
+1. Incluso un número chico de replicaciones bootstrap, digamos $B=25$ es
+   informativo, y $B=50$ con frecuencia es suficiente para dar una buena
+   estimación de $\mathsf{ee}_P(\hat{\theta})$ (citep:Efron1993).
+
+2. Cuando se busca estimar error estándar (citep:Chihara2018) recomienda $B=1000$
+   muestras, o $B=10,000$ muestras dependiendo la precisión que se busque.
+
+#+attr_latex: :options [Error estándar para \emph{plug-in}]
+#+begin_definition
+La variación de nuestro estimador es lo que conocemos como error estándar y lo denotamos por
+\begin{align}
+\mathsf{ee}\left( \hat \theta_N \right) = \left( \mathbb{V}(\hat \theta_N) \right)^{1/2}\,.
+\end{align}
+El estimador /plug-in/ de esta cantidad (el error estándar) es
+\begin{align}
+\mathsf{ee}_{\hat{\mathbb{P}}_N}\left( \hat \theta_N^* \right)\,,
+\end{align}
+donde $\hat{\theta}^*_N$ es un estimador /bootstrap/ con $\hat{\theta}^*_N = s(X^*_{1}, \ldots, X^*_{N})$ donde $X^*_{1}, \ldots, X^*_{N} \overset{\mathsf{iid}}{\sim} \hat{\mathbb{P}}_N$.
+#+end_definition
+
+
+#+attr_latex: :options [Error estándar para \emph{bootstrap}]
+#+begin_definition
+El estimador /bootstrap/ del error estándar se calcula por medio de remuestras
+$X^{(b)}_{1}, \ldots, X^{(b)}_{N} \overset{\mathsf{iid}}{\sim}
+\hat{\mathbb{P}}_N$ con $b = 1, \ldots, B$ de acuerdo a
+\begin{align}
+\hat{\mathsf{ee}}_B (\hat \theta^*) = \frac{1}{B-1} \sum_{b = 1}^{B} \left( \hat{\theta}^{(b)} - \hat{\theta}^{(\cdot)} \right)^2\,,
+\end{align}
+donde $\hat \theta^{(b)}$ denota el estimador de $\theta$ utilizando la remuestra $b$ y $\hat \theta ^{(\cdot)}$ es la media de las remuestras. Es decir, 
+\begin{align}
+\hat \theta^{(\cdot)} = \frac1B \sum_{b = 1}^{B} \hat \theta^{(b)}\,.
+\end{align}
+#+end_definition
+
+#+REVEAL: split
+Nota que
+\begin{align}
+\lim_{B \rightarrow \infty} \hat{\mathsf{ee}}_{B} \left(\hat \theta^*\right)  = \mathsf{ee}_{\hat{\mathbb{P}}_N}\left( \hat \theta^* \right)\,.
+\end{align}
+
+** Estimación de sesgo 
+
+En tareas de estimación nos interesa cuantificar el sesgo de nuestros procedimientos. Por ejemplo, si nos interesa evaluar un estimador $\hat \theta = s(X_{1:N})$ de una característica $\theta = t(\mathbb{P})$ el sesgo del estimador está definido como
+\begin{align}
+\mathsf{sesgo}_{\mathbb{P}} = \mathsf{sesgo}_{\mathbb{P}} (\hat \theta, \theta ) = \mathbb{E}_\mathbb{P}[\hat \theta] - t(\mathbb{P})\,.
+\end{align}
+
+Los estimadores /plug-in/ usualmente tienen un sesgo pequeño. Pero si nos interesa
+poder cuantificarlo. Para esto utilizamos
+\begin{align}
+\mathsf{sesgo}_{\hat{\mathbb{P}}} = \mathsf{sesgo}_{\hat{\mathbb{P}}} (\hat \theta, \theta ) = \mathbb{E}_{\hat{\mathbb{P}}}[\hat \theta^*] - t(\hat{\mathbb{P}})\,.
+\end{align}
+
+Nota que
+\begin{gather}
+\hat \theta = t(\hat{\mathbb{P}}) = s(X_{1:N})\,, \\
+ \mathbb{E}_{\hat{\mathbb{P}}}[\hat \theta^*] \approx \frac{1}{B} \sum_{b = 1}^{B} \hat \theta ^{(b)}\,, \qquad \text{ donde } \qquad \hat \theta^{(b)} = s(X^{(b)}_{1}, \ldots, X^{(b)}_{N})\,.
+\end{gather}
+#+attr_latex: :options [Sesgo y error cuadrático]
+#+begin_remark
+El sesgo y el error estándar están relacionados por medio del error cuadrático medio $(\mathsf{MSE})$, el cual definimos como
+\begin{align}
+\mathsf{MSE} = \mathsf{MSE}(\hat \theta, \theta) = \mathbb{E}\left[ (\hat \theta - \theta)^2\right]\,.
+\end{align}
+#+end_remark
+
+
+* /Jackknife/
+
+Es una técnica originalmente propuesta para medir sesgo (Quenouille, 1949) y errores estándar (Tukey, 1958). Para una muestra $X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \mathbb{P}$ de observaciones se consideran $N$ remuestreos de la forma
+\begin{align}
+X_{(i)} = (X_{1}, \ldots, X_{i-1}, X_{i+1}, \ldots, X_{N})\,.
+\end{align}
+
+Se utilizan dichas remuestras para calcular nuestra colección de estimadores
+\begin{align}
+\hat \theta_{(i)} = s \left( X_{(i)} \right)\,.
+\end{align}
+
+#+attr_latex: :options [\emph{Plug-in} y Jackknife]
+#+begin_remark
+Para estimadores /plug-in/ de la forma $\hat \theta = t(\hat{\mathbb{P}})$, tenemos
+\begin{align}
+\hat \theta_{(i)} = t \left(  \hat{\mathbb{P}}_{(i)} \right)\,,
+\end{align}
+donde $\hat{\mathbb{P}}_{(i)}$ denota la función de distribución empírica de las
+$N-1$ observaciones.
+#+end_remark
+
+** Estimación de sesgo usando /jackknife/
+
+El estimador del sesgo de /jackknife/ se define como
+\begin{align}
+\widehat{\mathsf{sesgo}}_{\mathsf{jack}} = (N - 1) \left( \hat \theta_{(\cdot)} - \hat \theta \right) \,,
+\end{align}
+donde
+\begin{align}
+\hat \theta_{(\cdot)} = \frac1N \sum_{i = 1}^{N} \hat \theta_{(i)}\,.
+\end{align}
+
+#+BEGIN_NOTES
+Mas adelante discutiremos sobre el factor $N-1$ adelante de la estimación de
+sesgo. Pero por el momento puedes pensar en que los estimadores /jackknife/ son
+promedios de $N-1$ observaciones, mientras que el estimador observado es
+producto de $N$ observaciones. Por lo tanto, se necesite un factor que permita
+comparar ambas cantidades.
+#+END_NOTES
+
+#+REVEAL: split
+El uso de la estimación de sesgo es para poder presentar un estimador con una corrección por sesgo. Es decir, el estimador /jackknife/ entonces es
+\begin{align}
+\hat{\theta}_{\mathsf{jack}} = \hat \theta - \widehat{\mathsf{sesgo}}_{\mathsf{jack}}\,,
+\end{align}
+donde si utilizamos la sustitución adecuada obtenemos
+\begin{align}
+\hat{\theta}_{\mathsf{jack}} = N\, \hat \theta - (N-1) \, \hat \theta_{(\cdot)}\,.
+\end{align}
+
+#+attr_latex:
+#+begin_exercise
+Considera la situación de estimar la varianza a partir de una muestra $X_{1}, \ldots, X_{N} \overset{\mathsf{iid}}{\sim} \mathbb{P}$ por medio del estimador /plug-in/: 
+\begin{align}
+\hat \theta = \frac{1}{N} \sum_{i= 1}^{N} (X_i - \bar X_N)^2\,.
+\end{align}
+Verifica que el estimador /jackknife/ corregido por sesgo es el estimador insesgado usual 
+\begin{align}
+\hat  \theta _{\mathsf{jack}} = \hat \theta - \widehat{\mathsf{sesgo}}_{\mathsf{jack}} = \frac{1}{N-1} \sum_{i = 1}^{N} \left( X_i - \bar X_N \right)^2\,.
+\end{align}
+#+end_exercise
+
+
+** Justificación fórmula de sesgo  
+El sesgo del estimador /plug-in/ satisface la siguiente ecuación:
+\begin{align}
+\mathsf{sesgo}(\hat \theta) = \mathbb{E}(\hat \theta - \sigma^2) = \frac{N-1}{N} \sigma^2 - \sigma^2 = - \frac{\sigma^2}{N}\,.
+\end{align}
+El método /jackknife/ calcula términos con sesgo igual a 
+\begin{align}
+\mathsf{sesgo}(\hat \theta_{(i)}) = -\frac{\sigma^2}{N-1}\,.
+\end{align}
+
+#+REVEAL: split
+Por lo que, tenemos
+\begin{align}
+\mathbb{E}\left(\hat{\theta}_{(i)}-\hat{\theta}\right) &=\mathbb{E}\left(\hat{\theta}_{(i)}-\theta\right)-\mathbb{E}(\hat{\theta}-\theta) \\
+&=\mathsf{sesgo}\left(\hat{\theta}_{(i)}\right)-\mathsf{sesgo}(\hat{\theta}) \\
+&=-\frac{\sigma^2}{N-1}-\left(-\frac{\sigma^2}{N}\right) \\
+&=-\frac{\sigma^2}{N(N-1)}=\frac{\mathsf{sesgo}(\hat{\theta})}{N-1}\,.
+\end{align}
+Lo que implica que el estimador /jackknife/ con factor $N-1$ nos da una estimación correcta del sesgo de nuestros estimadores.
+
+** Estimación de errores estándar usando /jackknife/
+
+El estimador del error estándar usando las remuestras /jackknife/ se define como
+\begin{align}
+\widehat{\mathsf{ee}}_{\mathsf{jack}}(\hat{\theta}_N) = \left[ \frac{N-1}{N} \sum_{i = 1}^{N} \left( \hat \theta_{(i)} - \hat \theta_{(\cdot)} \right)^2 \right]^{1/2}\,.
+\end{align}
+
+#+attr_latex: :options [Estimadores Jackknife]
+#+begin_remark
+Nota que necesitamos un ~factor de inflación~ para los términos
+cuadráticos. Esto es por que, intuitivamente, los términos son cercanos entre si
+y no caracterizan las desviaciones que observaríamos con promedios de $N$
+observaciones.
+#+end_remark
+
+
+* /Bootstrap/ y otras estadísticas 
+
+#+begin_src R :exports none :results none
+  ## Bootstrap para razon y suavizadores ---------------------------------------
+#+end_src
+
+El /bootstrap/ es una técnica versátil. Un ejemplo son *estimadores de razón*, que
+tienen la forma
+\begin{align}
+\hat{r} = \frac{\overline y}{\overline x}\,.
+\end{align}
+
+Por ejemplo, ¿cómo haríamos estimación para el procentaje de área area habitable
+de las casas en relación al tamaño del lote? Una manera de estimar esta cantidad
+es dividiendo la suma del área habitable de nuestra muestra y dividirlo entre
+la suma del área de los lotes de nuestra muestra, como en la fórmula anterior. Esta
+fórmula es más difícil pues tanto numerador como denominador tienen variabilidad,
+y estas dos cantidades no varían independientemente.
+
+Con el /bootstrap/ podemos atacar estos problemas.
+
+** Estimadores de razón
+
+Nuestra muestra original es:
+
+#+begin_src R :exports code :results none
+  set.seed(250)
+  casas_muestra <- sample_n(poblacion_casas, 200)
+#+end_src
+
+#+begin_src R :exports results :results org 
+  options(width = 70)
+  casas_muestra |> glimpse()
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+Rows: 200
+Columns: 46
+$ id                    <dbl> 1166, 855, 579, 1158, 882, 583, 614, 2…
+$ tipo_zona             <chr> "RL", "RL", "FV", "RL", "RL", "RL", "R…
+$ frente_lote           <dbl> 79, 102, 34, 34, 44, 81, 70, 78, 64, 6…
+$ calle                 <chr> "Pave", "Pave", "Pave", "Pave", "Pave"…
+$ forma_lote            <chr> "IR1", "Reg", "Reg", "IR1", "IR1", "Re…
+$ nombre_zona           <chr> "NridgHt", "Sawyer", "Somerst", "Nridg…
+$ tipo_edificio         <chr> "1Fam", "1Fam", "TwnhsE", "Twnhs", "1F…
+$ estilo                <chr> "1Story", "1Story", "2Story", "1Story"…
+$ calidad_gral          <dbl> 7, 5, 7, 7, 7, 6, 5, 6, 6, 5, 4, 6, 4,…
+$ condicion_gral        <dbl> 5, 4, 5, 5, 5, 5, 5, 6, 5, 7, 7, 7, 7,…
+$ año_construccion      <dbl> 2009, 1955, 2007, 2007, 1990, 1990, 20…
+$ calidad_exteriores    <chr> "Gd", "TA", "Gd", "Gd", "Gd", "TA", "T…
+$ material_exteriores   <chr> "VinylSd", "Wd Sdng", "VinylSd", "Viny…
+$ condicion_exteriores  <chr> "TA", "TA", "TA", "TA", "Gd", "Gd", "T…
+$ calidad_sotano        <chr> "Gd", "TA", "Gd", "Gd", "Gd", "Gd", "G…
+$ condicion_sotano      <chr> "TA", "TA", "TA", "TA", "TA", "TA", "T…
+$ tipo_sotano           <chr> "Unf", "ALQ", "Unf", "GLQ", "LwQ", "GL…
+$ calefaccion           <chr> "GasA", "GasA", "GasA", "GasA", "GasA"…
+$ calidad_calefaccion   <chr> "Ex", "TA", "Ex", "Ex", "Ex", "TA", "E…
+$ aire_acondicionado    <chr> "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y"…
+$ baños_completos       <dbl> 2, 1, 2, 2, 2, 1, 1, 2, 2, 2, 1, 2, 1,…
+$ baños_medios          <dbl> 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0,…
+$ recamaras_sup         <dbl> 3, 3, 2, 2, 3, 3, 3, 3, 3, 3, 2, 4, 2,…
+$ calidad_cocina        <chr> "Gd", "TA", "Gd", "Gd", "Gd", "TA", "T…
+$ cuartos_sup           <dbl> 7, 6, 5, 6, 7, 5, 6, 7, 7, 5, 4, 8, 5,…
+$ tipo_garage           <chr> "Attchd", "Attchd", "Detchd", "Attchd"…
+$ terminado_garage      <chr> "RFn", "Unf", "Unf", "RFn", "RFn", NA,…
+$ num_coches            <dbl> 2, 2, 2, 2, 2, 0, 0, 2, 2, 2, 1, 2, 0,…
+$ calidad_garage        <chr> "TA", "TA", "TA", "TA", "TA", NA, NA, …
+$ condicion_garage      <chr> "TA", "TA", "TA", "TA", "TA", NA, NA, …
+$ año_venta             <dbl> 2009, 2006, 2008, 2009, 2007, 2007, 20…
+$ mes_venta             <dbl> 9, 7, 2, 7, 4, 5, 12, 6, 2, 9, 4, 8, 1…
+$ tipo_venta            <chr> "New", "WD", "WD", "WD", "WD", "WD", "…
+$ condicion_venta       <chr> "Partial", "Abnorml", "Abnorml", "Norm…
+$ lat                   <dbl> 42.06, 42.03, 42.05, 42.06, 42.00, 42.…
+$ long                  <dbl> -93.66, -93.67, -93.64, -93.66, -93.65…
+$ area_sotano_m2        <dbl> 139.54, 163.79, 64.01, 122.07, 107.40,…
+$ area_1er_piso_m2      <dbl> 139.54, 165.27, 65.31, 122.07, 110.28,…
+$ area_2o_piso_m2       <dbl> 0.00, 0.00, 64.01, 0.00, 49.24, 0.00, …
+$ area_habitable_sup_m2 <dbl> 139.54, 165.27, 129.32, 122.07, 159.51…
+$ area_garage_m2        <dbl> 59.83, 42.18, 50.17, 58.16, 37.16, 0.0…
+$ area_lote_m2          <dbl> 886.4, 1664.8, 334.8, 464.6, 1278.2, 1…
+$ precio_miles          <dbl> 233.2, 170.0, 146.0, 230.0, 187.5, 118…
+$ valor_misc_miles      <dbl> 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0…
+$ precio_m2_miles       <dbl> 1.6710, 1.0286, 1.1290, 1.8841, 1.1754…
+$ precio_m2             <dbl> 1671.0, 1028.6, 1129.0, 1884.1, 1175.4…
+#+end_src
+
+#+begin_src R :exports none :results none 
+  write_rds(casas_muestra, "cache/casas_muestra.rds")
+#+end_src
+
+
+#+REVEAL: split
+El estimador de interés es:
+#+begin_src R :exports code :results none 
+  ## paso 1: define el estimador
+  estimador_razon <- function(split, ...){
+    muestra <- analysis(split)
+    muestra |>
+      summarise(estimate = sum(area_habitable_sup_m2) / sum(area_lote_m2),
+                .groups = "drop") |>
+      mutate(term = "area del lote construida")
+  }
+#+end_src
+
+#+REVEAL: split
+Y nuestra estimación puntual es
+
+#+begin_src R :exports both :results org 
+  estimador <- casas_muestra |>
+    summarise(estimate = sum(area_habitable_sup_m2) / sum(area_lote_m2))
+  estimador
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 1
+  estimate
+     <dbl>
+1    0.141
+#+end_src
+
+Es decir que en promedio, un poco menos del $15\%$ del lote total es ocupado por área habitable. 
+Ahora hacemos bootstrap para construir un intervalo:
+
+#+begin_src R :exports code :results none 
+  library(rsample)
+  dist_boot <- bootstraps(casas_muestra,  2000) |>   ## paso 2 y 3
+    mutate(res_boot = map(splits, estimador_razon))  ## paso 4
+#+end_src
+
+
+#+REVEAL: split
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/casas-bootstrap-razon.jpeg :exports results :results output graphics file
+  g_1 <- ggplot(dist_boot %>% unnest(res_boot), aes(x = estimate)) +
+    geom_histogram(bins = 20) + sin_lineas
+  g_2 <- ggplot(dist_boot %>% unnest(res_boot), aes(sample = estimate)) +
+    geom_qq() + geom_qq_line(colour = 'red') + sin_lineas
+  g_1 + g_2
+#+end_src
+
+#+RESULTS:
+[[file:../images/casas-bootstrap-razon.jpeg]]
+
+#+REVEAL: split
+En este caso la cola derecha parece tener menos dispersión que una distribución normal.
+Usamos un intervalo de percentiles para obtener:
+
+#+begin_src R :exports both :results org 
+  dist_boot |> int_pctl(res_boot) |>
+    mutate(estimador = estimador$estimate) |>
+    rename(media_boot = .estimate) |>
+    mutate(sesgo = media_boot - estimador) |>
+    select(-.method, -term)
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+# A tibble: 1 × 6
+  .lower media_boot .upper .alpha estimador   sesgo
+   <dbl>      <dbl>  <dbl>  <dbl>     <dbl>   <dbl>
+1  0.121      0.142  0.159   0.05     0.141 0.00101
+#+end_src
+
+
+#+REVEAL: split
+Nótese que el sesgo es bajo.  De modo que en esta zona, entre $12\%$ y $16\%$ de toda
+el área disponible es ocupada por área habitable: estas son casas que tienen
+jardines o terrenos, garage relativamente grandes.
+
+** Suavizadores
+
+Podemos usar el /bootstrap/ para juzgar la variabilidad de un suavizador, que
+consideramos como nuestra estadística:
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/casas-suavizador.jpeg :exports results :results output graphics file
+  graf_casas <- function(data){
+    ggplot(data %>% filter(calidad_gral < 7), 
+           aes(x = area_habitable_sup_m2)) + 
+      geom_point(aes(y = precio_m2_miles), alpha = 0.75) +
+      geom_smooth(aes(y = precio_m2_miles), method = "loess", span = 0.7, 
+                  se = FALSE, method.args = list(degree = 1, family = "symmetric")) +
+      sin_lineas 
+  }
+  graf_casas(casas_muestra)
+#+end_src
+
+#+RESULTS:
+[[file:../images/casas-suavizador.jpeg]]
+
+#+REVEAL: split
+Podemos hacer bootstrap para juzgar la estabilidad del suavizador:
+
+#+begin_src R :exports none :results none
+  suaviza_boot <- function(x, data){
+    ## remuestreo
+    muestra_boot <- sample_n(data, nrow(data), replace = T)
+    ajuste <- loess(precio_m2_miles ~ area_habitable_sup_m2, data = muestra_boot, 
+                    degree = 1, span = 0.7, family = "symmetric")
+    datos_grafica <- tibble(area_habitable_sup_m2 = seq(25, 250, 5))
+    ajustados <- predict(ajuste, newdata = datos_grafica)
+    datos_grafica %>% mutate(ajustados = ajustados) %>% 
+      mutate(rep = x)
+  }
+  reps <- map(1:10, ~ suaviza_boot(.x, casas_muestra %>% filter(calidad_gral < 7))) %>% 
+    bind_rows()
+#+end_src
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/casas-suavizador-bs.jpeg :exports results :results output graphics file
+  ## ojo: la rutina loess no tienen soporte para extrapolación
+  graf_casas(casas_muestra) + 
+    geom_line(data = reps, aes(y = ajustados, group = rep), alpha = 1, colour = "red") +
+    coord_cartesian(xlim = c(50, 225))
+#+end_src
+
+#+RESULTS:
+[[file:../images/casas-suavizador-bs.jpeg]]
+
+#+REVEAL: split
+Donde vemos que algunas cambios de pendiente del suavizador original no son muy
+interpretables (por ejemplo, para áreas chicas) y alta variabilidad en general
+en los extremos. Podemos hacer más iteraciones para calcular bandas de
+confianza:
+
+#+HEADER: :width 1200 :height 500 :R-dev-args bg="transparent"
+#+begin_src R :file images/casas-suavizador-bandas.jpeg :exports results :results output graphics file
+  reps <- map(1:200, ~ suaviza_boot(.x, casas_muestra %>% filter(calidad_gral < 7))) %>% 
+    bind_rows()
+  ## ojo: la rutina loess no tienen soporte para extrapolación
+  graf_casas(casas_muestra) + 
+    geom_line(data = reps, aes(y = ajustados, group = rep), alpha = 0.2, colour = "red") +
+    coord_cartesian(xlim = c(50, 225))
+#+end_src
+
+#+RESULTS:
+[[file:../images/casas-suavizador-bandas.jpeg]]
+
+#+REVEAL: split
+Donde observamos cómo tenemos incertidumbre en cuanto al nivel y forma de las
+curvas en los extremos de los datos (casas grandes y chicas), lo cual es
+natural. Aunque podemos resumir para hacer bandas de confianza, mostrar
+remuestras de esta manera es informativo: por ejempo: vemos cómo es probable
+también que para casas de menos de 70 metros cuadrados el precio por metro
+cuadrado no cambia tanto (líneas constantes). 
+
+#+begin_src R :exports none :results none
+  ## Ambiente ==================================================================
+  options(width = 75)
+#+end_src
+
+#+begin_src R :exports both :results org 
+  sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_src org
+R version 4.3.1 (2023-06-16)
+Platform: x86_64-apple-darwin20 (64-bit)
+Running under: macOS Ventura 13.5.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Mexico_City
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices datasets  utils     methods   base     
+
+other attached packages:
+ [1] scales_1.2.1    patchwork_1.1.2 lubridate_1.9.2 forcats_1.0.0  
+ [5] stringr_1.5.0   dplyr_1.1.2     purrr_1.0.1     readr_2.1.4    
+ [9] tidyr_1.3.0     tibble_3.2.1    ggplot2_3.4.2   tidyverse_2.0.0
+
+loaded via a namespace (and not attached):
+ [1] bit_4.0.5        gtable_0.3.3     compiler_4.3.1   renv_1.0.0      
+ [5] crayon_1.5.2     tidyselect_1.2.0 parallel_4.3.1   R6_2.5.1        
+ [9] labeling_0.4.2   generics_0.1.3   munsell_0.5.0    pillar_1.9.0    
+[13] tzdb_0.4.0       rlang_1.1.1      utf8_1.2.3       stringi_1.7.12  
+[17] bit64_4.0.5      timechange_0.2.0 cli_3.6.1        withr_2.5.0     
+[21] magrittr_2.0.3   grid_4.3.1       vroom_1.6.3      hms_1.1.3       
+[25] lifecycle_1.0.3  vctrs_0.6.3      glue_1.6.2       farver_2.1.1    
+[29] fansi_1.0.4      colorspace_2.1-0 tools_4.3.1      pkgconfig_2.0.3
+#+end_src
+
+
+bibliographystyle:abbrvnat
+bibliography:references.bib
+
