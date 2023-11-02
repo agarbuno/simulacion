@@ -93,8 +93,6 @@ Nota que esta elección es una mala elección desde el punto de vista bayesiano.
   }
 #+end_src
 
-\newpage
-
 ** Aproximación Normal (de Laplace)
 
 #+begin_src R :exports both :results org
