@@ -38,6 +38,21 @@
       ],
       "Hash": "6314fc110e09548ba889491db6ae67fb"
     },
+    "LaplacesDemon": {
+      "Package": "LaplacesDemon",
+      "Version": "16.1.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "graphics",
+        "parallel",
+        "stats",
+        "utils"
+      ],
+      "Hash": "e3688a7a73fe0c811053581348eb78f2"
+    },
     "LearnBayes": {
       "Package": "LearnBayes",
       "Version": "2.15.1",
